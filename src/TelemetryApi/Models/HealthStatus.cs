@@ -15,9 +15,14 @@ public sealed class HealthStatus
 
 public sealed class SourceHealth
 {
-    public string    Status       { get; init; } = string.Empty;
-    public DateTime? LastIngest   { get; init; }
-    public int       VehicleCount { get; init; }
+    public string    Status         { get; init; } = string.Empty;
+    public DateTime? LastIngest     { get; init; }
+    public int       VehicleCount   { get; init; }
+    /// <summary>
+    /// True when the ingestion function is deliberately disabled via ENABLE_*
+    /// configuration. Distinct from "unhealthy" — no remediation needed.
+    /// </summary>
+    public bool      ConfigDisabled { get; init; }
 }
 
 /// <summary>

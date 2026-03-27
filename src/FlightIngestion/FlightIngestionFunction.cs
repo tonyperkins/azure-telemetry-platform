@@ -42,6 +42,13 @@ public sealed class FlightIngestionFunction
     [Function("FlightIngestion")]
     public async Task RunAsync([TimerTrigger("0 * * * * *")] TimerInfo timer)
     {
+        // SRE: Feature flag / kill switch
+        if (!_config.GetValue<bool>("ENABLE_FLIGHT_INGESTION", defaultValue: true))
+        {
+            _logger.LogInformation("Flight ingestion is disabled via configuration. Skipping run.");
+            return;
+        }
+
         var sw   = Stopwatch.StartNew();
         var bbox = _config["OPENSKY_BBOX"] ?? "29.8,-98.2,30.8,-97.2";
 

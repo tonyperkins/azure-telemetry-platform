@@ -42,6 +42,13 @@ public sealed class MetroIngestionFunction
     [Function("MetroIngestion")]
     public async Task RunAsync([TimerTrigger("*/30 * * * * *")] TimerInfo timer)
     {
+        // SRE: Feature flag / kill switch
+        if (!_config.GetValue<bool>("ENABLE_METRO_INGESTION", defaultValue: true))
+        {
+            _logger.LogInformation("Metro ingestion is disabled via configuration. Skipping run.");
+            return;
+        }
+
         var sw      = Stopwatch.StartNew();
         var feedUrl = _config["METRO_FEED_URL"]
             ?? "https://data.texas.gov/download/r4v4-vz24/application%2Foctet-stream";

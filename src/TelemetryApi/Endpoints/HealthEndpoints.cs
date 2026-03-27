@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using TelemetryApi.Data;
 using TelemetryApi.Models;
 
@@ -51,10 +52,23 @@ public static class HealthEndpoints
     ///   degraded  — at least one source degraded or unhealthy
     ///   unhealthy — all sources unhealthy
     /// </summary>
-    private static async Task<IResult> GetHealth(VehicleRepository repo)
+    private static async Task<IResult> GetHealth(VehicleRepository repo, IConfiguration config)
     {
         var sourceRows = (await repo.GetSourceHealthAsync()).ToList();
         var now        = DateTime.UtcNow;
+
+        // SRE: Read feature flags so we can distinguish "intentionally disabled"
+        // from "actually broken". A disabled source shows ConfigDisabled=true in the
+        // health response, letting the dashboard surface a different UI treatment
+        // (greyed-out controls) instead of the red <Unhealthy> alert.
+        var flightEnabled = config.GetValue<bool>("ENABLE_FLIGHT_INGESTION", defaultValue: true);
+        var metroEnabled  = config.GetValue<bool>("ENABLE_METRO_INGESTION",  defaultValue: true);
+
+        var sourceFlags = new Dictionary<string, bool>
+        {
+            ["flight"] = flightEnabled,
+            ["metro"]  = metroEnabled,
+        };
 
         var sources = new Dictionary<string, SourceHealth>();
 
@@ -80,9 +94,10 @@ public static class HealthEndpoints
 
             sources[knownSource] = new SourceHealth
             {
-                Status       = status,
-                LastIngest   = row == default ? null : row.LastIngest,
-                VehicleCount = row == default ? 0    : row.Count
+                Status         = status,
+                LastIngest     = row == default ? null : row.LastIngest,
+                VehicleCount   = row == default ? 0    : row.Count,
+                ConfigDisabled = !sourceFlags[knownSource],
             };
         }
 

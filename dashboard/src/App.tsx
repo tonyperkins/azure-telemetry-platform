@@ -105,6 +105,9 @@ export default function App() {
 
   const metroCount  = useMemo(() => vehicles.filter(v => v.source === 'metro').length,  [vehicles]);
   const flightCount = useMemo(() => vehicles.filter(v => v.source === 'flight').length, [vehicles]);
+  const flightConfigDisabled = !!(health?.sources.flight.configDisabled);
+  const metroConfigDisabled  = !!(health?.sources.metro.configDisabled);
+
   
   // Detect circuit breaker: if flights enabled but no flight data for 3+ consecutive polls
   const flightDataMissingCount = useRef(0);
@@ -353,6 +356,8 @@ export default function App() {
             onToggleFlight={() => setFlightEnabled(!flightEnabled)}
             isFlightCircuitBreakerActive={isFlightCircuitBreakerActive}
             onShowCircuitBreakerModal={() => setShowCircuitBreakerModal(true)}
+            flightConfigDisabled={flightConfigDisabled}
+            metroConfigDisabled={metroConfigDisabled}
           />
 
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -418,6 +423,7 @@ export default function App() {
             onToggleVehicleLabels={() => setShowVehicleLabels(!showVehicleLabels)}
             onToggleClustering={() => setEnableClustering(!enableClustering)}
             onResetAll={handleResetAll}
+            flightConfigDisabled={flightConfigDisabled}
           />
         </div>
 

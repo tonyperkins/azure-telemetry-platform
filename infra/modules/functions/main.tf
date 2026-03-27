@@ -51,6 +51,8 @@ resource "azurerm_windows_function_app" "main" {
     # correlation. Using the wrong key results in Functions emitting telemetry
     # without parent operation IDs, breaking the end-to-end trace view.
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = var.appinsights_connection_string
+    "ENABLE_METRO_INGESTION"                = "true"
+    "ENABLE_FLIGHT_INGESTION"               = "true"
     "METRO_FEED_URL"                        = var.metro_feed_url
     "OPENSKY_BBOX"                          = var.opensky_bbox
     "FILTER_ON_GROUND"                      = "true"

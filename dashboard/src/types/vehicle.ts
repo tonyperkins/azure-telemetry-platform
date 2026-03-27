@@ -20,7 +20,9 @@ export interface SourceHealth {
   status: 'healthy' | 'degraded' | 'unhealthy';
   lastIngest: string | null;
   vehicleCount: number;
+  configDisabled?: boolean; // true = intentionally paused via ENABLE_* config, not a failure
 }
+
 
 export interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';

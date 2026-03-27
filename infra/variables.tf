@@ -10,9 +10,9 @@ variable "environment" {
 }
 
 variable "location" {
-  description = "Azure region for all resources. southcentralus is closest to Austin, TX."
+  description = "Azure region for all resources. centralus supports Static Web Apps and SQL."
   type        = string
-  default     = "southcentralus"
+  default     = "centralus"
 }
 
 variable "alert_email" {

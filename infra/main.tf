@@ -30,6 +30,13 @@ provider "azurerm" {
       purge_soft_delete_on_destroy    = false
       recover_soft_deleted_key_vaults = true
     }
+    resource_group {
+      # SRE: Allow deleting a resource group even if it contains resources.
+      # This is crucial for region migrations (e.g. southcentralus -> centralus)
+      # where Terraform needs to recreate the RG but child resources (alerts, 
+      # logs) prevent a clean deletion of the old region's group.
+      prevent_deletion_if_contains_resources = false
+    }
   }
 }
 
@@ -55,7 +62,7 @@ locals {
 }
 
 resource "azurerm_resource_group" "main" {
-  name     = "rg-telemetry-${var.environment}"
+  name     = "rg-telemetry-atp-${var.environment}"
   location = var.location
   tags     = local.tags
 }
