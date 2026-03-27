@@ -48,6 +48,12 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Pre-flight Credentials Check
+        if: env.AZURE_CREDENTIALS == '' && secrets.AZURE_CREDENTIALS == ''
+        run: |
+          echo "::error::AZURE_CREDENTIALS secret is missing! Deployment cannot proceed."
+          exit 1
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -55,7 +61,7 @@ jobs:
           terraform_wrapper: false
 
       - name: terraform init
-        working-directory: azure-telemetry-platform/infra
+        working-directory: infra
         env:
           ARM_CLIENT_ID:       ${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}
           ARM_CLIENT_SECRET:   ${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}
@@ -64,7 +70,7 @@ jobs:
         run: terraform init -input=false
 
       - name: terraform plan
-        working-directory: azure-telemetry-platform/infra
+        working-directory: infra
         env:
           ARM_CLIENT_ID:       ${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}
           ARM_CLIENT_SECRET:   ${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}
@@ -78,7 +84,7 @@ jobs:
       - name: terraform apply
         # SRE: apply is gated on the plan from the same run. This prevents
         # a race where someone modifies infra between plan and apply.
-        working-directory: azure-telemetry-platform/infra
+        working-directory: infra
         env:
           ARM_CLIENT_ID:       ${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}
           ARM_CLIENT_SECRET:   ${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}
@@ -91,7 +97,7 @@ jobs:
 
       - name: Capture Terraform outputs
         id: tf-outputs
-        working-directory: azure-telemetry-platform/infra
+        working-directory: infra
         env:
           ARM_CLIENT_ID:       ${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}
           ARM_CLIENT_SECRET:   ${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}
@@ -125,7 +131,7 @@ jobs:
           dotnet publish src/TelemetryApi/TelemetryApi.csproj
           --configuration Release
           --output ./publish/api
-        working-directory: azure-telemetry-platform
+        # working-directory: . (removed prefix)
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -136,7 +142,7 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ needs.terraform.outputs.app_service_name }}
-          package: azure-telemetry-platform/publish/api
+          package: publish/api
 
       - name: Smoke-test health endpoint
         # SRE: Post-deployment smoke test. If /api/health returns non-200,
@@ -174,7 +180,7 @@ jobs:
           dotnet publish src/MetroIngestion/MetroIngestion.csproj   --configuration Release --output ./publish/functions
           dotnet publish src/FlightIngestion/FlightIngestion.csproj --configuration Release --output ./publish/functions
           dotnet publish src/RetentionCleanup/RetentionCleanup.csproj --configuration Release --output ./publish/functions
-        working-directory: azure-telemetry-platform
+        # working-directory: . (removed prefix)
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -185,7 +191,7 @@ jobs:
         uses: azure/functions-action@v1
         with:
           app-name: ${{ needs.terraform.outputs.function_app_name }}
-          package: azure-telemetry-platform/publish/functions
+          package: publish/functions
 
   # ---------------------------------------------------------------------------
   # Job 4: Build + deploy dashboard to Static Web App
@@ -205,15 +211,15 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: azure-telemetry-platform/dashboard/package-lock.json
+          cache-dependency-path: dashboard/package-lock.json
 
       - name: Install dependencies
         run: npm ci
-        working-directory: azure-telemetry-platform/dashboard
+        working-directory: dashboard
 
       - name: Build dashboard
         run: npm run build
-        working-directory: azure-telemetry-platform/dashboard
+        working-directory: dashboard
         env:
           # SRE: VITE_ prefix makes this available at build time only (bundled
           # into the static JS). It is NOT a runtime secret — the API hostname
@@ -226,7 +232,7 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
-          app_location: azure-telemetry-platform/dashboard
+          app_location: dashboard
           output_location: dist
           skip_app_build: true
 
