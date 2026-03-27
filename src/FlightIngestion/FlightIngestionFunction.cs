@@ -40,7 +40,7 @@ public sealed class FlightIngestionFunction
     }
 
     [Function("FlightIngestion")]
-    public async Task RunAsync([TimerTrigger("*/30 * * * * *")] TimerInfo timer)
+    public async Task RunAsync([TimerTrigger("0 * * * * *")] TimerInfo timer)
     {
         var sw   = Stopwatch.StartNew();
         var bbox = _config["OPENSKY_BBOX"] ?? "29.8,-98.2,30.8,-97.2";

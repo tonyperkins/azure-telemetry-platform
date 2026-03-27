@@ -153,7 +153,12 @@ build_all() {
 }
 
 # Start all services
+# SRE: Always kill orphans before starting to ensure we don't end up with
+# parallel timer triggers hitting API rate limits.
 start_all() {
+    log_info "Cleaning up any orphaned processes first..."
+    kill_all_orphans
+    
     log_info "Starting all services..."
     start_metro
     sleep 2
@@ -171,26 +176,13 @@ start_all() {
 kill_all_orphans() {
     log_info "Searching for orphaned processes..."
     
-    # Kill any vite/npm processes
-    local vite_pids=$(ps aux | grep -E "vite|npm run dev" | grep -v grep | awk '{print $2}')
-    if [ -n "$vite_pids" ]; then
-        log_info "Killing orphaned dashboard processes: $vite_pids"
-        echo "$vite_pids" | xargs kill -9 2>/dev/null || true
-    fi
-    
-    # Kill any func start processes
-    local func_pids=$(ps aux | grep "func start" | grep -v grep | awk '{print $2}')
-    if [ -n "$func_pids" ]; then
-        log_info "Killing orphaned function processes: $func_pids"
-        echo "$func_pids" | xargs kill -9 2>/dev/null || true
-    fi
-    
-    # Kill any dotnet run processes
-    local dotnet_pids=$(ps aux | grep "dotnet run" | grep -v grep | awk '{print $2}')
-    if [ -n "$dotnet_pids" ]; then
-        log_info "Killing orphaned API processes: $dotnet_pids"
-        echo "$dotnet_pids" | xargs kill -9 2>/dev/null || true
-    fi
+    # SRE: Use pkill with full command line matching to target only our project
+    # This is safer than killing all 'dotnet' or 'npm' processes on the host.
+    pkill -f "MetroIngestion.dll" || true
+    pkill -f "FlightIngestion.dll" || true
+    pkill -f "TelemetryApi.dll" || true
+    pkill -f "vite" || true
+    pkill -f "func start" || true
     
     log_success "Orphaned processes cleaned up"
 }
