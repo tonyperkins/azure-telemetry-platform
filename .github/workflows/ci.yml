@@ -46,13 +46,14 @@ jobs:
         continue-on-error: true
         # working-directory: azure-telemetry-platform (removed prefix)
 
-      - name: Publish test results
+      - name: Report Results
         uses: dorny/test-reporter@v1
         if: always()
         with:
           name: xUnit Results
           path: TestResults/*.trx
           reporter: dotnet-trx
+          fail-on-error: false
 
       - name: Publish TelemetryApi artifact
         run: >
