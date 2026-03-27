@@ -32,6 +32,9 @@ interface MapControlsProps {
   
   // Reset
   onResetAll: () => void;
+
+  // Config-level disable flags
+  flightConfigDisabled?: boolean;
 }
 
 export function MapControls({
@@ -56,6 +59,7 @@ export function MapControls({
   onToggleVehicleLabels,
   onToggleClustering,
   onResetAll,
+  flightConfigDisabled = false,
 }: MapControlsProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [routeSearch, setRouteSearch] = useState('');
@@ -233,26 +237,50 @@ export function MapControls({
 
             {/* Flights Toggle */}
             <div
-              onClick={onToggleFlight}
+              onClick={flightConfigDisabled ? undefined : onToggleFlight}
+              title={
+                flightConfigDisabled
+                  ? 'Flight ingestion is disabled in configuration (ENABLE_FLIGHT_INGESTION=false). No data is being collected from OpenSky.'
+                  : undefined
+              }
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '10px 12px',
-                background: '#F8FAFC',
+                background: flightConfigDisabled ? '#F1F5F9' : '#F8FAFC',
                 borderRadius: '6px',
-                cursor: 'pointer',
-                border: '1px solid #E2E8F0',
+                cursor: flightConfigDisabled ? 'not-allowed' : 'pointer',
+                border: flightConfigDisabled ? '1px dashed #CBD5E0' : '1px solid #E2E8F0',
+                opacity: flightConfigDisabled ? 0.6 : 1,
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
                 <span style={{ fontSize: '18px' }}>✈</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '13px', fontWeight: 500, color: '#1E293B' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 500, color: flightConfigDisabled ? '#94A3B8' : '#1E293B', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     Flights
+                    {flightConfigDisabled && (
+                      <span style={{
+                        fontSize: '9px',
+                        fontWeight: 700,
+                        background: '#E2E8F0',
+                        color: '#64748B',
+                        borderRadius: '3px',
+                        padding: '1px 5px',
+                        letterSpacing: '0.4px',
+                        textTransform: 'uppercase',
+                      }}>
+                        Config Off
+                      </span>
+                    )}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#64748B' }}>
-                    {flightEnabled ? `${flightCount} aircraft active` : 'Hidden'}
+                  <div style={{ fontSize: '11px', color: '#94A3B8' }}>
+                    {flightConfigDisabled
+                      ? 'Ingestion paused via ENABLE_FLIGHT_INGESTION'
+                      : flightEnabled
+                        ? `${flightCount} aircraft active`
+                        : 'Hidden'}
                   </div>
                 </div>
               </div>
@@ -270,11 +298,11 @@ export function MapControls({
                   style={{
                     width: '20px',
                     height: '20px',
-                    background: 'white',
+                    background: flightConfigDisabled ? '#94A3B8' : 'white',
                     borderRadius: '50%',
                     position: 'absolute',
                     top: '2px',
-                    left: flightEnabled ? '22px' : '2px',
+                    left: (!flightConfigDisabled && flightEnabled) ? '22px' : '2px',
                     transition: 'left 0.2s',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
                   }}
@@ -299,9 +327,28 @@ export function MapControls({
               Bus Routes
             </label>
             
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#1E293B' }}>
-              <input type="checkbox" checked={showFlightPaths} onChange={onToggleFlightPaths} />
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: flightConfigDisabled ? 'not-allowed' : 'pointer',
+                fontSize: '13px',
+                color: flightConfigDisabled ? '#94A3B8' : '#1E293B',
+                opacity: flightConfigDisabled ? 0.5 : 1,
+              }}
+              title={flightConfigDisabled ? 'Flight ingestion is disabled in configuration' : undefined}
+            >
+              <input
+                type="checkbox"
+                checked={!flightConfigDisabled && showFlightPaths}
+                onChange={flightConfigDisabled ? undefined : onToggleFlightPaths}
+                disabled={flightConfigDisabled}
+              />
               Flight Paths
+              {flightConfigDisabled && (
+                <span style={{ fontSize: '10px', color: '#94A3B8' }}>(config disabled)</span>
+              )}
             </label>
           </div>
 
