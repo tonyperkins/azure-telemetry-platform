@@ -1,0 +1,21 @@
+/**
+ * Tracking pulse animation for the tracked vehicle marker
+ * Creates a pulsing ring effect around the marker
+ */
+
+@keyframes trackingPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(37, 99, 235, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+  }
+}
+
+.tracking-pulse {
+  animation: trackingPulse 1.5s infinite;
+  border-radius: 50%;
+}

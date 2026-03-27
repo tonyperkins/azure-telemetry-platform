@@ -1,0 +1,257 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'prod'
+        type: choice
+        options: [ prod, staging ]
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  NODE_VERSION: '20.x'
+  TF_VERSION: '~> 1.7'
+
+# SRE: Prevent concurrent deployments to the same environment. If a deploy is
+# already running when a new push arrives, cancel the in-progress run.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Terraform apply — provisions / updates Azure infrastructure
+  # This runs BEFORE app deployments so the App Service and Function App
+  # always exist before we attempt code deployments.
+  # Requires secrets: AZURE_CREDENTIALS, TF_VAR_sql_admin_password,
+  #                   TF_VAR_alert_email
+  # ---------------------------------------------------------------------------
+  terraform:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'prod' }}
+    outputs:
+      app_service_name:    ${{ steps.tf-outputs.outputs.app_service_name }}
+      function_app_name:   ${{ steps.tf-outputs.outputs.function_app_name }}
+      app_service_hostname: ${{ steps.tf-outputs.outputs.app_service_hostname }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: terraform init
+        working-directory: azure-telemetry-platform/infra
+        env:
+          ARM_CLIENT_ID:       ${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}
+          ARM_CLIENT_SECRET:   ${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}
+          ARM_SUBSCRIPTION_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
+          ARM_TENANT_ID:       ${{ fromJson(secrets.AZURE_CREDENTIALS).tenantId }}
+        run: terraform init -input=false
+
+      - name: terraform plan
+        working-directory: azure-telemetry-platform/infra
+        env:
+          ARM_CLIENT_ID:       ${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}
+          ARM_CLIENT_SECRET:   ${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}
+          ARM_SUBSCRIPTION_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
+          ARM_TENANT_ID:       ${{ fromJson(secrets.AZURE_CREDENTIALS).tenantId }}
+          TF_VAR_sql_admin_password: ${{ secrets.TF_VAR_SQL_ADMIN_PASSWORD }}
+          TF_VAR_alert_email:        ${{ secrets.TF_VAR_ALERT_EMAIL }}
+          TF_VAR_environment:        ${{ github.event.inputs.environment || 'prod' }}
+        run: terraform plan -input=false -out=tfplan
+
+      - name: terraform apply
+        # SRE: apply is gated on the plan from the same run. This prevents
+        # a race where someone modifies infra between plan and apply.
+        working-directory: azure-telemetry-platform/infra
+        env:
+          ARM_CLIENT_ID:       ${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}
+          ARM_CLIENT_SECRET:   ${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}
+          ARM_SUBSCRIPTION_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
+          ARM_TENANT_ID:       ${{ fromJson(secrets.AZURE_CREDENTIALS).tenantId }}
+          TF_VAR_sql_admin_password: ${{ secrets.TF_VAR_SQL_ADMIN_PASSWORD }}
+          TF_VAR_alert_email:        ${{ secrets.TF_VAR_ALERT_EMAIL }}
+          TF_VAR_environment:        ${{ github.event.inputs.environment || 'prod' }}
+        run: terraform apply -input=false tfplan
+
+      - name: Capture Terraform outputs
+        id: tf-outputs
+        working-directory: azure-telemetry-platform/infra
+        env:
+          ARM_CLIENT_ID:       ${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}
+          ARM_CLIENT_SECRET:   ${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}
+          ARM_SUBSCRIPTION_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
+          ARM_TENANT_ID:       ${{ fromJson(secrets.AZURE_CREDENTIALS).tenantId }}
+        run: |
+          echo "app_service_name=$(terraform output -raw app_service_name)" >> $GITHUB_OUTPUT
+          echo "function_app_name=$(terraform output -raw function_app_name)" >> $GITHUB_OUTPUT
+          echo "app_service_hostname=$(terraform output -raw app_service_hostname)" >> $GITHUB_OUTPUT
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Deploy TelemetryApi to App Service
+  # Depends on terraform job so the App Service exists before deploy.
+  # ---------------------------------------------------------------------------
+  deploy-api:
+    name: Deploy TelemetryApi
+    runs-on: ubuntu-latest
+    needs: terraform
+    environment: ${{ github.event.inputs.environment || 'prod' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Publish TelemetryApi
+        run: >
+          dotnet publish src/TelemetryApi/TelemetryApi.csproj
+          --configuration Release
+          --output ./publish/api
+        working-directory: azure-telemetry-platform
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ needs.terraform.outputs.app_service_name }}
+          package: azure-telemetry-platform/publish/api
+
+      - name: Smoke-test health endpoint
+        # SRE: Post-deployment smoke test. If /api/health returns non-200,
+        # the workflow fails and GitHub marks the commit as broken.
+        # The team is alerted before users notice the problem.
+        run: |
+          sleep 20
+          STATUS=$(curl -sf -o /dev/null -w "%{http_code}" \
+            "https://${{ needs.terraform.outputs.app_service_hostname }}/api/health")
+          if [ "$STATUS" != "200" ]; then
+            echo "Health check failed: HTTP $STATUS"
+            exit 1
+          fi
+          echo "Health check passed: HTTP $STATUS"
+
+  # ---------------------------------------------------------------------------
+  # Job 3: Deploy Functions
+  # ---------------------------------------------------------------------------
+  deploy-functions:
+    name: Deploy Azure Functions
+    runs-on: ubuntu-latest
+    needs: terraform
+    environment: ${{ github.event.inputs.environment || 'prod' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Publish all Function projects into one output
+        run: |
+          dotnet publish src/MetroIngestion/MetroIngestion.csproj   --configuration Release --output ./publish/functions
+          dotnet publish src/FlightIngestion/FlightIngestion.csproj --configuration Release --output ./publish/functions
+          dotnet publish src/RetentionCleanup/RetentionCleanup.csproj --configuration Release --output ./publish/functions
+        working-directory: azure-telemetry-platform
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Function App
+        uses: azure/functions-action@v1
+        with:
+          app-name: ${{ needs.terraform.outputs.function_app_name }}
+          package: azure-telemetry-platform/publish/functions
+
+  # ---------------------------------------------------------------------------
+  # Job 4: Build + deploy dashboard to Static Web App
+  # Depends on terraform so we have the App Service hostname for VITE_API_BASE_URL.
+  # ---------------------------------------------------------------------------
+  deploy-dashboard:
+    name: Deploy Dashboard
+    runs-on: ubuntu-latest
+    needs: [ terraform, deploy-api ]
+    environment: ${{ github.event.inputs.environment || 'prod' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: azure-telemetry-platform/dashboard/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: azure-telemetry-platform/dashboard
+
+      - name: Build dashboard
+        run: npm run build
+        working-directory: azure-telemetry-platform/dashboard
+        env:
+          # SRE: VITE_ prefix makes this available at build time only (bundled
+          # into the static JS). It is NOT a runtime secret — the API hostname
+          # is public information. Do not confuse this with an API key.
+          VITE_API_BASE_URL: https://${{ needs.terraform.outputs.app_service_hostname }}
+
+      - name: Deploy to Static Web App
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: azure-telemetry-platform/dashboard
+          output_location: dist
+          skip_app_build: true
+
+  # ---------------------------------------------------------------------------
+  # Job 5: Deployment summary
+  # Prints live URLs and resource names as a workflow summary.
+  # ---------------------------------------------------------------------------
+  deployment-summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [ deploy-api, deploy-functions, deploy-dashboard ]
+    if: always()
+
+    steps:
+      - name: Write summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Terraform | ${{ needs.deploy-api.result == 'success' && '✅ Applied' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| TelemetryApi | ${{ needs.deploy-api.result == 'success' && '✅ Deployed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Azure Functions | ${{ needs.deploy-functions.result == 'success' && '✅ Deployed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dashboard | ${{ needs.deploy-dashboard.result == 'success' && '✅ Deployed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Live URLs" >> $GITHUB_STEP_SUMMARY
+          echo "- **API Health**: https://${{ needs.terraform.outputs.app_service_hostname }}/api/health" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dashboard**: (see Static Web App default hostname in Azure Portal)" >> $GITHUB_STEP_SUMMARY

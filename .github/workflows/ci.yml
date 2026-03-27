@@ -1,0 +1,153 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  NODE_VERSION: '20.x'
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Build + test .NET projects
+  # ---------------------------------------------------------------------------
+  dotnet-build-test:
+    name: .NET Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore NuGet packages
+        run: dotnet restore azure-telemetry-platform.sln
+        working-directory: azure-telemetry-platform
+
+      - name: Build (Release)
+        run: dotnet build azure-telemetry-platform.sln --no-restore --configuration Release
+        working-directory: azure-telemetry-platform
+
+      - name: Run xUnit tests
+        # SRE: Tests run against LocalDB in CI using the SQL Server GitHub Action.
+        # Integration tests verify real query correctness — mocks alone are not sufficient.
+        run: >
+          dotnet test azure-telemetry-platform.sln
+          --no-build
+          --configuration Release
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory ./TestResults
+        working-directory: azure-telemetry-platform
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: xUnit Results
+          path: azure-telemetry-platform/TestResults/*.trx
+          reporter: dotnet-trx
+
+      - name: Publish TelemetryApi artifact
+        run: >
+          dotnet publish src/TelemetryApi/TelemetryApi.csproj
+          --no-build
+          --configuration Release
+          --output ./artifacts/TelemetryApi
+        working-directory: azure-telemetry-platform
+
+      - name: Publish Functions artifact
+        run: >
+          dotnet publish src/MetroIngestion/MetroIngestion.csproj
+          --no-build
+          --configuration Release
+          --output ./artifacts/Functions &&
+          dotnet publish src/FlightIngestion/FlightIngestion.csproj
+          --no-build
+          --configuration Release
+          --output ./artifacts/Functions &&
+          dotnet publish src/RetentionCleanup/RetentionCleanup.csproj
+          --no-build
+          --configuration Release
+          --output ./artifacts/Functions
+        working-directory: azure-telemetry-platform
+
+      - name: Upload TelemetryApi artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: telemetry-api
+          path: azure-telemetry-platform/artifacts/TelemetryApi
+          retention-days: 7
+
+      - name: Upload Functions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: functions
+          path: azure-telemetry-platform/artifacts/Functions
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Build React dashboard
+  # ---------------------------------------------------------------------------
+  dashboard-build:
+    name: Dashboard Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: azure-telemetry-platform/dashboard/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: azure-telemetry-platform/dashboard
+
+      - name: TypeScript type-check + build
+        run: npm run build
+        working-directory: azure-telemetry-platform/dashboard
+        env:
+          VITE_API_BASE_URL: https://placeholder-replaced-at-deploy-time.azurewebsites.net
+
+      - name: Upload dashboard artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard
+          path: azure-telemetry-platform/dashboard/dist
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  # Job 3: Terraform validate (no Azure credentials needed)
+  # ---------------------------------------------------------------------------
+  terraform-validate:
+    name: Terraform Validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '~> 1.7'
+
+      - name: terraform init (backend disabled for validation)
+        run: terraform init -backend=false
+        working-directory: azure-telemetry-platform/infra
+
+      - name: terraform validate
+        run: terraform validate
+        working-directory: azure-telemetry-platform/infra
+
+      - name: terraform fmt check
+        run: terraform fmt -check -recursive
+        working-directory: azure-telemetry-platform/infra

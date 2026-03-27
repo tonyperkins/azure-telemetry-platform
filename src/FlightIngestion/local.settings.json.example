@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "SQL_CONNECTION_STRING": "Server=localhost,1433;Database=TelemetryDev;User Id=sa;Password=<YOUR_SA_PASSWORD>;TrustServerCertificate=True;",
+    "OPENSKY_BBOX": "29.8,-98.2,30.8,-97.2",
+    "OPENSKY_CLIENT_ID": "",
+    "OPENSKY_CLIENT_SECRET": "",
+    "FILTER_ON_GROUND": "true",
+    "APPINSIGHTS_CONNECTION_STRING": ""
+  }
+}

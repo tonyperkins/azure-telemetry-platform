@@ -1,0 +1,62 @@
+# =============================================================================
+# azure-telemetry-platform .gitignore
+# =============================================================================
+
+# Secrets / local config — NEVER commit these
+.env.local
+*.env.local
+*.env.secrets
+
+# Azure Functions local dev settings — ALWAYS contain secrets
+# NEVER commit these. Use .env.example as reference.
+local.settings.json
+
+# ASP.NET dev appsettings — may contain connection strings
+appsettings.Development.json
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+TestResults/
+artifacts/
+publish/
+*.nupkg
+
+# Node / dashboard
+node_modules/
+dashboard/dist/
+dashboard/.env.local
+.vite/
+
+# Terraform
+infra/.terraform/
+infra/*.tfplan
+infra/tfplan
+infra/terraform.tfstate
+infra/terraform.tfstate.backup
+infra/.terraform.tfvars
+# DO commit: .terraform.lock.hcl (pinned provider versions)
+
+# Terraform variable files with secrets
+*.auto.tfvars
+terraform.tfvars
+
+# Azure Functions local settings (contains connection strings)
+src/**/local.settings.json
+
+# OS
+.DS_Store
+Thumbs.db
+*.Zone.Identifier
+
+# Logs
+.logs/
+*.log
+
+# IDE
+.idea/
+*.swp
+*~
