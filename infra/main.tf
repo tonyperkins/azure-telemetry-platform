@@ -126,6 +126,8 @@ module "keyvault" {
   sql_connection_string    = module.sql.connection_string
   appservice_principal_id  = module.appservice.principal_id
   functionapp_principal_id = module.functions.principal_id
+  opensky_client_id        = var.opensky_client_id
+  opensky_client_secret    = var.opensky_client_secret
 }
 
 module "appservice" {
@@ -154,14 +156,16 @@ module "appservice" {
 # must be utilized instead of Azure Native RBAC assignment via Terraform.
 
 module "functions" {
-  source                        = "./modules/functions"
-  resource_group_name           = azurerm_resource_group.main.name
-  location                      = var.location
-  environment                   = var.environment
-  tags                          = local.tags
-  suffix                        = local.suffix
-  sql_secret_uri                = module.keyvault.sql_secret_uri
-  appinsights_connection_string = module.monitoring.connection_string
-  metro_feed_url                = var.metro_feed_url
-  opensky_bbox                  = var.opensky_bbox
+  source                           = "./modules/functions"
+  resource_group_name              = azurerm_resource_group.main.name
+  location                         = var.location
+  environment                      = var.environment
+  tags                             = local.tags
+  suffix                           = local.suffix
+  sql_secret_uri                   = module.keyvault.sql_secret_uri
+  appinsights_connection_string    = module.monitoring.connection_string
+  metro_feed_url                   = var.metro_feed_url
+  opensky_bbox                     = var.opensky_bbox
+  opensky_client_id_secret_uri     = module.keyvault.opensky_client_id_secret_uri
+  opensky_client_secret_secret_uri = module.keyvault.opensky_client_secret_secret_uri
 }

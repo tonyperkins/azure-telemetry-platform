@@ -61,5 +61,28 @@ resource "azurerm_key_vault_secret" "sql_connection_string" {
   value        = var.sql_connection_string
   key_vault_id = azurerm_key_vault.main.id
 
-  depends_on = [azurerm_key_vault_access_policy.terraform_deployer]
+  # Ensure the SP running the deployment has rights first
+  depends_on = [
+    azurerm_key_vault_access_policy.terraform_deployer
+  ]
+}
+
+resource "azurerm_key_vault_secret" "opensky_client_id" {
+  name         = "OPEN-SKY-CLIENT-ID"
+  value        = var.opensky_client_id
+  key_vault_id = azurerm_key_vault.main.id
+
+  depends_on = [
+    azurerm_key_vault_access_policy.terraform_deployer
+  ]
+}
+
+resource "azurerm_key_vault_secret" "opensky_client_secret" {
+  name         = "OPEN-SKY-CLIENT-SECRET"
+  value        = var.opensky_client_secret
+  key_vault_id = azurerm_key_vault.main.id
+
+  depends_on = [
+    azurerm_key_vault_access_policy.terraform_deployer
+  ]
 }

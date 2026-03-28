@@ -123,13 +123,13 @@ requests
 
 3. Verify the upstream feed is accessible:
    ```bash
-   curl -I "https://data.texas.gov/download/r4v4-vz24/application%2Foctet-stream"
+   curl -I "https://data.texas.gov/download/eiei-9rpf/application%2Foctet-stream"
    # Expected: HTTP 200, Content-Type: application/octet-stream
    ```
 
 4. Check the feed size is non-zero:
    ```bash
-   curl -s "https://data.texas.gov/download/r4v4-vz24/application%2Foctet-stream" | wc -c
+   curl -s "https://data.texas.gov/download/eiei-9rpf/application%2Foctet-stream" | wc -c
    # A value < 100 bytes suggests an empty or error response
    ```
 

@@ -78,6 +78,8 @@ jobs:
           ARM_TENANT_ID:       ${{ fromJson(secrets.AZURE_CREDENTIALS).tenantId }}
           TF_VAR_sql_admin_password: ${{ secrets.TF_VAR_SQL_ADMIN_PASSWORD }}
           TF_VAR_alert_email:        ${{ secrets.TF_VAR_ALERT_EMAIL }}
+          TF_VAR_opensky_client_id:  ${{ secrets.OPENSKY_CLIENT_ID }}
+          TF_VAR_opensky_client_secret: ${{ secrets.OPENSKY_CLIENT_SECRET }}
           TF_VAR_environment:        ${{ github.event.inputs.environment || 'prod' }}
         run: terraform plan -input=false -out=tfplan
 
@@ -92,6 +94,8 @@ jobs:
           ARM_TENANT_ID:       ${{ fromJson(secrets.AZURE_CREDENTIALS).tenantId }}
           TF_VAR_sql_admin_password: ${{ secrets.TF_VAR_SQL_ADMIN_PASSWORD }}
           TF_VAR_alert_email:        ${{ secrets.TF_VAR_ALERT_EMAIL }}
+          TF_VAR_opensky_client_id:  ${{ secrets.OPENSKY_CLIENT_ID }}
+          TF_VAR_opensky_client_secret: ${{ secrets.OPENSKY_CLIENT_SECRET }}
           TF_VAR_environment:        ${{ github.event.inputs.environment || 'prod' }}
         run: terraform apply -input=false tfplan
 
@@ -247,13 +251,51 @@ jobs:
           skip_app_build: true
 
   # ---------------------------------------------------------------------------
-  # Job 5: Deployment summary
+  # Job 5: Post-deployment Smoke Tests
+  # Verifies the live API is responding securely and map vehicles are ingested.
+  # ---------------------------------------------------------------------------
+  smoke-test:
+    name: Production Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [ terraform, deploy-api, deploy-functions, deploy-dashboard ]
+    
+    steps:
+      - name: Await Application Telemetry Initialization
+        run: |
+          API_URL="https://${{ needs.terraform.outputs.app_service_hostname }}/api/health"
+          echo "Smoke testing active Telemetry API at $API_URL"
+          
+          # Spin lock for up to 5 minutes waiting for background workers to execute
+          # successfully and populate the map with initial vehicles.
+          TIMEOUT=300
+          INTERVAL=15
+          ELAPSED=0
+          
+          while [ $ELAPSED -lt $TIMEOUT ]; do
+            STATUS=$(curl -s "$API_URL" | jq -r '.status')
+            echo "Current System Health Status: $STATUS ($ELAPSED/$TIMEOUT seconds)"
+            
+            if [ "$STATUS" == "healthy" ]; then
+              echo "✅ All Telemetry Background Function instances are fully integrated and healthy!"
+              exit 0
+            fi
+            
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+          
+          echo "❌ CRITICAL: The API failed to transition to a 'healthy' state within the 5 minute pipeline threshold!"
+          echo "Please immediately review the internal application traces."
+          exit 1
+
+  # ---------------------------------------------------------------------------
+  # Job 6: Deployment summary
   # Prints live URLs and resource names as a workflow summary.
   # ---------------------------------------------------------------------------
   deployment-summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
-    needs: [ terraform, deploy-api, deploy-functions, deploy-dashboard ]
+    needs: [ terraform, deploy-api, deploy-functions, deploy-dashboard, smoke-test ]
     if: always()
 
     steps:

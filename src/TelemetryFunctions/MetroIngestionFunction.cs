@@ -51,7 +51,7 @@ public sealed class MetroIngestionFunction
 
         var sw      = Stopwatch.StartNew();
         var feedUrl = _config["METRO_FEED_URL"]
-            ?? "https://data.texas.gov/download/r4v4-vz24/application%2Foctet-stream";
+            ?? "https://data.texas.gov/download/eiei-9rpf/application%2Foctet-stream";
 
         _logger.LogInformation("Metro ingestion started. Feed: {FeedUrl}", feedUrl);
 

@@ -31,11 +31,23 @@ variable "sql_admin_password" {
 variable "metro_feed_url" {
   description = "Capital Metro GTFS-RT feed URL."
   type        = string
-  default     = "https://data.texas.gov/download/r4v4-vz24/application%2Foctet-stream"
+  default     = "https://data.texas.gov/download/eiei-9rpf/application%2Foctet-stream"
 }
 
 variable "opensky_bbox" {
   description = "OpenSky Network bounding box: lamin,lomin,lamax,lomax covering greater Austin area."
   type        = string
   default     = "29.8,-98.2,30.8,-97.2"
+}
+
+variable "opensky_client_id" {
+  description = "OpenSky API credentials dynamically extracted from GitHub secrets."
+  type        = string
+  sensitive   = true
+}
+
+variable "opensky_client_secret" {
+  description = "OpenSky API credentials dynamically extracted from GitHub secrets."
+  type        = string
+  sensitive   = true
 }

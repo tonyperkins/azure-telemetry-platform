@@ -13,3 +13,13 @@ output "sql_secret_uri" {
   value       = azurerm_key_vault_secret.sql_connection_string.versionless_id
   sensitive   = true
 }
+
+output "opensky_client_id_secret_uri" {
+  value     = azurerm_key_vault_secret.opensky_client_id.versionless_id
+  sensitive = true
+}
+
+output "opensky_client_secret_secret_uri" {
+  value     = azurerm_key_vault_secret.opensky_client_secret.versionless_id
+  sensitive = true
+}

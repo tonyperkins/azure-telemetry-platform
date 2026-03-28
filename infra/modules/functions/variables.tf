@@ -20,3 +20,12 @@ variable "appinsights_connection_string" {
 
 variable "metro_feed_url" { type = string }
 variable "opensky_bbox" { type = string }
+variable "opensky_client_id_secret_uri" {
+  type      = string
+  sensitive = true
+}
+
+variable "opensky_client_secret_secret_uri" {
+  type      = string
+  sensitive = true
+}

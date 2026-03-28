@@ -52,10 +52,10 @@ resource "azurerm_windows_web_app" "main" {
     # SRE: Key Vault reference syntax. The App Service runtime resolves this
     # at startup via the managed identity — the raw connection string never
     # appears in app settings, environment variables, or deployment artifacts.
-    "ConnectionStrings__DefaultConnection"  = "@Microsoft.KeyVault(SecretUri=${var.sql_secret_uri}/)"
-    "LogAnalyticsWorkspaceId"               = var.log_analytics_workspace_id
-    "AppInsights__AppId"                    = var.app_insights_app_id
-    "AppInsights__ApiKey"                   = var.app_insights_api_key
+    "ConnectionStrings__DefaultConnection" = "@Microsoft.KeyVault(SecretUri=${var.sql_secret_uri}/)"
+    "LogAnalyticsWorkspaceId"              = var.log_analytics_workspace_id
+    "AppInsights__AppId"                   = var.app_insights_app_id
+    "AppInsights__ApiKey"                  = var.app_insights_api_key
   }
 
   tags = var.tags
