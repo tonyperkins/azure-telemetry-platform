@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { RouteShape, Vehicle } from '../types/vehicle';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 
 interface MapControlsProps {
   // Data Sources
@@ -71,8 +74,29 @@ export function MapControls({
   mapStyle,
   onMapStyleChange,
 }: MapControlsProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useLocalStorage('prefs_mapControlsExpanded', true);
   const [routeSearch, setRouteSearch] = useState('');
+  const [isCheckingApi, setIsCheckingApi] = useState(false);
+
+  const handleCheckApi = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsCheckingApi(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/manage/opensky-status`);
+      const data = await res.json();
+      if (!res.ok || !data.isUp) {
+        alert(`OpenSky API Error: ${data.statusCode}\n\n${data.error || 'The OpenSky Network API is unreachable or rate limited.'}`);
+      } else {
+        const remaining = data.rateLimitRemaining ?? 'Unknown';
+        const limit = data.rateLimitLimit ?? 'Unknown';
+        alert(`OpenSky API is UP! \u2705\n\nRate Limit: ${remaining} / ${limit} requests remaining.\nAuthenticated: ${data.authenticated ? 'Yes' : 'No'}`);
+      }
+    } catch (err) {
+      alert(`Network error connecting to Telemetry API: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setIsCheckingApi(false);
+    }
+  };
 
   // Extract routeId from rawJson since API doesn't populate top-level field
   const extractRouteId = (vehicle: Vehicle): string | null => {
@@ -323,6 +347,50 @@ export function MapControls({
                 />
               </div>
             </div>
+
+            {/* API Diagnostic Button */}
+            {!flightConfigDisabled && (
+              <button
+                onClick={handleCheckApi}
+                disabled={isCheckingApi}
+                title="Query the OpenSky Network directly to check current rate limits"
+                style={{
+                  width: '100%',
+                  marginTop: '8px',
+                  padding: '8px',
+                  background: 'var(--bg-active)',
+                  border: '1px solid var(--border-light)',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: 'var(--text-secondary)',
+                  cursor: isCheckingApi ? 'wait' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}
+                onMouseEnter={(e) => {
+                  if (!isCheckingApi) {
+                    e.currentTarget.style.background = 'var(--bg-hover)';
+                    e.currentTarget.style.borderColor = 'var(--border-main)';
+                    e.currentTarget.style.color = 'var(--text-primary)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isCheckingApi) {
+                    e.currentTarget.style.background = 'var(--bg-active)';
+                    e.currentTarget.style.borderColor = 'var(--border-light)';
+                    e.currentTarget.style.color = 'var(--text-secondary)';
+                  }
+                }}
+              >
+                {isCheckingApi ? '⏳ Checking OpenSky API...' : '🩺 Check API Status'}
+              </button>
+            )}
           </div>
 
           {/* Section 2: Map Layers */}

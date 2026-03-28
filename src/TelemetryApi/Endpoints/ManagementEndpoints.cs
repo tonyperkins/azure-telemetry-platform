@@ -23,6 +23,10 @@ public static class ManagementEndpoints
         group.MapPost("/start", StartFunctionApp)
             .WithName("StartFunctionApp")
             .WithDescription("Resumes the Azure Telemetry Function App.");
+
+        group.MapGet("/opensky-status", GetOpenSkyStatus)
+            .WithName("GetOpenSkyStatus")
+            .WithDescription("Queries OpenSky to retrieve current API rate limits and status.");
     }
 
     private static async Task<IResult> GetFunctionStatus([FromServices] IConfiguration config)
@@ -31,6 +35,53 @@ public static class ManagementEndpoints
         if (app == null) return Results.NotFound("Function App resource could not be located via ARM.");
 
         return Results.Ok(new { state = app.Data.State });
+    }
+
+    private static async Task<IResult> GetOpenSkyStatus([FromServices] IConfiguration config, [FromServices] IHttpClientFactory httpClientFactory)
+    {
+        var clientId = config["OPENSKY_CLIENT_ID"];
+        var clientSecret = config["OPENSKY_CLIENT_SECRET"];
+        
+        var client = httpClientFactory.CreateClient("OpenSky");
+        // SRE: Limit timeout for interactive dashboard queries
+        client.Timeout = TimeSpan.FromSeconds(10);
+        
+        if (!string.IsNullOrEmpty(clientId) && !string.IsNullOrEmpty(clientSecret))
+        {
+            var authBytes = System.Text.Encoding.ASCII.GetBytes($"{clientId}:{clientSecret}");
+            var authHeader = Convert.ToBase64String(authBytes);
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authHeader);
+        }
+
+        try
+        {
+            // Empty bounding box to minimize data transfer while still hitting the active endpoint
+            var url = "https://opensky-network.org/api/states/all?lamin=0&lomin=0&lamax=0&lomax=0";
+            var response = await client.GetAsync(url);
+            
+            var remaining = response.Headers.TryGetValues("X-Rate-Limit-Remaining", out var rVals) ? rVals.FirstOrDefault() : null;
+            var limit = response.Headers.TryGetValues("X-Rate-Limit-Limit", out var lVals) ? lVals.FirstOrDefault() : null;
+            var retryAfter = response.Headers.TryGetValues("X-Rate-Limit-Retry-After-Seconds", out var raVals) ? raVals.FirstOrDefault() : null;
+
+            return Results.Ok(new 
+            {
+                statusCode = (int)response.StatusCode,
+                isUp = response.IsSuccessStatusCode,
+                rateLimitRemaining = remaining,
+                rateLimitLimit = limit,
+                retryAfterSeconds = retryAfter,
+                authenticated = !string.IsNullOrEmpty(clientId)
+            });
+        }
+        catch (Exception ex)
+        {
+            return Results.Ok(new 
+            {
+                statusCode = 500,
+                isUp = false,
+                error = ex.Message
+            });
+        }
     }
 
     private static async Task<IResult> StopFunctionApp(HttpRequest request, [FromServices] IConfiguration config)

@@ -12,17 +12,18 @@ import { useBusStops } from './hooks/useBusStops';
 import { useFlightTrails } from './hooks/useFlightTrails';
 import { useRouteShapes } from './hooks/useRouteShapes';
 import { useVehicleData } from './hooks/useVehicleData';
+import { useLocalStorage } from './hooks/useLocalStorage';
 import { Vehicle } from './types/vehicle';
 
 export default function App() {
-  const [metroEnabled, setMetroEnabled] = useState(true);
-  const [flightEnabled, setFlightEnabled] = useState(true);
+  const [metroEnabled, setMetroEnabled] = useLocalStorage('prefs_metroEnabled', true);
+  const [flightEnabled, setFlightEnabled] = useLocalStorage('prefs_flightEnabled', true);
   const [isPaused, setIsPaused] = useState(false);
-  const [showBusStops, setShowBusStops] = useState(true);
-  const [showBusRoutes, setShowBusRoutes] = useState(true);
-  const [showFlightPaths, setShowFlightPaths] = useState(true);
-  const [showVehicleLabels, setShowVehicleLabels] = useState(true);
-  const [enableClustering, setEnableClustering] = useState(false);
+  const [showBusStops, setShowBusStops] = useLocalStorage('prefs_showBusStops', true);
+  const [showBusRoutes, setShowBusRoutes] = useLocalStorage('prefs_showBusRoutes', true);
+  const [showFlightPaths, setShowFlightPaths] = useLocalStorage('prefs_showFlightPaths', true);
+  const [showVehicleLabels, setShowVehicleLabels] = useLocalStorage('prefs_showVehicleLabels', true);
+  const [enableClustering, setEnableClustering] = useLocalStorage('prefs_enableClustering', false);
   const [selectedRoutes, setSelectedRoutes] = useState<Set<string>>(new Set());
   const [trackedVehicleId, setTrackedVehicleId] = useState<string | null>(null);
   const [trackedStopId, setTrackedStopId] = useState<string | null>(null);
@@ -37,12 +38,8 @@ export default function App() {
   const [isRunbookOpen, setIsRunbookOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [runbookSourceName, setRunbookSourceName] = useState<string | undefined>(undefined);
-  const [isDarkTheme, setIsDarkTheme] = useState(() => {
-    return localStorage.getItem('uiTheme') === 'dark';
-  });
-  const [mapStyle, setMapStyle] = useState<'light' | 'dark' | 'streets'>(() => {
-    return (localStorage.getItem('mapStyle') as 'light' | 'dark' | 'streets') || 'light';
-  });
+  const [isDarkTheme, setIsDarkTheme] = useLocalStorage('prefs_isDarkTheme', true);
+  const [mapStyle, setMapStyle] = useLocalStorage<'light' | 'dark' | 'streets'>('prefs_mapStyle', 'dark');
   const [isFlightCircuitBreakerActive, setIsFlightCircuitBreakerActive] = useState(false);
   const [showCircuitBreakerModal, setShowCircuitBreakerModal] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -330,14 +327,7 @@ export default function App() {
     prevMetrics.current = metrics;
   }, [health, metrics]);
 
-  // Persist themes
-  useEffect(() => {
-    localStorage.setItem('uiTheme', isDarkTheme ? 'dark' : 'light');
-  }, [isDarkTheme]);
-
-  useEffect(() => {
-    localStorage.setItem('mapStyle', mapStyle);
-  }, [mapStyle]);
+  // Removed manual storage sync effects since useLocalStorage handles it natively
 
   const sidebarWidth = isSidebarCollapsed ? 48 : 280;
 
