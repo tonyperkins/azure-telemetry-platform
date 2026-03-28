@@ -60,23 +60,13 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
           version = "KqlParameterItem/1.0"
           parameters = [
             {
-              id         = "TimeRange"
+              id         = "7e15cb9e-af5b-432d-96eb-8e999c0175d7"
               version    = "KqlParameterItem/1.0"
               name       = "TimeRange"
+              label      = "Time Range"
               type       = 4
               isRequired = true
               value      = { durationMs = 3600000 }
-              typeSettings = {
-                selectableValues = [
-                  { durationMs = 1800000, displayText = "Last 30 minutes" },
-                  { durationMs = 3600000, displayText = "Last 1 hour" },
-                  { durationMs = 14400000, displayText = "Last 4 hours" },
-                  { durationMs = 43200000, displayText = "Last 12 hours" },
-                  { durationMs = 86400000, displayText = "Last 24 hours" },
-                  { durationMs = 259200000, displayText = "Last 3 days" },
-                ]
-              }
-              label = "Time Range"
             }
           ]
           style = "pills"
