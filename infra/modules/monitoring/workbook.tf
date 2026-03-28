@@ -79,10 +79,7 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
               label = "Time Range"
             }
           ]
-          style        = "pills"
-          queryType    = 0
-          resourceType = "microsoft.insights/components"
-          resourceIds  = [lower(azurerm_application_insights.main.id)]
+          style = "pills"
         }
         name = "time-range-param"
       },
@@ -93,8 +90,8 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version       = "KqlItem/1.0"
-          query         = <<-KQL
+          version                 = "KqlItem/1.0"
+          query                   = <<-KQL
             requests
             | where timestamp {TimeRange}
             | where name has "/api/"
@@ -102,12 +99,12 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
             | extend Availability = round(100.0 * Succeeded / Total, 2)
             | project Availability
           KQL
-          size          = 4
-          title         = "API Availability"
-          queryType     = 0
-          resourceType  = "microsoft.insights/components"
-          resourceIds   = [lower(azurerm_application_insights.main.id)]
-          visualization = "tiles"
+          size                    = 4
+          title                   = "API Availability"
+          queryType               = 0
+          resourceType            = "microsoft.insights/components"
+          crossComponentResources = [lower(azurerm_application_insights.main.id)]
+          visualization           = "tiles"
           tileSettings = {
             leftContent = {
               columnMatch = "Availability"
@@ -125,19 +122,20 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version       = "KqlItem/1.0"
-          query         = <<-KQL
+          version                 = "KqlItem/1.0"
+          query                   = <<-KQL
             requests
             | where timestamp {TimeRange}
             | where name has "/api/"
             | summarize P95 = round(percentile(duration, 95), 0)
             | project P95
           KQL
-          size          = 4
-          title         = "API Latency (P95)"
-          queryType     = 0
-          resourceType  = "microsoft.insights/components"
-          visualization = "tiles"
+          size                    = 4
+          title                   = "API Latency (P95)"
+          queryType               = 0
+          resourceType            = "microsoft.insights/components"
+          crossComponentResources = [lower(azurerm_application_insights.main.id)]
+          visualization           = "tiles"
           tileSettings = {
             leftContent = {
               columnMatch = "P95"
@@ -155,8 +153,8 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version       = "KqlItem/1.0"
-          query         = <<-KQL
+          version                 = "KqlItem/1.0"
+          query                   = <<-KQL
             requests
             | where timestamp {TimeRange}
             | where name has "/api/"
@@ -164,11 +162,12 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
             | extend ErrorRate = iff(Total == 0, 0.0, round(100.0 * Failed / Total, 3))
             | project ErrorRate
           KQL
-          size          = 4
-          title         = "API Error Rate"
-          queryType     = 0
-          resourceType  = "microsoft.insights/components"
-          visualization = "tiles"
+          size                    = 4
+          title                   = "API Error Rate"
+          queryType               = 0
+          resourceType            = "microsoft.insights/components"
+          crossComponentResources = [lower(azurerm_application_insights.main.id)]
+          visualization           = "tiles"
           tileSettings = {
             leftContent = {
               columnMatch = "ErrorRate"
@@ -195,8 +194,8 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version       = "KqlItem/1.0"
-          query         = <<-KQL
+          version                 = "KqlItem/1.0"
+          query                   = <<-KQL
             customMetrics
             | where timestamp {TimeRange}
             | where name == "vehicles_ingested"
@@ -204,12 +203,12 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
             | summarize VehiclesIngested = sum(value) by bin(timestamp, 5m), Source
             | order by timestamp asc
           KQL
-          size          = 0
-          title         = "Vehicles Ingested per 5-Minute Window"
-          queryType     = 0
-          resourceType  = "microsoft.insights/components"
-          resourceIds   = [lower(azurerm_application_insights.main.id)]
-          visualization = "timechart"
+          size                    = 0
+          title                   = "Vehicles Ingested per 5-Minute Window"
+          queryType               = 0
+          resourceType            = "microsoft.insights/components"
+          crossComponentResources = [lower(azurerm_application_insights.main.id)]
+          visualization           = "timechart"
           chartSettings = {
             seriesLabelSettings = [
               { series = "metro", label = "Metro Buses", color = "green" },
@@ -223,8 +222,8 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version       = "KqlItem/1.0"
-          query         = <<-KQL
+          version                 = "KqlItem/1.0"
+          query                   = <<-KQL
             customMetrics
             | where timestamp {TimeRange}
             | where name == "vehicles_ingested_zero"
@@ -232,11 +231,12 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
             | summarize ZeroEvents = count() by bin(timestamp, 5m), Source
             | order by timestamp asc
           KQL
-          size          = 0
-          title         = "Zero-Vehicle Events (Staleness Indicator)"
-          queryType     = 0
-          resourceType  = "microsoft.insights/components"
-          visualization = "timechart"
+          size                    = 0
+          title                   = "Zero-Vehicle Events (Staleness Indicator)"
+          queryType               = 0
+          resourceType            = "microsoft.insights/components"
+          crossComponentResources = [lower(azurerm_application_insights.main.id)]
+          visualization           = "timechart"
           chartSettings = {
             seriesLabelSettings = [
               { series = "metro", label = "Metro Stale", color = "redBright" },
@@ -259,8 +259,8 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version       = "KqlItem/1.0"
-          query         = <<-KQL
+          version                 = "KqlItem/1.0"
+          query                   = <<-KQL
             requests
             | where timestamp {TimeRange}
             | where name has "/api/"
@@ -271,11 +271,12 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
               by bin(timestamp, 5m)
             | order by timestamp asc
           KQL
-          size          = 0
-          title         = "API Latency Percentiles (ms)"
-          queryType     = 0
-          resourceType  = "microsoft.insights/components"
-          visualization = "timechart"
+          size                    = 0
+          title                   = "API Latency Percentiles (ms)"
+          queryType               = 0
+          resourceType            = "microsoft.insights/components"
+          crossComponentResources = [lower(azurerm_application_insights.main.id)]
+          visualization           = "timechart"
           chartSettings = {
             seriesLabelSettings = [
               { series = "P50", label = "P50 (Median)", color = "green" },
@@ -291,8 +292,8 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version       = "KqlItem/1.0"
-          query         = <<-KQL
+          version                 = "KqlItem/1.0"
+          query                   = <<-KQL
             requests
             | where timestamp {TimeRange}
             | where name has "/api/"
@@ -306,11 +307,12 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
             | project timestamp, SuccessPct, ErrorPct
             | order by timestamp asc
           KQL
-          size          = 0
-          title         = "API Success vs Error Rate (%)"
-          queryType     = 0
-          resourceType  = "microsoft.insights/components"
-          visualization = "timechart"
+          size                    = 0
+          title                   = "API Success vs Error Rate (%)"
+          queryType               = 0
+          resourceType            = "microsoft.insights/components"
+          crossComponentResources = [lower(azurerm_application_insights.main.id)]
+          visualization           = "timechart"
           chartSettings = {
             seriesLabelSettings = [
               { series = "SuccessPct", label = "Success %", color = "green" },
@@ -334,19 +336,20 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version       = "KqlItem/1.0"
-          query         = <<-KQL
+          version                 = "KqlItem/1.0"
+          query                   = <<-KQL
             requests
             | where timestamp {TimeRange}
             | where name has "/api/"
             | summarize Requests = count() by bin(timestamp, 5m), name
             | order by timestamp asc
           KQL
-          size          = 0
-          title         = "Requests by Endpoint (5-min buckets)"
-          queryType     = 0
-          resourceType  = "microsoft.insights/components"
-          visualization = "timechart"
+          size                    = 0
+          title                   = "Requests by Endpoint (5-min buckets)"
+          queryType               = 0
+          resourceType            = "microsoft.insights/components"
+          crossComponentResources = [lower(azurerm_application_insights.main.id)]
+          visualization           = "timechart"
         }
         customWidth = "50"
         name        = "chart-request-volume"
@@ -354,8 +357,8 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version       = "KqlItem/1.0"
-          query         = <<-KQL
+          version                 = "KqlItem/1.0"
+          query                   = <<-KQL
             requests
             | where timestamp {TimeRange}
             | where name has "/api/"
@@ -367,12 +370,12 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
               by name
             | order by Requests desc
           KQL
-          size          = 1
-          title         = "Endpoint Summary"
-          queryType     = 0
-          resourceType  = "microsoft.insights/components"
-          resourceIds   = [lower(azurerm_application_insights.main.id)]
-          visualization = "table"
+          size                    = 1
+          title                   = "Endpoint Summary"
+          queryType               = 0
+          resourceType            = "microsoft.insights/components"
+          crossComponentResources = [lower(azurerm_application_insights.main.id)]
+          visualization           = "table"
           gridSettings = {
             formatters = [
               {
@@ -405,8 +408,8 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version       = "KqlItem/1.0"
-          query         = <<-KQL
+          version                 = "KqlItem/1.0"
+          query                   = <<-KQL
             requests
             | where timestamp {TimeRange}
             | where cloud_RoleName startswith "func-telemetry"
@@ -419,11 +422,12 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
               by bin(timestamp, 15m), name
             | order by timestamp desc
           KQL
-          size          = 1
-          title         = "Function Execution Log (15-min buckets)"
-          queryType     = 0
-          resourceType  = "microsoft.insights/components"
-          visualization = "table"
+          size                    = 1
+          title                   = "Function Execution Log (15-min buckets)"
+          queryType               = 0
+          resourceType            = "microsoft.insights/components"
+          crossComponentResources = [lower(azurerm_application_insights.main.id)]
+          visualization           = "table"
           gridSettings = {
             formatters = [
               {
@@ -446,20 +450,20 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version       = "KqlItem/1.0"
-          query         = <<-KQL
+          version                 = "KqlItem/1.0"
+          query                   = <<-KQL
             customMetrics
             | where timestamp {TimeRange}
             | where name == "records_deleted"
             | summarize RecordsDeleted = sum(value) by bin(timestamp, 1h)
             | order by timestamp asc
           KQL
-          size          = 0
-          title         = "Retention Cleanup — Records Purged per Hour"
-          queryType     = 0
-          resourceType  = "microsoft.insights/components"
-          resourceIds   = [lower(azurerm_application_insights.main.id)]
-          visualization = "barchart"
+          size                    = 0
+          title                   = "Retention Cleanup — Records Purged per Hour"
+          queryType               = 0
+          resourceType            = "microsoft.insights/components"
+          crossComponentResources = [lower(azurerm_application_insights.main.id)]
+          visualization           = "barchart"
           chartSettings = {
             seriesLabelSettings = [
               { series = "RecordsDeleted", label = "Records Deleted", color = "purple" }
@@ -488,8 +492,8 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version       = "KqlItem/1.0"
-          query         = <<-KQL
+          version                 = "KqlItem/1.0"
+          query                   = <<-KQL
             requests
             | where timestamp {TimeRange}
             | where name has "/api/"
@@ -512,11 +516,12 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
             | project timestamp, BurnRate
             | order by timestamp asc
           KQL
-          size          = 0
-          title         = "SLO Compliance — % of 5-min Windows Meeting All Targets (hourly)"
-          queryType     = 0
-          resourceType  = "microsoft.insights/components"
-          visualization = "timechart"
+          size                    = 0
+          title                   = "SLO Compliance — % of 5-min Windows Meeting All Targets (hourly)"
+          queryType               = 0
+          resourceType            = "microsoft.insights/components"
+          crossComponentResources = [lower(azurerm_application_insights.main.id)]
+          visualization           = "timechart"
           chartSettings = {
             seriesLabelSettings = [
               { series = "BurnRate", label = "SLO Compliance %", color = "green" }
@@ -538,8 +543,8 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version       = "KqlItem/1.0"
-          query         = <<-KQL
+          version                 = "KqlItem/1.0"
+          query                   = <<-KQL
             exceptions
             | where timestamp {TimeRange}
             | project
@@ -550,11 +555,12 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
             | order by timestamp desc
             | take 20
           KQL
-          size          = 1
-          title         = "Last 20 Exceptions"
-          queryType     = 0
-          resourceType  = "microsoft.insights/components"
-          visualization = "table"
+          size                    = 1
+          title                   = "Last 20 Exceptions"
+          queryType               = 0
+          resourceType            = "microsoft.insights/components"
+          crossComponentResources = [lower(azurerm_application_insights.main.id)]
+          visualization           = "table"
         }
         name = "table-recent-exceptions"
       }
