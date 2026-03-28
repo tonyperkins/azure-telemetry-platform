@@ -105,6 +105,7 @@ module "sql" {
   environment         = var.environment
   tags                = local.tags
   sql_admin_password  = var.sql_admin_password
+  suffix              = local.suffix
 }
 
 module "staticweb" {
@@ -133,6 +134,7 @@ module "appservice" {
   location                      = var.location
   environment                   = var.environment
   tags                          = local.tags
+  suffix                        = local.suffix
   key_vault_name                = module.keyvault.key_vault_name
   sql_secret_uri                = module.keyvault.sql_secret_uri
   appinsights_connection_string = module.monitoring.connection_string

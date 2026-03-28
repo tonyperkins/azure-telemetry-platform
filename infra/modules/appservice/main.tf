@@ -13,7 +13,7 @@ resource "azurerm_service_plan" "main" {
 }
 
 resource "azurerm_windows_web_app" "main" {
-  name                = "app-telemetry-${var.environment}"
+  name                = "app-telemetry-${var.environment}-${var.suffix}"
   resource_group_name = var.resource_group_name
   location            = var.location
   service_plan_id     = azurerm_service_plan.main.id

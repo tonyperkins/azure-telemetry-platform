@@ -9,7 +9,7 @@
 # =============================================================================
 
 resource "azurerm_mssql_server" "main" {
-  name                         = "sql-telemetry-${var.environment}"
+  name                         = "sql-telemetry-${var.environment}-${var.suffix}"
   resource_group_name          = var.resource_group_name
   location                     = var.location
   version                      = "12.0"

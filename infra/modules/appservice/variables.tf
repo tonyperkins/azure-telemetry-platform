@@ -25,3 +25,8 @@ variable "allowed_origins" {
   description = "CORS allowed origins (Static Web App hostname)."
   type        = string
 }
+
+variable "suffix" {
+  description = "Random suffix for global uniqueness."
+  type        = string
+}

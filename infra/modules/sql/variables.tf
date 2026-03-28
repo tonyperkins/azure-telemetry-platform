@@ -14,9 +14,14 @@ variable "environment" {
 }
 
 variable "sql_admin_password" {
-  description = "SQL server administrator password."
+  description = "Administrator password for the SQL server."
   type        = string
   sensitive   = true
+}
+
+variable "suffix" {
+  description = "Random suffix for global uniqueness."
+  type        = string
 }
 
 variable "tags" {

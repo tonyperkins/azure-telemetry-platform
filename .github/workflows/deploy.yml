@@ -149,7 +149,8 @@ jobs:
         # the workflow fails and GitHub marks the commit as broken.
         # The team is alerted before users notice the problem.
         run: |
-          sleep 20
+          echo "Waiting for App Service to warm up..."
+          sleep 45
           STATUS=$(curl -sf -o /dev/null -w "%{http_code}" \
             "https://${{ needs.terraform.outputs.app_service_hostname }}/api/health")
           if [ "$STATUS" != "200" ]; then
