@@ -94,7 +94,7 @@ public static class LogEndpoints
             {
                 "metro.log" => "traces | where cloud_RoleName startswith 'func-telemetry' | where message has 'MetroIngestion' or message has 'Bus' | project timestamp, message | order by timestamp desc",
                 "flight.log" => "traces | where cloud_RoleName startswith 'func-telemetry' | where message has 'FlightIngestion' or message has 'Flight' | project timestamp, message | order by timestamp desc",
-                "api.log" => "traces | where cloud_RoleName startswith 'app-telemetry' | project timestamp, message | order by timestamp desc",
+                "api.log" => "traces | where cloud_RoleName has 'TelemetryApi' or cloud_RoleName startswith 'app-telemetry' | project timestamp, message | order by timestamp desc",
                 _ => "traces | project timestamp, message | order by timestamp desc"
             };
 

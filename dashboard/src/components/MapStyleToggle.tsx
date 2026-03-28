@@ -22,7 +22,7 @@ const MAP_STYLES: Record<MapStyle, MapStyleConfig> = {
     icon: '🌙',
   },
   streets: {
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     label: 'Streets',
     icon: '🗺',
   },
