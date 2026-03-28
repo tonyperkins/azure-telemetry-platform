@@ -73,9 +73,9 @@ resource "azurerm_monitor_scheduled_query_rules_alert_v2" "data_staleness" {
     query                   = <<-KQL
       customMetrics
       | where name == "vehicles_ingested_zero"
-      | summarize Count = count() by Source = tostring(customDimensions["source"])
+      | summarize Count = count() by Source = tostring(customDimensions["source"]), bin(timestamp, 1m)
     KQL
-    time_aggregation_method = "Count"
+    time_aggregation_method = "Maximum"
     threshold               = 2
     operator                = "GreaterThan"
 
