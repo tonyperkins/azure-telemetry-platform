@@ -162,9 +162,11 @@ module "appservice" {
   allowed_origins               = "https://${module.staticweb.default_host_name}"
 
   # Management Endpoints
-  subscription_id            = data.azurerm_subscription.current.subscription_id
-  function_app_name          = "func-telemetry-${var.environment}-${local.suffix}"
-  management_admin_token_uri = local.management_admin_token_uri
+  subscription_id                  = data.azurerm_subscription.current.subscription_id
+  function_app_name                = "func-telemetry-${var.environment}-${local.suffix}"
+  management_admin_token_uri       = local.management_admin_token_uri
+  opensky_client_id_secret_uri     = local.opensky_id_uri
+  opensky_client_secret_secret_uri = local.opensky_sec_uri
 }
 
 # ---------------------------------------------------------------------------

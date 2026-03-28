@@ -44,6 +44,8 @@ interface MapControlsProps {
   // Map Theme
   mapStyle: 'light' | 'dark' | 'streets';
   onMapStyleChange: (style: 'light' | 'dark' | 'streets') => void;
+  
+  onAddToast?: (type: 'warning' | 'critical' | 'recovery' | 'info', title: string, body: string) => void;
 }
 
 export function MapControls({
@@ -73,6 +75,7 @@ export function MapControls({
   flightConfigDisabled = false,
   mapStyle,
   onMapStyleChange,
+  onAddToast,
 }: MapControlsProps) {
   const [isExpanded, setIsExpanded] = useLocalStorage('prefs_mapControlsExpanded', true);
   const [routeSearch, setRouteSearch] = useState('');
@@ -85,14 +88,14 @@ export function MapControls({
       const res = await fetch(`${API_BASE}/api/manage/opensky-status`);
       const data = await res.json();
       if (!res.ok || !data.isUp) {
-        alert(`OpenSky API Error: ${data.statusCode}\n\n${data.error || 'The OpenSky Network API is unreachable or rate limited.'}`);
+        if (onAddToast) onAddToast('critical', `OpenSky API Error: ${data.statusCode}`, data.error || 'The OpenSky Network API is unreachable or rate limited.');
       } else {
         const remaining = data.rateLimitRemaining ?? 'Unknown';
         const limit = data.rateLimitLimit ?? 'Unknown';
-        alert(`OpenSky API is UP! \u2705\n\nRate Limit: ${remaining} / ${limit} requests remaining.\nAuthenticated: ${data.authenticated ? 'Yes' : 'No'}`);
+        if (onAddToast) onAddToast('info', 'OpenSky API is UP! \u2705', `Rate Limit: ${remaining} / ${limit} requests remaining.\nAuthenticated: ${data.authenticated ? 'Yes' : 'No'}`);
       }
     } catch (err) {
-      alert(`Network error connecting to Telemetry API: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      if (onAddToast) onAddToast('critical', 'Network Error', `Could not connect to Telemetry API: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsCheckingApi(false);
     }

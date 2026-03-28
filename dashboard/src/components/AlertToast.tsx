@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-export type ToastType = 'warning' | 'critical' | 'recovery';
+export type ToastType = 'warning' | 'critical' | 'recovery' | 'info';
 
 export interface Toast {
   id: string;
@@ -73,6 +73,13 @@ function AlertToast({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string
           icon: '✅',
           iconColor: '#10B981',
           bgColor: '#F0FDF4',
+        };
+      case 'info':
+        return {
+          borderColor: '#3B82F6',
+          icon: 'ℹ️',
+          iconColor: '#3B82F6',
+          bgColor: '#EFF6FF',
         };
     }
   };

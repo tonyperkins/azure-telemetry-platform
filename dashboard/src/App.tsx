@@ -162,7 +162,7 @@ export default function App() {
     setTrackedStopId(null); // also clear any highlighted stop
   };
 
-  const addToast = (type: 'warning' | 'critical' | 'recovery', title: string, body: string) => {
+  const addToast = (type: 'warning' | 'critical' | 'recovery' | 'info', title: string, body: string) => {
     const toast: Toast = {
       id: `${Date.now()}-${Math.random()}`,
       type,
@@ -499,6 +499,7 @@ export default function App() {
             flightConfigDisabled={flightConfigDisabled}
             mapStyle={mapStyle}
             onMapStyleChange={setMapStyle}
+            onAddToast={addToast}
           />
         </div>
 

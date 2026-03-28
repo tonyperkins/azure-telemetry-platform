@@ -59,3 +59,14 @@ variable "management_admin_token_uri" {
   type      = string
   sensitive = true
 }
+
+variable "opensky_client_id_secret_uri" {
+  type        = string
+  description = "Versionless URI of the OpenSky Client ID in Key Vault."
+}
+
+variable "opensky_client_secret_secret_uri" {
+  type        = string
+  sensitive   = true
+  description = "Versionless URI of the OpenSky Client Secret in Key Vault."
+}

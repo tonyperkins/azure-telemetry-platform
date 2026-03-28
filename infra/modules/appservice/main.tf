@@ -62,6 +62,8 @@ resource "azurerm_windows_web_app" "main" {
     "AZURE_RESOURCE_GROUP"    = var.resource_group_name
     "AZURE_FUNCTION_APP_NAME" = var.function_app_name
     "MANAGEMENT_ADMIN_TOKEN"  = "@Microsoft.KeyVault(SecretUri=${var.management_admin_token_uri}/)"
+    "OPENSKY_CLIENT_ID"       = "@Microsoft.KeyVault(SecretUri=${var.opensky_client_id_secret_uri})"
+    "OPENSKY_CLIENT_SECRET"   = "@Microsoft.KeyVault(SecretUri=${var.opensky_client_secret_secret_uri})"
   }
 
   tags = var.tags
