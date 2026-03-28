@@ -27,7 +27,7 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
   resource_group_name = var.resource_group_name
   location            = var.location
   display_name        = "SRE Operations Dashboard — ${var.environment}"
-  source_id           = azurerm_application_insights.main.id
+  source_id           = lower(azurerm_application_insights.main.id)
   category            = "workbook"
 
   data_json = jsonencode({
