@@ -33,3 +33,9 @@ output "static_web_api_key" {
   value       = module.staticweb.api_key
   sensitive   = true
 }
+
+output "sql_connection_string" {
+  description = "Direct SQL administration connection string for executing GitHub Actions CI database migrations."
+  value       = module.sql.connection_string
+  sensitive   = true
+}

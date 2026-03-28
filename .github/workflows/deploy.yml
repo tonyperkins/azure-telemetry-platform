@@ -107,6 +107,18 @@ jobs:
           echo "app_service_name=$(terraform output -raw app_service_name)" >> $GITHUB_OUTPUT
           echo "function_app_name=$(terraform output -raw function_app_name)" >> $GITHUB_OUTPUT
           echo "app_service_hostname=$(terraform output -raw app_service_hostname)" >> $GITHUB_OUTPUT
+          
+          # Safely export the SQL Connection String ensuring it is completely masked
+          # prior to passing it down into the next sequential github workflow step.
+          SQL_CONN="$(terraform output -raw sql_connection_string)"
+          echo "::add-mask::$SQL_CONN"
+          echo "sql_connection_string=$SQL_CONN" >> $GITHUB_OUTPUT
+          
+      - name: Initialize Database Schema
+        uses: azure/sql-action@v2.3
+        with:
+          connection-string: ${{ steps.tf-outputs.outputs.sql_connection_string }}
+          path: './scripts/init-schema.sql'
 
   # ---------------------------------------------------------------------------
   # Job 2: Deploy TelemetryApi to App Service
