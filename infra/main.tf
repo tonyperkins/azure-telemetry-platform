@@ -61,10 +61,10 @@ locals {
   # SRE: Deterministic naming for Key Vault and its secrets.
   # This breaks the circular dependency between Managed Identity creation
   # (appservice/functions) and Secret access policy assignment (keyvault).
-  kv_name        = "kv-tlm-${var.environment}-${local.suffix}"
-  kv_base_uri    = "https://${local.kv_name}.vault.azure.net/secrets"
-  sql_secret_uri = "${local.kv_base_uri}/SQL-CONNECTION-STRING"
-  opensky_id_uri = "${local.kv_base_uri}/OPEN-SKY-CLIENT-ID"
+  kv_name         = "kv-tlm-${var.environment}-${local.suffix}"
+  kv_base_uri     = "https://${local.kv_name}.vault.azure.net/secrets"
+  sql_secret_uri  = "${local.kv_base_uri}/SQL-CONNECTION-STRING"
+  opensky_id_uri  = "${local.kv_base_uri}/OPEN-SKY-CLIENT-ID"
   opensky_sec_uri = "${local.kv_base_uri}/OPEN-SKY-CLIENT-SECRET"
 
   tags = {
