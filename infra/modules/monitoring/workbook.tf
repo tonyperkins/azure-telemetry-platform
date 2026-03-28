@@ -82,6 +82,7 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
           style        = "pills"
           queryType    = 0
           resourceType = "microsoft.insights/components"
+          resourceIds  = [lower(azurerm_application_insights.main.id)]
         }
         name = "time-range-param"
       },
@@ -105,6 +106,7 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
           title         = "API Availability"
           queryType     = 0
           resourceType  = "microsoft.insights/components"
+          resourceIds   = [lower(azurerm_application_insights.main.id)]
           visualization = "tiles"
           tileSettings = {
             leftContent = {
@@ -206,6 +208,7 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
           title         = "Vehicles Ingested per 5-Minute Window"
           queryType     = 0
           resourceType  = "microsoft.insights/components"
+          resourceIds   = [lower(azurerm_application_insights.main.id)]
           visualization = "timechart"
           chartSettings = {
             seriesLabelSettings = [
@@ -368,6 +371,7 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
           title         = "Endpoint Summary"
           queryType     = 0
           resourceType  = "microsoft.insights/components"
+          resourceIds   = [lower(azurerm_application_insights.main.id)]
           visualization = "table"
           gridSettings = {
             formatters = [
@@ -454,6 +458,7 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
           title         = "Retention Cleanup — Records Purged per Hour"
           queryType     = 0
           resourceType  = "microsoft.insights/components"
+          resourceIds   = [lower(azurerm_application_insights.main.id)]
           visualization = "barchart"
           chartSettings = {
             seriesLabelSettings = [
@@ -556,7 +561,7 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
     ]
 
     styleSettings      = {}
-    defaultResourceIds = []
+    defaultResourceIds = [lower(azurerm_application_insights.main.id)]
   })
 
   tags = var.tags
