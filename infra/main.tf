@@ -58,6 +58,15 @@ locals {
   # Short suffix used in resource names that must be globally unique
   suffix = random_id.suffix.hex
 
+  # SRE: Deterministic naming for Key Vault and its secrets.
+  # This breaks the circular dependency between Managed Identity creation
+  # (appservice/functions) and Secret access policy assignment (keyvault).
+  kv_name        = "kv-tlm-${var.environment}-${local.suffix}"
+  kv_base_uri    = "https://${local.kv_name}.vault.azure.net/secrets"
+  sql_secret_uri = "${local.kv_base_uri}/SQL-CONNECTION-STRING"
+  opensky_id_uri = "${local.kv_base_uri}/OPEN-SKY-CLIENT-ID"
+  opensky_sec_uri = "${local.kv_base_uri}/OPEN-SKY-CLIENT-SECRET"
+
   tags = {
     project     = "azure-telemetry-platform"
     environment = var.environment
@@ -141,8 +150,8 @@ module "appservice" {
   environment                   = var.environment
   tags                          = local.tags
   suffix                        = local.suffix
-  key_vault_name                = module.keyvault.key_vault_name
-  sql_secret_uri                = module.keyvault.sql_secret_uri
+  key_vault_name                = local.kv_name
+  sql_secret_uri                = local.sql_secret_uri
   appinsights_connection_string = module.monitoring.connection_string
   log_analytics_workspace_id    = module.monitoring.log_analytics_workspace_id
   app_insights_app_id           = module.monitoring.app_insights_app_id
@@ -152,7 +161,7 @@ module "appservice" {
 
   # Management Endpoints
   subscription_id        = data.azurerm_subscription.current.subscription_id
-  function_app_name      = "func-telemetry-${var.environment}"
+  function_app_name      = "func-telemetry-${var.environment}-${local.suffix}"
   management_admin_token = var.management_admin_token
 }
 
@@ -171,10 +180,10 @@ module "functions" {
   environment                      = var.environment
   tags                             = local.tags
   suffix                           = local.suffix
-  sql_secret_uri                   = module.keyvault.sql_secret_uri
+  sql_secret_uri                   = local.sql_secret_uri
   appinsights_connection_string    = module.monitoring.connection_string
   metro_feed_url                   = var.metro_feed_url
   opensky_bbox                     = var.opensky_bbox
-  opensky_client_id_secret_uri     = module.keyvault.opensky_client_id_secret_uri
-  opensky_client_secret_secret_uri = module.keyvault.opensky_client_secret_secret_uri
+  opensky_client_id_secret_uri     = local.opensky_id_uri
+  opensky_client_secret_secret_uri = local.opensky_sec_uri
 }
