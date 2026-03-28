@@ -6,27 +6,59 @@ A production-quality reference platform demonstrating SRE engineering practices 
 
 ## Architecture Overview
 
-```
-Capital Metro GTFS-RT         OpenSky Network REST
-       │                               │
-  MetroIngestion              FlightIngestion
-  Azure Function               Azure Function
-  (every 30s)                  (every 60s)
-       │                               │
-       └──────────────┬────────────────┘
-                      │  SqlBulkCopy
-                      ▼
-              Azure SQL Serverless
-              (vehicles table)
-                      │
-                      ▼
-              TelemetryApi (.NET 8)
-              App Service (B1)
-                      │  /api/vehicles/current
-                      │  /api/health
-                      ▼
-          Azure Static Web App
-          React + Vite + Leaflet
+```mermaid
+flowchart TD
+    subgraph sources ["External data sources"]
+        CM["Capital Metro\n<i>GTFS-RT protobuf</i>"]
+        OS["OpenSky Network\n<i>REST API</i>"]
+    end
+
+    subgraph functions ["Azure Functions · consumption plan"]
+        MI["Metro ingest\n<i>30s timer</i>"]
+        FI["Flight ingest\n<i>60s timer</i>"]
+        RC["Retention cleanup\n<i>DELETE &lt; 6 hrs</i>"]
+    end
+
+    subgraph appservice ["App Service · B1"]
+        API["Telemetry API\n<i>.NET 8</i>"]
+        ARM["Management SDK\n<i>start / stop</i>"]
+    end
+
+    subgraph storage ["Storage"]
+        SQL[("Azure SQL\n<i>serverless · auto-pause</i>")]
+        KV["Azure Key Vault"]
+    end
+
+    DASH["React dashboard\n<i>Leaflet + CARTO tiles</i>"]
+
+    CM -. "30s poll" .-> MI
+    OS -. "60s poll" .-> FI
+
+    MI -- "SqlBulkCopy upsert" --> SQL
+    FI -- "SqlBulkCopy upsert" --> SQL
+    RC -- "DELETE" --> SQL
+
+    SQL -- "SELECT" --> API
+    API --- ARM
+
+    DASH -- "HTTP GET" --> API
+    DASH -. "HTTP POST" .-> ARM
+
+    KV -. "secrets" .-> MI
+    KV -. "secrets" .-> FI
+    KV -. "connection string" .-> API
+
+    classDef external fill:#FAECE7,stroke:#993C1D,color:#712B13
+    classDef ingest fill:#EEEDFE,stroke:#534AB7,color:#3C3489
+    classDef store fill:#E1F5EE,stroke:#0F6E56,color:#085041
+    classDef api fill:#E6F1FB,stroke:#185FA5,color:#0C447C
+    classDef frontend fill:#F1EFE8,stroke:#5F5E5A,color:#444441
+
+    class CM,OS external
+    class MI,FI,RC ingest
+    class SQL,KV store
+    class API,ARM api
+    class DASH frontend
 ```
 
 **Additional infrastructure:**
@@ -60,7 +92,7 @@ azure-telemetry-platform/
 ├── docs/
 │   ├── runbook.md
 │   ├── postmortem-template.md
-│   └── architecture.md
+│   └── architecture-decisions.md
 ├── .github/workflows/
 │   ├── ci.yml                     # Build + test on every push/PR
 │   └── deploy.yml                 # Deploy to Azure on merge to main
@@ -176,7 +208,7 @@ Push to `main` → CI workflow runs tests → deploy workflow deploys all three 
 
 ## Monitoring & Alerting
 
-Two alert rules fire on business-level failures (not just exceptions):
+Three alert rules fire on business-level failures (not just exceptions):
 
 | Alert | Condition | Severity |
 |---|---|---|
@@ -198,7 +230,7 @@ customMetrics
 
 ## Design Decisions
 
-See [`docs/architecture.md`](docs/architecture.md) for full ADRs.
+See [`docs/architecture-decisions.md`](docs/architecture-decisions.md) for full ADRs.
 
 Key choices:
 - **Serverless SQL** — auto-pauses at night, reducing ~70% compute cost vs. provisioned
