@@ -35,8 +35,8 @@ flowchart TD
     CM -. "30s poll" .-> MI
     OS -. "60s poll" .-> FI
 
-    MI -- "SqlBulkCopy upsert" --> SQL
-    FI -- "SqlBulkCopy upsert" --> SQL
+    MI -- "INSERT" --> SQL
+    FI -- "INSERT" --> SQL
     RC -- "DELETE" --> SQL
 
     SQL -- "SELECT" --> API

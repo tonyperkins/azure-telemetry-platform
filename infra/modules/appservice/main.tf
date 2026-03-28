@@ -61,7 +61,7 @@ resource "azurerm_windows_web_app" "main" {
     "AZURE_SUBSCRIPTION_ID"   = var.subscription_id
     "AZURE_RESOURCE_GROUP"    = var.resource_group_name
     "AZURE_FUNCTION_APP_NAME" = var.function_app_name
-    "MANAGEMENT_ADMIN_TOKEN"  = var.management_admin_token
+    "MANAGEMENT_ADMIN_TOKEN"  = "@Microsoft.KeyVault(SecretUri=${var.management_admin_token_uri}/)"
   }
 
   tags = var.tags

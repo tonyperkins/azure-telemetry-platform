@@ -63,9 +63,22 @@ sequenceDiagram
 
 **SLO:** `/api/health` returns HTTP 200 with `status: "healthy"` for ≥99% of minutes in a 30-day rolling window.
 
+### Azure Portal Quick Links
+
+*(Pro-tip: The subscription ID has been injected to make these direct links work locally!)*
+
+- 📊 **[App Insights Failures Blade](https://portal.azure.com/#@/resource/subscriptions/780f4576-d4f2-4959-a6a9-0c61fd12b7ca/resourceGroups/rg-telemetry-atp-prod/providers/microsoft.insights/components/appi-telemetry-prod/troubleshoot)** — View exceptions and HTTP 5xx stack traces
+- 📈 **[Log Analytics Logs](https://portal.azure.com/#@/resource/subscriptions/780f4576-d4f2-4959-a6a9-0c61fd12b7ca/resourceGroups/rg-telemetry-atp-prod/providers/microsoft.operationalinsights/workspaces/law-telemetry-prod/logs)** — Run custom KQL metrics queries
+- 🔔 **[Alert Rules Manager](https://portal.azure.com/#@/resource/subscriptions/780f4576-d4f2-4959-a6a9-0c61fd12b7ca/resourceGroups/rg-telemetry-atp-prod/providers/Microsoft.Insights/metricalerts/alert-api-5xx-prod)** — Check active fired alerts
+- ☁️ **[Azure SQL Performance](https://portal.azure.com/#@/resource/subscriptions/780f4576-d4f2-4959-a6a9-0c61fd12b7ca/resourceGroups/rg-telemetry-atp-prod/providers/Microsoft.Sql/servers/sql-telemetry-prod-7d94f06a/databases/TelemetryDb)** — View DTU/vCore utilization
+
 ---
 
 ## 2. Health Checks
+
+> [!NOTE]
+> **Telemetry Window Discrepancy**  
+> There is a deliberate polling window discrepancy separating the data retrieval endpoints. `GetCurrentVehiclesAsync` (used by the dashboard map) operates on a strict **5m window** to avoid plotting stale ghost positions. In contrast, `GetSourceHealthAsync` (the actual SRE threshold monitor) utilizes a padded **15m window**. This intentional buffer prevents SRE dashboard noise and false-positive pipeline teardowns caused by brief upstream provider latency, routine Azure Serverless cold starts, or expected sub-minute schedule gaps.
 
 ### Quick status commands
 

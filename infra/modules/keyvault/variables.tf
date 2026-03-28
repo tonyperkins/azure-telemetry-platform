@@ -46,3 +46,9 @@ variable "opensky_client_secret" {
   type        = string
   sensitive   = true
 }
+
+variable "management_admin_token" {
+  description = "Management token for SRE functionality."
+  type        = string
+  sensitive   = true
+}

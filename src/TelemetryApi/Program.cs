@@ -61,6 +61,7 @@ builder.Services.AddScoped<VehicleRepository>();
 // the GTFS ZIP is registered via IHttpClientFactory (proper lifetime/pooling).
 // ---------------------------------------------------------------------------
 builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient(); // Default generic client registration
 builder.Services.AddHttpClient("GtfsStatic", client =>
 {
     client.Timeout = TimeSpan.FromSeconds(120);

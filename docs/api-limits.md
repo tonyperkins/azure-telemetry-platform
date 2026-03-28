@@ -8,9 +8,9 @@
 - **Reset**: Daily at 00:00 UTC
 
 ### Current Usage
-- **Polling Interval**: 30 seconds
-- **Daily Requests**: 2,880 (24 hours × 120 requests/hour)
-- **Headroom**: 1,120 credits/day (28% buffer)
+- **Polling Interval**: 60 seconds
+- **Daily Requests**: 1,440 (24 hours × 60 requests/hour)
+- **Headroom**: 2,560 credits/day (64% buffer for registered tier)
 
 ### Rate Limit Details
 Each API call consumes credits based on:
@@ -141,7 +141,7 @@ None. Static Web Apps are designed for high traffic.
 
 ## Recommendations
 
-1. **Keep OpenSky at 30s polling** — you have 28% headroom, which is healthy.
+1. **Keep OpenSky at 60s polling** — you have 64% headroom, which is healthy.
 2. **Monitor SQL DTU usage** — if queries start timing out, bump to 1 vCore.
 3. **Consider ADS-B receiver** — if you want sub-second flight updates or need to track aircraft beyond OpenSky's coverage.
 4. **Set up budget alerts** — Azure Cost Management can email you if spending exceeds $50/month.

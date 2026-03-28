@@ -4,6 +4,8 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using Dapper;
+using TelemetryFunctions.Data;
 
 namespace TelemetryFunctions;
 
@@ -31,16 +33,16 @@ namespace TelemetryFunctions;
 public sealed class RetentionCleanupFunction
 {
     private readonly TelemetryClient  _telemetry;
-    private readonly IConfiguration   _config;
+    private readonly IDbConnectionFactory _connectionFactory;
     private readonly ILogger<RetentionCleanupFunction> _logger;
 
     public RetentionCleanupFunction(
         TelemetryClient telemetry,
-        IConfiguration config,
+        IDbConnectionFactory connectionFactory,
         ILogger<RetentionCleanupFunction> logger)
     {
         _telemetry = telemetry;
-        _config    = config;
+        _connectionFactory = connectionFactory;
         _logger    = logger;
     }
 
@@ -52,28 +54,33 @@ public sealed class RetentionCleanupFunction
         _logger.LogInformation(
             "Retention cleanup started. Deleting records older than 24 hours.");
 
-        var connStr = _config["SQL_CONNECTION_STRING"]
-            ?? throw new InvalidOperationException("SQL_CONNECTION_STRING is not configured.");
+        const string sql = @"
+            DECLARE @DeletedRows INT = 1;
+            DECLARE @TotalDeleted INT = 0;
 
-        const string sql = """
-            DELETE FROM dbo.vehicles
-            WHERE ingested_at < DATEADD(hour, -24, GETUTCDATE());
+            WHILE @DeletedRows > 0
+            BEGIN
+                DELETE TOP (5000) 
+                FROM dbo.vehicles 
+                WHERE ingested_at < DATEADD(hour, -24, GETUTCDATE());
 
-            SELECT @@ROWCOUNT AS deleted_count;
-            """;
+                SET @DeletedRows = @@ROWCOUNT;
+                SET @TotalDeleted = @TotalDeleted + @DeletedRows;
+
+                IF @DeletedRows > 0
+                BEGIN
+                    WAITFOR DELAY '00:00:01';
+                END
+            END
+            
+            SELECT @TotalDeleted;
+        ";
 
         try
         {
-            await using var conn = new SqlConnection(connStr);
-            await conn.OpenAsync();
-
-            await using var cmd = new SqlCommand(sql, conn)
-            {
-                CommandTimeout = 120  // 2 minutes — large deletes on a slow day
-            };
-
-            var result       = await cmd.ExecuteScalarAsync();
-            var deletedCount = Convert.ToInt32(result);
+            await using var conn = await _connectionFactory.CreateConnectionAsync();
+            var result = await conn.ExecuteScalarAsync<int>(sql, commandTimeout: 120);
+            var deletedCount = result;
 
             sw.Stop();
 

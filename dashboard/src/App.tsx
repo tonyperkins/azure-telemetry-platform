@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertToastContainer, Toast } from './components/AlertToast';
 import { HelpModal } from './components/HelpModal';
-import { IncidentSimulation } from './components/IncidentSimulation';
 import { LogViewer } from './components/LogViewer';
 import { Map } from './components/Map';
 import { MapControls } from './components/MapControls';
@@ -505,6 +504,8 @@ export default function App() {
             onToggleVehicleLabels={() => setShowVehicleLabels(!showVehicleLabels)}
             onToggleClustering={() => setEnableClustering(!enableClustering)}
             onResetAll={handleResetAll}
+            hasTrackedVehicle={!!trackedVehicleId}
+            onClearTracked={handleStopTracking}
             flightConfigDisabled={flightConfigDisabled}
             mapStyle={mapStyle}
             onMapStyleChange={setMapStyle}
@@ -529,17 +530,12 @@ export default function App() {
         isPaused={isPaused}
         onTogglePause={() => setIsPaused(!isPaused)}
         onClearData={handleClearData}
-      />
-
-      {/* Incident Simulation Panel */}
-      <IncidentSimulation
         simulateMetroFailure={simulateMetroFailure}
         simulateLatency={simulateLatency}
         simulateErrors={simulateErrors}
         onToggleMetroFailure={handleToggleMetroFailure}
         onToggleLatency={handleToggleLatency}
         onToggleErrors={handleToggleErrors}
-        onOpenRunbook={() => handleOpenRunbook()}
       />
 
       {/* Alert Toast Notifications */}

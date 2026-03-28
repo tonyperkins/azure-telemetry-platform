@@ -30,8 +30,10 @@ interface MapControlsProps {
   onToggleVehicleLabels: () => void;
   onToggleClustering: () => void;
   
-  // Reset
+  // Reset & Tracking Controls
   onResetAll: () => void;
+  hasTrackedVehicle?: boolean;
+  onClearTracked?: () => void;
 
   // Config-level disable flags
   flightConfigDisabled?: boolean;
@@ -63,6 +65,8 @@ export function MapControls({
   onToggleVehicleLabels,
   onToggleClustering,
   onResetAll,
+  hasTrackedVehicle,
+  onClearTracked,
   flightConfigDisabled = false,
   mapStyle,
   onMapStyleChange,
@@ -554,32 +558,70 @@ export function MapControls({
             </div>
           </div>
 
-          {/* Reset All Button */}
-          <button
-            onClick={onResetAll}
-            style={{
-              width: '100%',
-              padding: '10px',
-              background: 'transparent',
-              border: '1px solid var(--border-main)',
-              borderRadius: '6px',
-              fontSize: '12px',
-              fontWeight: 500,
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--bg-active)';
-              e.currentTarget.style.borderColor = 'var(--text-muted)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.borderColor = 'var(--border-main)';
-            }}
-          >
-            Reset All
-          </button>
+          {/* Action Buttons Container */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {/* Clear Tracked Button - Conditional */}
+            {hasTrackedVehicle && (
+              <button
+                onClick={onClearTracked}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  background: 'var(--bg-active)',
+                  border: '1px solid #D97706',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: '#D97706',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#FEF3C7';
+                  e.currentTarget.style.color = '#B45309';
+                  e.currentTarget.style.borderColor = '#B45309';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'var(--bg-active)';
+                  e.currentTarget.style.color = '#D97706';
+                  e.currentTarget.style.borderColor = '#D97706';
+                }}
+              >
+                <span>✕</span> Clear Tracked Vehicle
+              </button>
+            )}
+
+            {/* Reset All Button */}
+            <button
+              onClick={onResetAll}
+              style={{
+                width: '100%',
+                padding: '10px',
+                background: 'transparent',
+                border: '1px solid var(--border-main)',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: 500,
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--bg-active)';
+                e.currentTarget.style.borderColor = 'var(--text-muted)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.borderColor = 'var(--border-main)';
+              }}
+            >
+              Reset All Layers
+            </button>
+          </div>
         </div>
       )}
     </div>

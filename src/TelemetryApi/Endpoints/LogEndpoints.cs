@@ -29,27 +29,27 @@ public static class LogEndpoints
             .WithDescription("Get recent Dashboard logs");
     }
 
-    private static async Task<IResult> GetMetroLogs([FromQuery] int lines, [FromServices] IConfiguration config)
+    private static async Task<IResult> GetMetroLogs([FromQuery] int lines, [FromServices] IConfiguration config, [FromServices] IHttpClientFactory httpClientFactory)
     {
-        return await GetLogFile("metro.log", lines, config);
+        return await GetLogFile("metro.log", lines, config, httpClientFactory);
     }
 
-    private static async Task<IResult> GetFlightLogs([FromQuery] int lines, [FromServices] IConfiguration config)
+    private static async Task<IResult> GetFlightLogs([FromQuery] int lines, [FromServices] IConfiguration config, [FromServices] IHttpClientFactory httpClientFactory)
     {
-        return await GetLogFile("flight.log", lines, config);
+        return await GetLogFile("flight.log", lines, config, httpClientFactory);
     }
 
-    private static async Task<IResult> GetApiLogs([FromQuery] int lines, [FromServices] IConfiguration config)
+    private static async Task<IResult> GetApiLogs([FromQuery] int lines, [FromServices] IConfiguration config, [FromServices] IHttpClientFactory httpClientFactory)
     {
-        return await GetLogFile("api.log", lines, config);
+        return await GetLogFile("api.log", lines, config, httpClientFactory);
     }
 
-    private static async Task<IResult> GetDashboardLogs([FromQuery] int lines, [FromServices] IConfiguration config)
+    private static async Task<IResult> GetDashboardLogs([FromQuery] int lines, [FromServices] IConfiguration config, [FromServices] IHttpClientFactory httpClientFactory)
     {
-        return await GetLogFile("dashboard.log", lines, config);
+        return await GetLogFile("dashboard.log", lines, config, httpClientFactory);
     }
 
-    private static async Task<IResult> GetLogFile(string filename, int lines, IConfiguration config)
+    private static async Task<IResult> GetLogFile(string filename, int lines, IConfiguration config, IHttpClientFactory httpClientFactory)
     {
         try
         {
@@ -99,7 +99,7 @@ public static class LogEndpoints
             };
 
             var url = $"https://api.applicationinsights.io/v1/apps/{appId}/query";
-            using var httpClient = new HttpClient();
+            using var httpClient = httpClientFactory.CreateClient();
             httpClient.DefaultRequestHeaders.Add("x-api-key", apiKey);
 
             var apiQuery = new { query = query };

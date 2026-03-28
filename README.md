@@ -16,7 +16,7 @@ flowchart TD
     subgraph functions ["Azure Functions · consumption plan"]
         MI["Metro ingest\n<i>30s timer</i>"]
         FI["Flight ingest\n<i>60s timer</i>"]
-        RC["Retention cleanup\n<i>DELETE &lt; 6 hrs</i>"]
+        RC["Retention cleanup\n<i>DELETE &lt; 24 hrs</i>"]
     end
 
     subgraph appservice ["App Service · B1"]
@@ -34,8 +34,8 @@ flowchart TD
     CM -. "30s poll" .-> MI
     OS -. "60s poll" .-> FI
 
-    MI -- "SqlBulkCopy upsert" --> SQL
-    FI -- "SqlBulkCopy upsert" --> SQL
+    MI -- "INSERT" --> SQL
+    FI -- "INSERT" --> SQL
     RC -- "DELETE" --> SQL
 
     SQL -- "SELECT" --> API
@@ -216,11 +216,11 @@ Push to `main` → CI workflow runs tests → deploy workflow deploys all three 
 
 Three alert rules fire on business-level failures (not just exceptions):
 
-| Alert | Condition | Severity |
-|---|---|---|
-| Metro feed stale | 0 vehicles ingested × 3 polls | 2 (Warning) |
-| Flight feed stale | 0 aircraft ingested × 3 polls | 2 (Warning) |
-| API error rate | HTTP 5xx > 5% over 5 min | 1 (Error) |
+| Component | Metric | Threshold | Alert Action |
+| :--- | :--- | :--- | :--- |
+| Metro Feed | Data Staleness | 0 ingested > 10m | [Planned/Manual] |
+| Flight Feed | Data Staleness | 0 ingested > 10m | [Planned/Manual] |
+| Telemetry API | Server Exceptions | > 10 exceptions / 5m | Email `platform-sre` |
 
 Alerts route to the email address specified in `var.alert_email`.
 

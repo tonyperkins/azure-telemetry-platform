@@ -1,4 +1,5 @@
 using TelemetryFunctions.Services;
+using TelemetryFunctions.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -45,6 +46,15 @@ var host = new HostBuilder()
                 ?? throw new InvalidOperationException("SQL_CONNECTION_STRING is not configured.");
             var logger  = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VehicleIngestionService>>();
             return new VehicleIngestionService(connStr, logger);
+        });
+
+        // SRE: Connection factory for Retention cleanup
+        services.AddSingleton<IDbConnectionFactory>(sp => 
+        {
+            var config = sp.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+            var connStr = config["SQL_CONNECTION_STRING"]
+                ?? throw new InvalidOperationException("SQL_CONNECTION_STRING is not configured.");
+            return new SqlDbConnectionFactory(connStr);
         });
 
         // Application Insights

@@ -116,6 +116,21 @@ function createIcon(
   } else {
     const iconMarkup = renderToStaticMarkup(<PlaneIcon heading={vehicle.heading ?? 0} />);
     const label = showLabel && zoom >= 11 ? vehicleLabel(vehicle) : null;
+    const pulseClass = isTracked ? 'tracking-pulse' : '';
+    const scale = isTracked ? 1.4 : 1.0;
+    
+    // Glowing halo behind icon when tracked — colour-matched to flight
+    const halo = isTracked
+      ? `<div style="
+           position:absolute;
+           inset:-6px;
+           border-radius:50%;
+           background:#D97706;
+           opacity:0.25;
+           filter:blur(4px);
+           animation:tracking-halo 1.5s ease-in-out infinite alternate;
+         "></div>`
+      : '';
 
     const labelHtml = label
       ? `<span style="
@@ -137,7 +152,15 @@ function createIcon(
       : '';
 
     return L.divIcon({
-      html: `<div style="position:relative;display:inline-flex;align-items:center;">${iconMarkup}${labelHtml}</div>`,
+      html: `
+        <div class="${pulseClass}" style="position:relative;display:inline-flex;align-items:center;">
+          <div style="position:relative;transform:scale(${scale});transform-origin:center center;transition:transform 0.3s ease;">
+            ${halo}
+            ${iconMarkup}
+          </div>
+          ${labelHtml}
+        </div>
+      `,
       className: '',
       iconSize:    label ? [22 + label.length * 7 + 28, 22] : [22, 22],
       iconAnchor:  [11, 11],
@@ -179,6 +202,10 @@ export function VehicleMarker({
         .addTo(map)
         .bindPopup(() => {
           const container = document.createElement('div');
+          // Set explicit dimensions so Leaflet autoPan calculates correctly before React renders
+          container.style.width = '280px';
+          container.style.minHeight = vehicle.source === 'metro' ? '230px' : '310px';
+          
           const root = createRoot(container);
           root.render(
             <VehiclePopup 
@@ -193,10 +220,7 @@ export function VehicleMarker({
           maxHeight: 500,
           minWidth: 300,
           autoPan: true,
-          keepInView: true,
-          closeButton: true,
-          autoClose: false,
-          closeOnClick: false
+          closeButton: true
         });
       
       // Add mouse event handlers for hover (only mouseover for route highlighting)

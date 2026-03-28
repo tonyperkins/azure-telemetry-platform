@@ -33,9 +33,12 @@ public static class ManagementEndpoints
         return Results.Ok(new { state = app.Data.State });
     }
 
-    private static async Task<IResult> StopFunctionApp([FromQuery] string token, [FromServices] IConfiguration config)
+    private static async Task<IResult> StopFunctionApp(HttpRequest request, [FromServices] IConfiguration config)
     {
-        if (!ValidateToken(token, config)) return Results.Unauthorized();
+        var authHeader = request.Headers["Authorization"].FirstOrDefault();
+        var token = authHeader?.StartsWith("Bearer ") == true ? authHeader.Substring(7).Trim() : authHeader;
+
+        if (string.IsNullOrEmpty(token) || !ValidateToken(token, config)) return Results.Unauthorized();
 
         var app = await GetFunctionAppResource(config);
         if (app == null) return Results.NotFound("Function App resource could not be located via ARM.");
@@ -46,9 +49,12 @@ public static class ManagementEndpoints
         return Results.Ok(new { state = "Stopped" });
     }
 
-    private static async Task<IResult> StartFunctionApp([FromQuery] string token, [FromServices] IConfiguration config)
+    private static async Task<IResult> StartFunctionApp(HttpRequest request, [FromServices] IConfiguration config)
     {
-        if (!ValidateToken(token, config)) return Results.Unauthorized();
+        var authHeader = request.Headers["Authorization"].FirstOrDefault();
+        var token = authHeader?.StartsWith("Bearer ") == true ? authHeader.Substring(7).Trim() : authHeader;
+
+        if (string.IsNullOrEmpty(token) || !ValidateToken(token, config)) return Results.Unauthorized();
 
         var app = await GetFunctionAppResource(config);
         if (app == null) return Results.NotFound("Function App resource could not be located via ARM.");

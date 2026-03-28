@@ -140,7 +140,7 @@ function TrackingController({
     if (!trackedVehicleId) return;
     const tracked = vehicles.find(v => v.vehicleId === trackedVehicleId);
     if (tracked) {
-      map.panTo([tracked.latitude, tracked.longitude], { animate: true, duration: 0.5 });
+      map.setView([tracked.latitude, tracked.longitude], 15, { animate: true, duration: 0.5 });
     } else {
       onStopTracking();
     }

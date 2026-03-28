@@ -66,6 +66,7 @@ locals {
   sql_secret_uri  = "${local.kv_base_uri}/SQL-CONNECTION-STRING"
   opensky_id_uri  = "${local.kv_base_uri}/OPEN-SKY-CLIENT-ID"
   opensky_sec_uri = "${local.kv_base_uri}/OPEN-SKY-CLIENT-SECRET"
+  management_admin_token_uri = "${local.kv_base_uri}/MANAGEMENT-ADMIN-TOKEN"
 
   tags = {
     project     = "azure-telemetry-platform"
@@ -141,6 +142,7 @@ module "keyvault" {
   functionapp_principal_id = module.functions.principal_id
   opensky_client_id        = var.opensky_client_id
   opensky_client_secret    = var.opensky_client_secret
+  management_admin_token   = var.management_admin_token
 }
 
 module "appservice" {
@@ -160,9 +162,9 @@ module "appservice" {
   allowed_origins               = "https://${module.staticweb.default_host_name}"
 
   # Management Endpoints
-  subscription_id        = data.azurerm_subscription.current.subscription_id
-  function_app_name      = "func-telemetry-${var.environment}-${local.suffix}"
-  management_admin_token = var.management_admin_token
+  subscription_id            = data.azurerm_subscription.current.subscription_id
+  function_app_name          = "func-telemetry-${var.environment}-${local.suffix}"
+  management_admin_token_uri = local.management_admin_token_uri
 }
 
 # ---------------------------------------------------------------------------

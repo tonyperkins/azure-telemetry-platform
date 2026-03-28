@@ -86,3 +86,13 @@ resource "azurerm_key_vault_secret" "opensky_client_secret" {
     azurerm_key_vault_access_policy.terraform_deployer
   ]
 }
+
+resource "azurerm_key_vault_secret" "management_admin_token" {
+  name         = "MANAGEMENT-ADMIN-TOKEN"
+  value        = var.management_admin_token
+  key_vault_id = azurerm_key_vault.main.id
+
+  depends_on = [
+    azurerm_key_vault_access_policy.terraform_deployer
+  ]
+}

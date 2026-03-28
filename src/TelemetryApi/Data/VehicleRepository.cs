@@ -2,6 +2,7 @@ using Dapper;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Data.SqlClient;
+using Polly;
 using TelemetryApi.Models;
 
 namespace TelemetryApi.Data;
@@ -314,10 +315,25 @@ public sealed class VehicleRepository
     private async Task<IEnumerable<T>> ExecuteQueryAsync<T>(
         string sql, object parameters, string operationName)
     {
+        var retryPolicy = Policy
+            .Handle<SqlException>(ex => 
+                // Handle Azure SQL Serverless Auto-Pause wake-up timeouts (-2) or connection drops
+                ex.Number == -2 || ex.Number == 40613 || ex.Number == 40197) 
+            .WaitAndRetryAsync(3, retryAttempt => 
+                TimeSpan.FromSeconds(retryAttempt == 1 ? 2 : (retryAttempt == 2 ? 10 : 20)),
+                (exception, timeSpan, context) =>
+                {
+                    _logger.LogWarning(exception, $"SQL Serverless connection failed in {operationName}. Retrying in {timeSpan.TotalSeconds} seconds.");
+                }
+            );
+
         try
         {
-            using var conn = _connectionFactory.CreateConnection();
-            return await conn.QueryAsync<T>(sql, parameters);
+            return await retryPolicy.ExecuteAsync(async () =>
+            {
+                using var conn = _connectionFactory.CreateConnection();
+                return await conn.QueryAsync<T>(sql, parameters);
+            });
         }
         catch (SqlException ex)
         {
@@ -328,7 +344,7 @@ public sealed class VehicleRepository
             // The exception is tracked in Application Insights so the on-call
             // engineer can see it in the failures blade without needing log digging.
             _logger.LogError(ex,
-                "SQL error in {Operation}. Returning empty result set.",
+                "SQL error in {Operation}. Returning empty result set after retries.",
                 operationName);
 
             _telemetry.TrackException(ex, new Dictionary<string, string>

@@ -60,3 +60,9 @@ Thumbs.db
 .idea/
 *.swp
 *~
+
+# Binaries and Dev Junk
+actionlint
+*.deb
+*.zip
+.pids/

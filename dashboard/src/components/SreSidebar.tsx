@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { HealthStatus } from '../types/vehicle';
 import { ApiMetrics } from '../hooks/useApiMetrics';
+import { IncidentSimulation } from './IncidentSimulation';
 
 interface Props {
   health: HealthStatus | null;
@@ -15,6 +16,12 @@ interface Props {
   isPaused?: boolean;
   onTogglePause?: () => void;
   onClearData?: () => void;
+  simulateMetroFailure?: boolean;
+  simulateLatency?: boolean;
+  simulateErrors?: boolean;
+  onToggleMetroFailure?: () => void;
+  onToggleLatency?: () => void;
+  onToggleErrors?: () => void;
 }
 
 interface MetricSnapshot {
@@ -59,6 +66,12 @@ export function SreSidebar({
   isPaused,
   onTogglePause,
   onClearData,
+  simulateMetroFailure,
+  simulateLatency,
+  simulateErrors,
+  onToggleMetroFailure,
+  onToggleLatency,
+  onToggleErrors,
 }: Props) {
   const handleToggleCollapse = onToggleCollapse;
 
@@ -79,8 +92,11 @@ export function SreSidebar({
 
     try {
       setFunctionStatus("Unknown"); // Optimistic loading
-      const response = await fetch(`${API_BASE}/api/manage/${action}?token=${encodeURIComponent(token)}`, {
-        method: 'POST'
+      const response = await fetch(`${API_BASE}/api/manage/${action}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       if (!response.ok) {
         window.alert(`Authorization Refused. The provided SRE token was invalid or missing.`);
@@ -381,9 +397,22 @@ export function SreSidebar({
               />
             </Section>
 
+            {/* Incident Simulation */}
+            {simulateMetroFailure !== undefined && (
+              <IncidentSimulation
+                simulateMetroFailure={simulateMetroFailure!}
+                simulateLatency={simulateLatency!}
+                simulateErrors={simulateErrors!}
+                onToggleMetroFailure={onToggleMetroFailure!}
+                onToggleLatency={onToggleLatency!}
+                onToggleErrors={onToggleErrors!}
+                onOpenRunbook={() => onOpenRunbook?.('')}
+              />
+            )}
+
             {/* Control Buttons */}
             {(onTogglePause || onClearData) && (
-              <div style={{ padding: '12px', borderTop: '1px solid #E5E7EB', display: 'flex', gap: '8px', flexDirection: 'column' }}>
+              <div style={{ padding: '12px', borderTop: '1px solid var(--border-light)', display: 'flex', gap: '8px', flexDirection: 'column' }}>
 
                 {/* Azure Function App Ingestion Suspend */}
                 <div style={{ padding: '8px', background: 'var(--bg-active)', border: '1px solid var(--border-light)', borderRadius: '4px', textAlign: 'center' }}>

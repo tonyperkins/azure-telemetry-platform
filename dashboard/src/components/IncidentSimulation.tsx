@@ -24,17 +24,9 @@ export function IncidentSimulation({
   return (
     <div
       style={{
-        position: 'fixed',
-        bottom: '20px',
-        left: '20px',
-        zIndex: 1000,
         background: 'var(--bg-base)',
-        border: '2px solid #F59E0B',
-        borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+        borderTop: '1px solid var(--border-light)',
         fontFamily: "'Inter', sans-serif",
-        minWidth: '320px',
-        maxWidth: '400px',
       }}
     >
       {/* Header */}
@@ -42,9 +34,7 @@ export function IncidentSimulation({
         onClick={() => setIsExpanded(!isExpanded)}
         style={{
           padding: '12px 16px',
-          background: '#FEF3C7',
-          borderTopLeftRadius: '6px',
-          borderTopRightRadius: '6px',
+          background: 'var(--bg-hover)',
           cursor: 'pointer',
           userSelect: 'none',
           display: 'flex',
@@ -53,14 +43,14 @@ export function IncidentSimulation({
         }}
       >
         <div>
-          <div style={{ fontSize: '14px', fontWeight: 600, color: '#92400E', marginBottom: '2px' }}>
+          <div style={{ fontSize: '14px', fontWeight: 600, color: '#F59E0B', marginBottom: '2px' }}>
             ⚡ Incident Simulation
           </div>
-          <div style={{ fontSize: '11px', color: '#78350F' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
             Simulate failure scenarios to demonstrate observability
           </div>
         </div>
-        <span style={{ fontSize: '12px', color: '#92400E' }}>
+        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
           {isExpanded ? '▼' : '▲'}
         </span>
       </div>

@@ -20,11 +20,18 @@
 }
 
 /* ============================================================
-   Leaflet Popup — Dark Mode
-   Applied via html[data-map-theme='dark'] which we set in Map.tsx
-   whenever isDarkTheme is true. Leaflet renders popups on <body>
-   so they sit outside the [data-theme] wrapper.
+   Leaflet Popup Customization
+   Makes the popup content fit perfectly without padding boundaries
    ============================================================ */
+
+.leaflet-popup-content-wrapper {
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 6px !important;
+  background: var(--bg-base) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+}
 
 html[data-map-theme='dark'] .leaflet-popup-content-wrapper {
   background: #1E293B !important;
@@ -33,16 +40,31 @@ html[data-map-theme='dark'] .leaflet-popup-content-wrapper {
   box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
 }
 
+.leaflet-popup-content {
+  margin: 0 !important;
+  width: auto !important;
+  border-radius: 6px;
+}
+
+.leaflet-popup-tip {
+  background: var(--bg-base) !important;
+}
+
 html[data-map-theme='dark'] .leaflet-popup-tip {
   background: #1E293B !important;
 }
 
-html[data-map-theme='dark'] .leaflet-popup-close-button {
-  color: #94A3B8 !important;
+.leaflet-popup-close-button {
+  color: #FFFFFF !important;
+  font-weight: 500 !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4) !important;
+  top: 6px !important;
+  right: 6px !important;
+  z-index: 10 !important;
 }
 
-html[data-map-theme='dark'] .leaflet-popup-close-button:hover {
-  color: #F8FAFC !important;
+.leaflet-popup-close-button:hover {
+  color: #E2E8F0 !important;
 }
 
 /* Tracked bus stop — pulsing amber ring */
@@ -57,4 +79,3 @@ html[data-map-theme='dark'] .leaflet-popup-close-button:hover {
   border-radius: 50%;
   z-index: 1000 !important;
 }
-
