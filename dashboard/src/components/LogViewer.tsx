@@ -160,7 +160,7 @@ export function LogViewer({ isOpen: externalIsOpen, onToggle }: LogViewerProps =
         top: `${position.y}px`,
         width: '700px',
         height: '60vh',
-        background: '#1A202C',
+        background: 'var(--bg-header)',
         borderRadius: '8px',
         boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
         display: 'flex',
@@ -175,7 +175,7 @@ export function LogViewer({ isOpen: externalIsOpen, onToggle }: LogViewerProps =
       <div
         onMouseDown={handleMouseDown}
         style={{
-          background: '#2D3748',
+          background: 'var(--text-primary)',
           padding: '12px 16px',
           borderBottom: '1px solid #4A5568',
           display: 'flex',
@@ -187,7 +187,7 @@ export function LogViewer({ isOpen: externalIsOpen, onToggle }: LogViewerProps =
           userSelect: 'none',
         }}
       >
-        <span style={{ fontWeight: 600, color: '#E2E8F0', fontSize: '14px' }}>
+        <span style={{ fontWeight: 600, color: 'var(--text-inverse)', fontSize: '14px' }}>
           System Logs
         </span>
         <button
@@ -195,7 +195,7 @@ export function LogViewer({ isOpen: externalIsOpen, onToggle }: LogViewerProps =
           style={{
             background: 'transparent',
             border: 'none',
-            color: '#A0AEC0',
+            color: 'var(--text-muted)',
             fontSize: '18px',
             cursor: 'pointer',
             padding: '0 4px',
@@ -208,7 +208,7 @@ export function LogViewer({ isOpen: externalIsOpen, onToggle }: LogViewerProps =
       {/* Source Selector */}
       <div
         style={{
-          background: '#2D3748',
+          background: 'var(--text-primary)',
           padding: '8px 16px',
           borderBottom: '1px solid #4A5568',
           display: 'flex',
@@ -237,7 +237,7 @@ export function LogViewer({ isOpen: externalIsOpen, onToggle }: LogViewerProps =
         ))}
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#A0AEC0' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
             <input
               type="checkbox"
               checked={autoRefresh}
@@ -281,7 +281,7 @@ export function LogViewer({ isOpen: externalIsOpen, onToggle }: LogViewerProps =
         }}
       >
         {loading && !logs && (
-          <div style={{ color: '#A0AEC0', textAlign: 'center', padding: '20px' }}>
+          <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>
             Loading logs...
           </div>
         )}
@@ -327,7 +327,7 @@ export function LogViewer({ isOpen: externalIsOpen, onToggle }: LogViewerProps =
       {/* Footer */}
       <div
         style={{
-          background: '#2D3748',
+          background: 'var(--text-primary)',
           borderTop: '1px solid #4A5568',
           padding: '8px 16px',
           display: 'flex',

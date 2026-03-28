@@ -1,0 +1,105 @@
+<svg width="680" viewBox="0 0 680 660" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+<!-- Section label: External -->
+<text x="340" y="16" text-anchor="middle" font-size="12" fill="#888780">External data sources</text>
+
+<!-- Capital Metro -->
+<rect x="55" y="28" width="220" height="56" rx="8" fill="#FAECE7" stroke="#993C1D" stroke-width="0.5"/>
+<text x="165" y="48" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#712B13">Capital Metro</text>
+<text x="165" y="66" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#993C1D">GTFS-RT protobuf</text>
+
+<!-- OpenSky -->
+<rect x="365" y="28" width="210" height="56" rx="8" fill="#FAECE7" stroke="#993C1D" stroke-width="0.5"/>
+<text x="470" y="48" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#712B13">OpenSky Network</text>
+<text x="470" y="66" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#993C1D">REST API</text>
+
+<!-- Polling arrows -->
+<line x1="165" y1="84" x2="140" y2="160" stroke="#888780" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<text x="138" y="124" text-anchor="end" font-size="12" fill="#888780">30s poll</text>
+<line x1="470" y1="84" x2="300" y2="160" stroke="#888780" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<text x="400" y="118" text-anchor="start" font-size="12" fill="#888780">60s poll</text>
+
+<!-- Functions container -->
+<rect x="50" y="128" width="480" height="108" rx="12" fill="none" stroke="#B4B2A9" stroke-width="0.5" stroke-dasharray="6 4"/>
+<text x="290" y="148" text-anchor="middle" font-size="12" fill="#888780">Azure Functions (consumption)</text>
+
+<!-- Metro Ingest -->
+<rect x="70" y="160" width="140" height="56" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text x="140" y="180" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#3C3489">Metro ingest</text>
+<text x="140" y="198" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#534AB7">30s timer</text>
+
+<!-- Flight Ingest -->
+<rect x="230" y="160" width="140" height="56" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text x="300" y="180" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#3C3489">Flight ingest</text>
+<text x="300" y="198" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#534AB7">60s timer</text>
+
+<!-- Retention -->
+<rect x="390" y="160" width="140" height="56" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text x="460" y="180" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#3C3489">Retention</text>
+<text x="460" y="198" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#534AB7">6hr cleanup</text>
+
+<!-- Arrows to SQL -->
+<line x1="140" y1="216" x2="200" y2="290" stroke="#5F5E5A" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="300" y1="216" x2="260" y2="290" stroke="#5F5E5A" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="460" y1="216" x2="320" y2="290" stroke="#5F5E5A" stroke-width="1" marker-end="url(#arrow)"/>
+<text x="395" y="258" text-anchor="start" font-size="12" fill="#888780">SqlBulkCopy upsert</text>
+
+<!-- Azure SQL -->
+<rect x="140" y="290" width="240" height="56" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="260" y="310" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#085041">Azure SQL</text>
+<text x="260" y="328" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#0F6E56">Serverless, auto-pause</text>
+
+<!-- Key Vault -->
+<rect x="548" y="246" width="108" height="44" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="602" y="268" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#085041">Key Vault</text>
+
+<!-- Key Vault arrows -->
+<line x1="548" y1="256" x2="532" y2="220" stroke="#0F6E56" stroke-width="0.5" stroke-dasharray="4 3" opacity="0.5" marker-end="url(#arrow)"/>
+<line x1="548" y1="278" x2="502" y2="438" stroke="#0F6E56" stroke-width="0.5" stroke-dasharray="4 3" opacity="0.5" marker-end="url(#arrow)"/>
+<text x="545" y="308" text-anchor="middle" font-size="12" fill="#0F6E56" opacity="0.6">secrets</text>
+
+<!-- SQL to API -->
+<line x1="260" y1="346" x2="200" y2="430" stroke="#5F5E5A" stroke-width="1" marker-end="url(#arrow)"/>
+<text x="215" y="390" text-anchor="start" font-size="12" fill="#888780">SELECT</text>
+
+<!-- App Service container -->
+<rect x="90" y="398" width="410" height="110" rx="12" fill="none" stroke="#B4B2A9" stroke-width="0.5" stroke-dasharray="6 4"/>
+<text x="295" y="418" text-anchor="middle" font-size="12" fill="#888780">App Service (B1)</text>
+
+<!-- Telemetry API -->
+<rect x="110" y="430" width="175" height="56" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text x="198" y="450" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#0C447C">Telemetry API</text>
+<text x="198" y="468" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#185FA5">.NET 8</text>
+
+<!-- Management SDK -->
+<rect x="315" y="430" width="165" height="56" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text x="398" y="450" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#0C447C">Management SDK</text>
+<text x="398" y="468" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#185FA5">Start / stop</text>
+
+<!-- Connector between API boxes -->
+<line x1="285" y1="458" x2="315" y2="458" stroke="#B5D4F4" stroke-width="0.5"/>
+
+<!-- Dashboard to API arrows -->
+<line x1="228" y1="558" x2="198" y2="486" stroke="#5F5E5A" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="200" y="530" text-anchor="end" font-size="12" fill="#888780">HTTP GET</text>
+<line x1="282" y1="558" x2="398" y2="486" stroke="#888780" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<text x="358" y="530" text-anchor="start" font-size="12" fill="#888780">HTTP POST</text>
+
+<!-- React Dashboard -->
+<rect x="130" y="558" width="240" height="56" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/>
+<text x="250" y="578" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="#444441">React dashboard</text>
+<text x="250" y="596" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#5F5E5A">Leaflet + CARTO tiles</text>
+
+<!-- Legend -->
+<rect x="50" y="640" width="10" height="10" rx="2" fill="#FAECE7" stroke="#993C1D" stroke-width="0.5"/>
+<text x="66" y="649" font-size="12" fill="#5F5E5A">External</text>
+<rect x="130" y="640" width="10" height="10" rx="2" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text x="146" y="649" font-size="12" fill="#5F5E5A">Ingestion</text>
+<rect x="218" y="640" width="10" height="10" rx="2" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="234" y="649" font-size="12" fill="#5F5E5A">Storage</text>
+<rect x="290" y="640" width="10" height="10" rx="2" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text x="306" y="649" font-size="12" fill="#5F5E5A">API</text>
+<rect x="338" y="640" width="10" height="10" rx="2" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/>
+<text x="354" y="649" font-size="12" fill="#5F5E5A">Frontend</text>
+</svg>

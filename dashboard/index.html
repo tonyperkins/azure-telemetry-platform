@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Azure Telemetry Platform</title>
     <link rel="stylesheet" href="/src/styles/tracking-pulse.css" />
+    <link rel="stylesheet" href="/src/styles/theme.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -12,7 +13,7 @@
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
       html, body, #root { height: 100%; width: 100%; }
-      body { font-family: 'Inter', sans-serif; background: #F1F0EE; color: #2D3748; }
+      body { font-family: 'Inter', sans-serif; background: var(--bg-root); color: var(--text-primary); transition: background-color 0.3s ease, color 0.3s ease; }
       @keyframes pulse {
         0%, 100% { opacity: 1; }
         50% { opacity: 0.5; }

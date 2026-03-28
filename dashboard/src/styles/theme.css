@@ -1,0 +1,61 @@
+/* Global theme variables for Light and Dark modes */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: #0F172A; /* Austin Dark theme baseline to prevent white flash */
+}
+
+:root {
+  /* Background Colors */
+  --bg-root: #F1F0EE;
+  --bg-base: #FFFFFF;
+  --bg-header: #1A202C; /* Darker header even in light mode */
+  --bg-panel: rgba(255, 255, 255, 0.95);
+  --bg-hover: #F8FAFC;
+  --bg-active: #F1F5F9;
+  
+  /* Text Colors */
+  --text-primary: #1E293B;
+  --text-secondary: #64748B;
+  --text-muted: #94A3B8;
+  --text-inverse: #E2E8F0; /* Used for header/dark backgrounds */
+  
+  /* Border Colors */
+  --border-light: #E2E8F0;
+  --border-main: #CBD5E1;
+  --border-dark: #2D3748; /* Header border */
+
+  /* Specific Components */
+  --log-bg: #0D1117;
+  --log-text: #E2E8F0;
+}
+
+[data-theme='dark'] {
+  /* Background Colors */
+  --bg-root: #0F172A;
+  --bg-base: #1E293B;
+  --bg-header: #0B0F19;
+  --bg-panel: rgba(30, 41, 59, 0.95);
+  --bg-hover: #334155;
+  --bg-active: #475569;
+  
+  /* Text Colors */
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  --text-inverse: #F8FAFC;
+  
+  /* Border Colors */
+  --border-light: #334155;
+  --border-main: #475569;
+  --border-dark: #334155;
+
+  /* Specific Components */
+  --log-bg: #0D1117;
+  --log-text: #E2E8F0;
+}
+
+[data-theme='dark'] .theme-transition {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}

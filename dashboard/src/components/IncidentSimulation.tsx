@@ -28,7 +28,7 @@ export function IncidentSimulation({
         bottom: '20px',
         left: '20px',
         zIndex: 1000,
-        background: '#FFFFFF',
+        background: 'var(--bg-base)',
         border: '2px solid #F59E0B',
         borderRadius: '8px',
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
@@ -133,7 +133,7 @@ function SimulationToggle({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-        <label style={{ fontSize: '13px', fontWeight: 500, color: '#2D3748', cursor: 'pointer' }}>
+        <label style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', cursor: 'pointer' }}>
           {label}
         </label>
         <button
@@ -156,7 +156,7 @@ function SimulationToggle({
               left: enabled ? '22px' : '2px',
               width: '20px',
               height: '20px',
-              background: '#FFFFFF',
+              background: 'var(--bg-base)',
               borderRadius: '50%',
               transition: 'left 0.2s',
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.2)',

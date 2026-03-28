@@ -1,21 +1,60 @@
 /**
- * Tracking pulse animation for the tracked vehicle marker
- * Creates a pulsing ring effect around the marker
+ * Tracking pulse + halo animations for the tracked vehicle marker
+ * Creates a pulsing ring effect + colour-matched glow behind the icon
  */
 
 @keyframes trackingPulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.6);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(37, 99, 235, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
-  }
+  0%   { box-shadow: 0 0 0 0   rgba(37, 99, 235, 0.7); }
+  70%  { box-shadow: 0 0 0 12px rgba(37, 99, 235, 0); }
+  100% { box-shadow: 0 0 0 0   rgba(37, 99, 235, 0); }
+}
+
+@keyframes tracking-halo {
+  from { opacity: 0.15; transform: scale(0.9); }
+  to   { opacity: 0.35; transform: scale(1.2); }
 }
 
 .tracking-pulse {
   animation: trackingPulse 1.5s infinite;
   border-radius: 50%;
 }
+
+/* ============================================================
+   Leaflet Popup — Dark Mode
+   Applied via html[data-map-theme='dark'] which we set in Map.tsx
+   whenever isDarkTheme is true. Leaflet renders popups on <body>
+   so they sit outside the [data-theme] wrapper.
+   ============================================================ */
+
+html[data-map-theme='dark'] .leaflet-popup-content-wrapper {
+  background: #1E293B !important;
+  color: #F8FAFC !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+}
+
+html[data-map-theme='dark'] .leaflet-popup-tip {
+  background: #1E293B !important;
+}
+
+html[data-map-theme='dark'] .leaflet-popup-close-button {
+  color: #94A3B8 !important;
+}
+
+html[data-map-theme='dark'] .leaflet-popup-close-button:hover {
+  color: #F8FAFC !important;
+}
+
+/* Tracked bus stop — pulsing amber ring */
+@keyframes stop-beacon {
+  0%   { box-shadow: 0 0 0 0   rgba(245, 158, 11, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+  100% { box-shadow: 0 0 0 0   rgba(245, 158, 11, 0); }
+}
+
+.bus-stop-tracked {
+  animation: stop-beacon 1.8s infinite;
+  border-radius: 50%;
+  z-index: 1000 !important;
+}
+

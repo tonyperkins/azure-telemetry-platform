@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertToastContainer, Toast } from './components/AlertToast';
+import { HelpModal } from './components/HelpModal';
 import { IncidentSimulation } from './components/IncidentSimulation';
 import { LogViewer } from './components/LogViewer';
 import { Map } from './components/Map';
@@ -25,6 +26,7 @@ export default function App() {
   const [enableClustering, setEnableClustering] = useState(false);
   const [selectedRoutes, setSelectedRoutes] = useState<Set<string>>(new Set());
   const [trackedVehicleId, setTrackedVehicleId] = useState<string | null>(null);
+  const [trackedStopId, setTrackedStopId] = useState<string | null>(null);
   const [initialRoutesSet, setInitialRoutesSet] = useState(false);
   
   const [simulateMetroFailure, setSimulateMetroFailure] = useState(false);
@@ -34,11 +36,17 @@ export default function App() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isLogViewerOpen, setIsLogViewerOpen] = useState(false);
   const [isRunbookOpen, setIsRunbookOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [runbookSourceName, setRunbookSourceName] = useState<string | undefined>(undefined);
-  const [isDarkTheme, setIsDarkTheme] = useState(false);
+  const [isDarkTheme, setIsDarkTheme] = useState(() => {
+    return localStorage.getItem('uiTheme') === 'dark';
+  });
+  const [mapStyle, setMapStyle] = useState<'light' | 'dark' | 'streets'>(() => {
+    return (localStorage.getItem('mapStyle') as 'light' | 'dark' | 'streets') || 'light';
+  });
   const [isFlightCircuitBreakerActive, setIsFlightCircuitBreakerActive] = useState(false);
   const [showCircuitBreakerModal, setShowCircuitBreakerModal] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const activeAlerts = useRef<Set<string>>(new Set());
   const prevHealth = useRef<any>(null);
   const prevMetrics = useRef<any>(null);
@@ -82,6 +90,11 @@ export default function App() {
     }
   };
 
+  const metroCount  = useMemo(() => vehicles.filter(v => v.source === 'metro').length,  [vehicles]);
+  const flightCount = useMemo(() => vehicles.filter(v => v.source === 'flight').length, [vehicles]);
+  const flightConfigDisabled = !!(health?.sources.flight.configDisabled);
+  const metroConfigDisabled  = !!(health?.sources.metro.configDisabled);
+
   const filtered = useMemo(() => {
     return vehicles.filter(v => {
       if (v.source === 'metro') {
@@ -98,15 +111,12 @@ export default function App() {
         }
         return true;
       }
-      if (v.source === 'flight') return flightEnabled;
+      if (v.source === 'flight') {
+        return flightEnabled && !flightConfigDisabled;
+      }
       return false;
     });
-  }, [vehicles, metroEnabled, flightEnabled, selectedRoutes]);
-
-  const metroCount  = useMemo(() => vehicles.filter(v => v.source === 'metro').length,  [vehicles]);
-  const flightCount = useMemo(() => vehicles.filter(v => v.source === 'flight').length, [vehicles]);
-  const flightConfigDisabled = !!(health?.sources.flight.configDisabled);
-  const metroConfigDisabled  = !!(health?.sources.metro.configDisabled);
+  }, [vehicles, metroEnabled, flightEnabled, selectedRoutes, flightConfigDisabled]);
 
   
   // Detect circuit breaker: if flights enabled but no flight data for 3+ consecutive polls
@@ -144,6 +154,7 @@ export default function App() {
     setShowVehicleLabels(true);
     setEnableClustering(false);
     setSelectedRoutes(new Set());
+    setMapStyle('light');
   };
 
   const handleTrackVehicle = (vehicleId: string, _source: 'metro' | 'flight') => {
@@ -152,6 +163,7 @@ export default function App() {
 
   const handleStopTracking = () => {
     setTrackedVehicleId(null);
+    setTrackedStopId(null); // also clear any highlighted stop
   };
 
   const addToast = (type: 'warning' | 'critical' | 'recovery', title: string, body: string) => {
@@ -316,20 +328,28 @@ export default function App() {
       }
     }
 
-    prevHealth.current = health;
     prevMetrics.current = metrics;
   }, [health, metrics]);
+
+  // Persist themes
+  useEffect(() => {
+    localStorage.setItem('uiTheme', isDarkTheme ? 'dark' : 'light');
+  }, [isDarkTheme]);
+
+  useEffect(() => {
+    localStorage.setItem('mapStyle', mapStyle);
+  }, [mapStyle]);
 
   const sidebarWidth = isSidebarCollapsed ? 48 : 280;
 
   return (
-    <div style={{ display: 'flex', height: '100vh' }} data-theme={isDarkTheme ? 'dark' : 'light'}>
+    <div style={{ display: 'flex', height: '100vh', background: 'var(--bg-root)', color: 'var(--text-primary)' }} data-theme={isDarkTheme ? 'dark' : 'light'}>
       {/* Main content area */}
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, marginRight: `${sidebarWidth}px`, transition: 'margin-right 0.3s ease' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, paddingRight: `${sidebarWidth}px`, transition: 'padding-right 0.3s ease' }}>
         {/* Top bar */}
         <div style={{
-          background: '#1A202C',
-          borderBottom: '1px solid #2D3748',
+          background: 'var(--bg-header)',
+          borderBottom: '1px solid var(--border-dark)',
           padding: '10px 16px',
           display: 'flex',
           alignItems: 'center',
@@ -340,7 +360,7 @@ export default function App() {
           <span style={{
             fontWeight: 600,
             fontSize: '15px',
-            color: '#E2E8F0',
+            color: 'var(--text-inverse)',
             fontFamily: "'Inter', sans-serif",
             letterSpacing: '-0.2px',
           }}>
@@ -361,14 +381,74 @@ export default function App() {
           />
 
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <button
+              onClick={() => setIsHelpOpen(true)}
+              title="Help & Documentation"
+              style={{
+                background: 'transparent',
+                border: '1px solid #4A5568',
+                color: 'var(--text-inverse)',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              ❓ Help
+            </button>
+
+            <button
+              onClick={() => setIsDarkTheme(!isDarkTheme)}
+              title={isDarkTheme ? "Switch to Light UI" : "Switch to Dark UI"}
+              style={{
+                background: 'transparent',
+                border: '1px solid #4A5568',
+                color: 'var(--text-inverse)',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '60px', justifyContent: 'center' }}>
+                {isDarkTheme ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>🌙 Dark</span>
+                ) : (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>☀️ Light</span>
+                )}
+              </div>
+            </button>
+
             {lastUpdated && (
-              <span style={{ fontSize: '11px', color: '#A0AEC0', fontFamily: "'Inter', sans-serif" }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}>
                 Last updated {Math.floor((Date.now() - lastUpdated.getTime()) / 1000)}s ago
               </span>
             )}
 
             {loading && (
-              <span style={{ fontSize: '12px', color: '#A0AEC0', fontFamily: "'Inter', sans-serif" }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: "'Inter', sans-serif" }}>
                 Loading…
               </span>
             )}
@@ -396,9 +476,11 @@ export default function App() {
             enableClustering={enableClustering}
             selectedRoutes={selectedRoutes}
             trackedVehicleId={trackedVehicleId}
+            trackedStopId={trackedStopId}
             onTrackVehicle={handleTrackVehicle}
+            onTrackStop={setTrackedStopId}
             onStopTracking={handleStopTracking}
-            onThemeChange={setIsDarkTheme}
+            mapStyle={mapStyle}
           />
           
           <MapControls
@@ -424,6 +506,8 @@ export default function App() {
             onToggleClustering={() => setEnableClustering(!enableClustering)}
             onResetAll={handleResetAll}
             flightConfigDisabled={flightConfigDisabled}
+            mapStyle={mapStyle}
+            onMapStyleChange={setMapStyle}
           />
         </div>
 
@@ -438,9 +522,10 @@ export default function App() {
         metroCount={metroCount}
         flightCount={flightCount}
         lastUpdated={lastUpdated}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         onOpenLogs={() => setIsLogViewerOpen(!isLogViewerOpen)}
         onOpenRunbook={handleOpenRunbook}
-        onCollapsedChange={setIsSidebarCollapsed}
         isPaused={isPaused}
         onTogglePause={() => setIsPaused(!isPaused)}
         onClearData={handleClearData}
@@ -459,6 +544,12 @@ export default function App() {
 
       {/* Alert Toast Notifications */}
       <AlertToastContainer toasts={toasts} onDismiss={dismissToast} />
+
+      {/* Help Modal */}
+      <HelpModal
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
+      />
 
       {/* Runbook Modal */}
       <RunbookModal
@@ -486,7 +577,8 @@ export default function App() {
         >
           <div
             style={{
-              background: 'white',
+              background: 'var(--bg-base)',
+              color: 'var(--text-primary)',
               borderRadius: '8px',
               padding: '24px',
               maxWidth: '500px',
@@ -496,12 +588,12 @@ export default function App() {
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
               <span style={{ fontSize: '32px' }}>⚠️</span>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#1E293B' }}>
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)' }}>
                 Flight API Rate Limited
               </h2>
             </div>
             
-            <p style={{ color: '#475569', lineHeight: 1.6, marginBottom: '12px' }}>
+            <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '12px' }}>
               The OpenSky Network API has returned a <strong>429 Too Many Requests</strong> error.
               To prevent making the problem worse, a <strong>circuit breaker</strong> has been activated.
             </p>
@@ -514,10 +606,10 @@ export default function App() {
             </div>
             
             <div style={{ marginBottom: '16px' }}>
-              <p style={{ fontSize: '14px', fontWeight: 600, color: '#1E293B', marginBottom: '8px' }}>
+              <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
                 Why did this happen?
               </p>
-              <ul style={{ margin: 0, paddingLeft: '20px', color: '#64748B', fontSize: '13px' }}>
+              <ul style={{ margin: 0, paddingLeft: '20px', color: 'var(--text-secondary)', fontSize: '13px' }}>
                 <li>OpenSky has a rate limit of ~10 requests per second</li>
                 <li>Daily quota: 4,000 credits/day (resets at 00:00 UTC)</li>
                 <li>Polling every 30 seconds uses ~2,880 credits/day</li>
@@ -525,10 +617,10 @@ export default function App() {
             </div>
             
             <div style={{ marginBottom: '20px' }}>
-              <p style={{ fontSize: '14px', fontWeight: 600, color: '#1E293B', marginBottom: '8px' }}>
+              <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
                 What happens next?
               </p>
-              <ul style={{ margin: 0, paddingLeft: '20px', color: '#64748B', fontSize: '13px' }}>
+              <ul style={{ margin: 0, paddingLeft: '20px', color: 'var(--text-secondary)', fontSize: '13px' }}>
                 <li>Circuit breaker active for 5 minutes</li>
                 <li>Flights will resume automatically after cooldown</li>
                 <li>No action needed from you</li>

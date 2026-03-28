@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { useMap } from 'react-leaflet';
 import { Vehicle } from '../types/vehicle';
-import { createTeardropBusIcon } from '../utils/busIcon';
+import { createArrowBusIcon } from '../utils/busIcon';
 import { getRouteColor } from '../utils/routeColors';
 import { VehiclePopup } from './VehiclePopup';
 
@@ -76,29 +76,42 @@ function createIcon(
       : '#0D9488';
     
     const heading = vehicle.heading ?? 0;
-    const isStationary = vehicle.speedKmh === 0;
-    const opacity = isStationary ? 0.7 : 1.0;
     
-    const teardropSvg = createTeardropBusIcon(routeColor);
+    // Pass isTracked into icon so it gets the white retention ring
+    const arrowSvg = createArrowBusIcon(routeColor, isTracked);
     const label = showLabel && zoom >= 13 ? vehicleLabel(vehicle) : null;
     
-    // Rotation and scaling for tracked vehicle
-    const scale = isTracked ? 1.3 : 1.0;
+    // Tracked: larger scale + pulse class
+    const scale = isTracked ? 1.4 : 1.0;
     const pulseClass = isTracked ? 'tracking-pulse' : '';
+    
+    // Glowing halo behind icon when tracked — colour-matched to route
+    const halo = isTracked
+      ? `<div style="
+           position:absolute;
+           inset:-6px;
+           border-radius:50%;
+           background:${routeColor};
+           opacity:0.25;
+           filter:blur(4px);
+           animation:tracking-halo 1.5s ease-in-out infinite alternate;
+         "></div>`
+      : '';
 
     return L.divIcon({
       html: `
-        <div class="${pulseClass}" style="display: flex; align-items: center; gap: 4px; opacity: ${opacity};">
-          <div style="transform: rotate(${heading}deg) scale(${scale}); transform-origin: center center; transition: transform 0.3s ease;">
-            ${teardropSvg}
+        <div class="${pulseClass}" style="position:relative;display:flex;align-items:center;gap:4px;">
+          <div style="position:relative;transform:rotate(${heading}deg) scale(${scale});transform-origin:center center;transition:transform 0.3s ease;">
+            ${halo}
+            ${arrowSvg}
           </div>
-          ${label ? `<span style="font-size: 11px; font-weight: 600; color: ${routeColor}; white-space: nowrap;">${label}</span>` : ''}
+          ${label ? `<span style="font-size:11px;font-weight:600;color:${routeColor};white-space:nowrap;text-shadow:0 0 3px rgba(0,0,0,0.6);">${label}</span>` : ''}
         </div>
       `,
       className: '',
-      iconSize: [20, 28],
-      iconAnchor: [10, 14],
-      popupAnchor: [0, -14],
+      iconSize: [26, 30],
+      iconAnchor: [13, 15],
+      popupAnchor: [0, -17],
     });
   } else {
     const iconMarkup = renderToStaticMarkup(<PlaneIcon heading={vehicle.heading ?? 0} />);

@@ -102,7 +102,7 @@ function AlertToast({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string
         <div style={{ fontSize: '20px', lineHeight: 1 }}>{config.icon}</div>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: '#2D3748' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
               {toast.title}
             </div>
             <button

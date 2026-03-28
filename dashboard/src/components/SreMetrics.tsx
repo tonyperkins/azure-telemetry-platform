@@ -24,37 +24,37 @@ export function SreMetrics({ metrics, isPaused, onTogglePause, onClearData }: Pr
 
   return (
     <div style={{
-      background: '#2D3748',
-      borderBottom: '1px solid #4A5568',
+      background: 'var(--bg-header)',
+      borderBottom: '1px solid var(--border-dark)',
       padding: '8px 16px',
       display: 'flex',
       alignItems: 'center',
       gap: '24px',
       flexWrap: 'wrap',
       fontSize: '12px',
-      color: '#E2E8F0',
+      color: 'var(--text-inverse)',
       fontFamily: "'Inter', sans-serif",
     }}>
-      <span style={{ fontWeight: 600, color: '#A0AEC0' }}>SRE Metrics</span>
+      <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>SRE Metrics</span>
 
       <div style={{ display: 'flex', gap: '4px', alignItems: 'baseline' }}>
-        <span style={{ color: '#A0AEC0' }}>Response:</span>
+        <span style={{ color: 'var(--text-muted)' }}>Response:</span>
         <span style={{ fontWeight: 600, color: '#68D391' }}>{metrics.lastResponseTime}ms</span>
         <span style={{ color: '#718096', fontSize: '10px' }}>(avg: {metrics.avgResponseTime}ms)</span>
       </div>
 
       <div style={{ display: 'flex', gap: '4px', alignItems: 'baseline' }}>
-        <span style={{ color: '#A0AEC0' }}>Payload:</span>
+        <span style={{ color: 'var(--text-muted)' }}>Payload:</span>
         <span style={{ fontWeight: 600, color: '#63B3ED' }}>{formatBytes(metrics.lastPayloadSize)}</span>
       </div>
 
       <div style={{ display: 'flex', gap: '4px', alignItems: 'baseline' }}>
-        <span style={{ color: '#A0AEC0' }}>Requests:</span>
+        <span style={{ color: 'var(--text-muted)' }}>Requests:</span>
         <span style={{ fontWeight: 600 }}>{metrics.totalRequests}</span>
       </div>
 
       <div style={{ display: 'flex', gap: '4px', alignItems: 'baseline' }}>
-        <span style={{ color: '#A0AEC0' }}>Error Rate:</span>
+        <span style={{ color: 'var(--text-muted)' }}>Error Rate:</span>
         <span style={{
           fontWeight: 600,
           color: parseFloat(errorRate) > 5 ? '#FC8181' : '#68D391'

@@ -54,11 +54,11 @@ export function StatsBar({ metroCount, flightCount, lastUpdated, isStale, health
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: '8px 16px',
-      background: '#2D3748',
+      background: 'var(--text-primary)',
       borderBottom: '1px solid #4A5568',
       fontFamily: "'Inter', sans-serif",
       fontSize: '13px',
-      color: '#E2E8F0',
+      color: 'var(--text-inverse)',
     }}>
       <span style={{ fontWeight: 500 }}>
         {metroCount} buses · {flightCount} flights
@@ -69,7 +69,7 @@ export function StatsBar({ metroCount, flightCount, lastUpdated, isStale, health
         )}
       </span>
 
-      <span style={{ color: '#A0AEC0' }}>
+      <span style={{ color: 'var(--text-muted)' }}>
         Last updated {ageLabel}
       </span>
 

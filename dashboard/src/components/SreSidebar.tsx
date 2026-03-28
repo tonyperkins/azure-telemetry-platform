@@ -8,9 +8,10 @@ interface Props {
   metroCount: number;
   flightCount: number;
   lastUpdated: Date | null;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
   onOpenLogs?: () => void;
   onOpenRunbook?: (sourceName: string) => void;
-  onCollapsedChange?: (isCollapsed: boolean) => void;
   isPaused?: boolean;
   onTogglePause?: () => void;
   onClearData?: () => void;
@@ -45,23 +46,21 @@ function useElapsedSeconds(since: Date | null): number {
   return elapsed;
 }
 
-export function SreSidebar({ health, metrics, metroCount, flightCount, lastUpdated, onOpenLogs, onOpenRunbook, onCollapsedChange, isPaused, onTogglePause, onClearData }: Props) {
-  const [isCollapsed, setIsCollapsed] = useState(true);
-
-  // Notify parent of initial collapsed state
-  useEffect(() => {
-    if (onCollapsedChange) {
-      onCollapsedChange(true);
-    }
-  }, [onCollapsedChange]);
-
-  const handleToggleCollapse = () => {
-    const newCollapsed = !isCollapsed;
-    setIsCollapsed(newCollapsed);
-    if (onCollapsedChange) {
-      onCollapsedChange(newCollapsed);
-    }
-  };
+export function SreSidebar({
+  health,
+  metrics,
+  metroCount,
+  flightCount,
+  lastUpdated,
+  isCollapsed,
+  onToggleCollapse,
+  onOpenLogs,
+  onOpenRunbook,
+  isPaused,
+  onTogglePause,
+  onClearData,
+}: Props) {
+  const handleToggleCollapse = onToggleCollapse;
 
   const [functionStatus, setFunctionStatus] = useState<'Running' | 'Stopped' | 'Unknown'>('Unknown');
   const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5200';
@@ -94,7 +93,7 @@ export function SreSidebar({ health, metrics, metroCount, flightCount, lastUpdat
       setFunctionStatus("Unknown");
     }
   };
-  
+
   const metricsHistory = useRef<MetricSnapshot[]>([]);
   const vehicleCountHistory = useRef<VehicleCountSnapshot[]>([]);
   const prevMetroCount = useRef(metroCount);
@@ -115,7 +114,7 @@ export function SreSidebar({ health, metrics, metroCount, flightCount, lastUpdat
 
   useEffect(() => {
     const now = Date.now();
-    
+
     const newRequestsSinceLastPoll = metrics.totalRequests - prevRequestCount.current;
     requestsPerMin.current = newRequestsSinceLastPoll * 2;
     prevRequestCount.current = metrics.totalRequests;
@@ -190,8 +189,8 @@ export function SreSidebar({ health, metrics, metroCount, flightCount, lastUpdat
         right: 0,
         bottom: 0,
         width: sidebarWidth,
-        background: '#FFFFFF',
-        borderLeft: '1px solid #D1D5DB',
+        background: 'var(--bg-base)',
+        borderLeft: '1px solid var(--border-light)',
         display: 'flex',
         flexDirection: 'column',
         transition: 'width 0.3s ease',
@@ -203,11 +202,11 @@ export function SreSidebar({ health, metrics, metroCount, flightCount, lastUpdat
       <div
         style={{
           padding: isCollapsed ? '12px 8px' : '12px 16px',
-          borderBottom: '1px solid #D1D5DB',
+          borderBottom: '1px solid var(--border-light)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: '#F9FAFB',
+          background: 'var(--bg-hover)',
           gap: '8px',
         }}
       >
@@ -217,7 +216,7 @@ export function SreSidebar({ health, metrics, metroCount, flightCount, lastUpdat
               margin: 0,
               fontSize: '14px',
               fontWeight: 600,
-              color: '#2D3748',
+              color: 'var(--text-primary)',
               fontFamily: "'Inter', sans-serif",
               flex: 1,
             }}
@@ -242,6 +241,25 @@ export function SreSidebar({ health, metrics, metroCount, flightCount, lastUpdat
             title="Toggle system logs"
           >
             📋 Logs
+          </button>
+        )}
+        {!isCollapsed && onOpenRunbook && (
+          <button
+            onClick={() => onOpenRunbook('')}
+            style={{
+              background: '#6D28D9',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '6px 12px',
+              fontSize: '12px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: "'Inter', sans-serif",
+            }}
+            title="Open incident runbook"
+          >
+            📖 Runbook
           </button>
         )}
         <button
@@ -337,10 +355,10 @@ export function SreSidebar({ health, metrics, metroCount, flightCount, lastUpdat
             {/* Section 3 - Vehicle Activity */}
             <Section title="Vehicle Activity">
               <div style={{ padding: '8px 0' }}>
-                <div style={{ fontSize: '13px', color: '#2D3748', fontFamily: "'Inter', sans-serif", marginBottom: '4px' }}>
+                <div style={{ fontSize: '13px', color: 'var(--text-primary)', fontFamily: "'Inter', sans-serif", marginBottom: '4px' }}>
                   Metro: {metroCount} buses <span style={{ color: '#0D9488' }}>{metroTrend}</span>
                 </div>
-                <div style={{ fontSize: '13px', color: '#2D3748', fontFamily: "'Inter', sans-serif", marginBottom: '8px' }}>
+                <div style={{ fontSize: '13px', color: 'var(--text-primary)', fontFamily: "'Inter', sans-serif", marginBottom: '8px' }}>
                   Flights: {flightCount} aircraft <span style={{ color: '#D97706' }}>{flightTrend}</span>
                 </div>
                 <VehicleCountChart history={vehicleCountHistory.current} />
@@ -366,34 +384,34 @@ export function SreSidebar({ health, metrics, metroCount, flightCount, lastUpdat
             {/* Control Buttons */}
             {(onTogglePause || onClearData) && (
               <div style={{ padding: '12px', borderTop: '1px solid #E5E7EB', display: 'flex', gap: '8px', flexDirection: 'column' }}>
-                
+
                 {/* Azure Function App Ingestion Suspend */}
-                <div style={{ padding: '8px', background: '#FEE2E2', border: '1px solid #EF4444', borderRadius: '4px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '11px', color: '#B91C1C', fontWeight: 600, marginBottom: '6px' }}>
+                <div style={{ padding: '8px', background: 'var(--bg-active)', border: '1px solid var(--border-light)', borderRadius: '4px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: '6px' }}>
                     Azure Pipeline: {functionStatus}
                   </div>
                   {functionStatus !== 'Stopped' ? (
-                     <button
-                        onClick={() => handleFunctionStatusToggle('stop')}
-                        style={{
-                          background: '#EF4444', color: 'white', border: 'none', borderRadius: '4px',
-                          padding: '6px 12px', fontSize: '11px', fontWeight: 600, cursor: 'pointer',
-                          fontFamily: "'Inter', sans-serif", width: '100%',
-                        }}
-                      >
-                        ■ Suspend Active Ingestion
-                      </button>
+                    <button
+                      onClick={() => handleFunctionStatusToggle('stop')}
+                      style={{
+                        background: '#EF4444', color: 'white', border: 'none', borderRadius: '4px',
+                        padding: '6px 12px', fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+                        fontFamily: "'Inter', sans-serif", width: '100%',
+                      }}
+                    >
+                      ■ Suspend Active Ingestion
+                    </button>
                   ) : (
                     <button
-                        onClick={() => handleFunctionStatusToggle('start')}
-                        style={{
-                          background: '#10B981', color: 'white', border: 'none', borderRadius: '4px',
-                          padding: '6px 12px', fontSize: '11px', fontWeight: 600, cursor: 'pointer',
-                          fontFamily: "'Inter', sans-serif", width: '100%',
-                        }}
-                      >
-                        ▶ Resume Azure Loop
-                      </button>
+                      onClick={() => handleFunctionStatusToggle('start')}
+                      style={{
+                        background: '#10B981', color: 'white', border: 'none', borderRadius: '4px',
+                        padding: '6px 12px', fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+                        fontFamily: "'Inter', sans-serif", width: '100%',
+                      }}
+                    >
+                      ▶ Resume Azure Loop
+                    </button>
                   )}
                 </div>
 
@@ -419,7 +437,7 @@ export function SreSidebar({ health, metrics, metroCount, flightCount, lastUpdat
                         fontFamily: "'Inter', sans-serif",
                       }}
                     >
-                      🗑 Form UI
+                      🗑 Clear Data
                     </button>
                   )}
                 </div>
@@ -456,7 +474,7 @@ function CollapsedView({ health }: { health: HealthStatus | null }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ borderBottom: '1px solid #E5E7EB', padding: '12px 16px' }}>
+    <div style={{ borderBottom: '1px solid var(--border-light)', padding: '12px 16px' }}>
       <h3
         style={{
           margin: '0 0 12px 0',
@@ -517,8 +535,8 @@ function HealthCard({
   return (
     <div
       style={{
-        background: '#F9FAFB',
-        border: '1px solid #E5E7EB',
+        background: 'var(--bg-hover)',
+        border: '1px solid var(--border-light)',
         borderRadius: '6px',
         padding: '10px',
         marginBottom: '8px',
@@ -528,7 +546,7 @@ function HealthCard({
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
         <span style={{ fontSize: '18px' }}>{getStatusIcon()}</span>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: '#2D3748' }}>{title}</div>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{title}</div>
           <div style={{ fontSize: '12px', color: '#6B7280' }}>{getStatusLabel()}</div>
         </div>
       </div>
@@ -592,8 +610,8 @@ function MetricCard({
   return (
     <div
       style={{
-        background: '#F9FAFB',
-        border: '1px solid #E5E7EB',
+        background: 'var(--bg-hover)',
+        border: '1px solid var(--border-light)',
         borderRadius: '6px',
         padding: '10px',
         marginBottom: '8px',
@@ -613,7 +631,7 @@ function MetricCard({
 
 function Sparkline({ data, color, threshold }: { data: number[]; color: string; threshold?: number }) {
   if (data.length < 2) {
-    return <div style={{ height: '40px', background: '#F3F4F6', borderRadius: '4px' }} />;
+    return <div style={{ height: '40px', background: 'var(--bg-active)', borderRadius: '4px' }} />;
   }
 
   const width = 200;
@@ -642,7 +660,7 @@ function Sparkline({ data, color, threshold }: { data: number[]; color: string; 
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
-      
+
       {thresholdY !== null && (
         <line
           x1={padding}
@@ -672,7 +690,7 @@ function Sparkline({ data, color, threshold }: { data: number[]; color: string; 
 
 function VehicleCountChart({ history }: { history: VehicleCountSnapshot[] }) {
   if (history.length < 2) {
-    return <div style={{ height: '80px', background: '#F3F4F6', borderRadius: '4px' }} />;
+    return <div style={{ height: '80px', background: 'var(--bg-active)', borderRadius: '4px' }} />;
   }
 
   const width = 200;
@@ -732,7 +750,7 @@ function SLOBadge({ label, status }: { label: string; status: { label: string; c
   return (
     <div
       style={{
-        background: '#F9FAFB',
+        background: 'var(--bg-hover)',
         border: `2px solid ${status.color}`,
         borderRadius: '6px',
         padding: '8px 10px',

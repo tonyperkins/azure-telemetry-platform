@@ -14,9 +14,16 @@ function getCompassDirection(degrees: number | null): string {
   return directions[index];
 }
 
+/**
+ * Speed display for FLIGHTS only.
+ *
+ * Why not metro? Capital Metro's GTFS-RT feed rarely populates the optional
+ * `speed` field — the protobuf default (0.0) is stored as-is, causing every
+ * bus to show "Stationary" regardless of actual movement. Suppress it for metro
+ * to avoid misleading data. OpenSky velocity for flights IS reliable.
+ */
 function formatSpeed(speedKmh: number | null): string | null {
-  if (speedKmh === null) return null; // No data - suppress display
-  if (speedKmh === 0) return 'Stationary';
+  if (speedKmh === null || speedKmh <= 0) return null;
   const mph = Math.round(speedKmh * 0.621371);
   return `${mph} mph`;
 }
@@ -69,45 +76,63 @@ export function VehiclePopup({ vehicle, isTracked = false, onTrack, onStopTracki
   const routeId = extractRouteId(vehicle);
   const tripId = extractTripId(vehicle);
   const heading = vehicle.heading !== null ? `${Math.round(vehicle.heading)}° ${getCompassDirection(vehicle.heading)}` : 'N/A';
-  const speed = formatSpeed(vehicle.speedKmh);
+  // Speed: only meaningful for flights — metro feed almost never populates it
+  const speed = isMetro ? null : formatSpeed(vehicle.speedKmh);
   const coords = `${vehicle.latitude.toFixed(4)}, ${vehicle.longitude.toFixed(4)}`;
   const mapsUrl = `https://maps.google.com/?q=${vehicle.latitude},${vehicle.longitude}`;
   const verticalRate = formatVerticalRate(vehicle.verticalRateMs);
+  const accentColor = isMetro ? '#0D9488' : '#D97706';
 
   return (
-    <div style={{ fontFamily: "'Inter', sans-serif", width: '280px' }}>
+    <div style={{
+      fontFamily: "'Inter', sans-serif",
+      width: '280px',
+      background: 'var(--bg-base, #ffffff)',
+      color: 'var(--text-primary, #1E293B)',
+      borderRadius: '6px',
+      overflow: 'hidden',
+    }}>
       {/* Header */}
       <div style={{ 
-        background: isMetro ? '#0D9488' : '#D97706',
+        background: accentColor,
         color: 'white',
-        padding: '12px 16px',
-        borderRadius: '6px 6px 0 0',
-        fontWeight: 600,
+        padding: '10px 14px',
+        fontWeight: 700,
         fontSize: '14px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
+        gap: '8px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {isMetro ? '🚌' : '✈️'} {isMetro && routeId ? `Route ${routeId}` : vehicle.label || vehicle.vehicleId}
         </div>
+        {isTracked && (
+          <span style={{
+            fontSize: '10px',
+            fontWeight: 600,
+            background: 'rgba(255,255,255,0.25)',
+            padding: '2px 7px',
+            borderRadius: '999px',
+            letterSpacing: '0.4px',
+          }}>
+            TRACKING
+          </span>
+        )}
       </div>
 
       {/* Data Grid */}
-      <div style={{ fontSize: '12px', lineHeight: '1.8' }}>
+      <div style={{ fontSize: '12px', lineHeight: '1.8', padding: '10px 14px' }}>
         {isMetro ? (
-          // Metro Bus Data
           <>
             <DataRow label="Vehicle ID" value={vehicle.vehicleId} />
             {routeId && <DataRow label="Route" value={routeId} />}
-            {tripId && <DataRow label="Trip ID" value={tripId.length > 16 ? tripId.substring(0, 16) + '...' : tripId} />}
+            {tripId && <DataRow label="Trip ID" value={tripId.length > 16 ? tripId.substring(0, 16) + '…' : tripId} />}
             <DataRow label="Heading" value={heading} />
-            {speed && <DataRow label="Speed" value={speed} />}
             <DataRow label="Last Updated" value={getTimeAgo(vehicle.ingestedAt)} />
             <DataRow label="Coordinates" value={<a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#3B82F6', textDecoration: 'none' }}>{coords}</a>} />
           </>
         ) : (
-          // Flight Data
           <>
             <DataRow label="Callsign" value={vehicle.label || vehicle.vehicleId} />
             <DataRow label="ICAO24" value={vehicle.vehicleId} />
@@ -123,60 +148,60 @@ export function VehiclePopup({ vehicle, isTracked = false, onTrack, onStopTracki
       </div>
 
       {/* Track/Stop Tracking Button */}
-      {isTracked && onStopTracking ? (
-        <button
-          onClick={onStopTracking}
-          style={{
-            width: '100%',
-            padding: '10px',
-            marginTop: '12px',
-            background: '#DC2626',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '13px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-          }}
-        >
-          ✕ Stop Tracking
-        </button>
-      ) : onTrack ? (
-        <button
-          onClick={onTrack}
-          style={{
-            width: '100%',
-            padding: '10px',
-            marginTop: '12px',
-            background: '#2563EB',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '13px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-          }}
-        >
-          📍 Track Vehicle
-        </button>
-      ) : null}
+      <div style={{ padding: '0 14px 12px' }}>
+        {isTracked && onStopTracking ? (
+          <button
+            onClick={onStopTracking}
+            style={{
+              width: '100%',
+              padding: '9px',
+              background: '#DC2626',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+            }}
+          >
+            ✕ Stop Tracking
+          </button>
+        ) : onTrack ? (
+          <button
+            onClick={onTrack}
+            style={{
+              width: '100%',
+              padding: '9px',
+              background: '#2563EB',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+            }}
+          >
+            📍 Track Vehicle
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }
 
 function DataRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '8px', marginBottom: '4px' }}>
-      <span style={{ color: '#64748B', fontWeight: 500 }}>{label}</span>
-      <span style={{ color: '#1E293B', fontFamily: "'Courier New', monospace" }}>{value}</span>
+    <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: '8px', marginBottom: '3px' }}>
+      <span style={{ color: 'var(--text-secondary, #64748B)', fontWeight: 500 }}>{label}</span>
+      <span style={{ color: 'var(--text-primary, #1E293B)', fontFamily: "'Courier New', monospace", fontSize: '11px' }}>{value}</span>
     </div>
   );
 }

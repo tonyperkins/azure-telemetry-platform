@@ -35,6 +35,10 @@ interface MapControlsProps {
 
   // Config-level disable flags
   flightConfigDisabled?: boolean;
+
+  // Map Theme
+  mapStyle: 'light' | 'dark' | 'streets';
+  onMapStyleChange: (style: 'light' | 'dark' | 'streets') => void;
 }
 
 export function MapControls({
@@ -60,6 +64,8 @@ export function MapControls({
   onToggleClustering,
   onResetAll,
   flightConfigDisabled = false,
+  mapStyle,
+  onMapStyleChange,
 }: MapControlsProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [routeSearch, setRouteSearch] = useState('');
@@ -136,11 +142,11 @@ export function MapControls({
     <div
       style={{
         position: 'absolute',
-        top: '120px',
+        top: '128px',
         left: '10px',
         zIndex: 1000,
-        background: '#FFFFFF',
-        border: '2px solid #60A5FA',
+        background: 'var(--bg-base)',
+        border: '2px solid var(--primary-color, #3B82F6)',
         borderRadius: '8px',
         boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
         width: '280px',
@@ -152,8 +158,8 @@ export function MapControls({
         onClick={() => setIsExpanded(!isExpanded)}
         style={{
           padding: '12px 16px',
-          background: '#F8FAFC',
-          borderBottom: isExpanded ? '1px solid #E2E8F0' : 'none',
+          background: 'var(--bg-hover)',
+          borderBottom: isExpanded ? '1px solid var(--border-light)' : 'none',
           borderTopLeftRadius: '6px',
           borderTopRightRadius: '6px',
           display: 'flex',
@@ -165,11 +171,11 @@ export function MapControls({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '16px' }}>🗂</span>
-          <span style={{ fontWeight: 600, fontSize: '14px', color: '#1E293B' }}>
+          <span style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>
             Map Controls
           </span>
         </div>
-        <span style={{ fontSize: '12px', color: '#64748B' }}>
+        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
           {isExpanded ? '▼' : '▲'}
         </span>
       </div>
@@ -179,7 +185,7 @@ export function MapControls({
         <div style={{ padding: '16px' }}>
           {/* Section 1: Data Sources */}
           <div style={{ marginBottom: '20px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Data Sources
             </div>
             
@@ -191,20 +197,20 @@ export function MapControls({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '10px 12px',
-                background: '#F8FAFC',
+                background: 'var(--bg-hover)',
                 borderRadius: '6px',
                 marginBottom: '8px',
                 cursor: 'pointer',
-                border: '1px solid #E2E8F0',
+                border: '1px solid var(--border-light)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
                 <span style={{ fontSize: '18px' }}>🚌</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '13px', fontWeight: 500, color: '#1E293B' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)' }}>
                     Metro Buses
                   </div>
-                  <div style={{ fontSize: '11px', color: '#64748B' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
                     {metroEnabled ? `${metroCount} buses active` : 'Hidden'}
                   </div>
                 </div>
@@ -213,7 +219,7 @@ export function MapControls({
                 style={{
                   width: '44px',
                   height: '24px',
-                  background: metroEnabled ? '#10B981' : '#CBD5E0',
+                  background: metroEnabled ? '#10B981' : 'var(--border-main)',
                   borderRadius: '12px',
                   position: 'relative',
                   transition: 'background 0.2s',
@@ -248,24 +254,24 @@ export function MapControls({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '10px 12px',
-                background: flightConfigDisabled ? '#F1F5F9' : '#F8FAFC',
+                background: flightConfigDisabled ? 'var(--bg-active)' : 'var(--bg-hover)',
                 borderRadius: '6px',
                 cursor: flightConfigDisabled ? 'not-allowed' : 'pointer',
-                border: flightConfigDisabled ? '1px dashed #CBD5E0' : '1px solid #E2E8F0',
+                border: flightConfigDisabled ? '1px dashed var(--border-main)' : '1px solid var(--border-light)',
                 opacity: flightConfigDisabled ? 0.6 : 1,
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
                 <span style={{ fontSize: '18px' }}>✈</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '13px', fontWeight: 500, color: flightConfigDisabled ? '#94A3B8' : '#1E293B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 500, color: flightConfigDisabled ? 'var(--text-muted)' : 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     Flights
                     {flightConfigDisabled && (
                       <span style={{
                         fontSize: '9px',
                         fontWeight: 700,
-                        background: '#E2E8F0',
-                        color: '#64748B',
+                        background: 'var(--border-light)',
+                        color: 'var(--text-secondary)',
                         borderRadius: '3px',
                         padding: '1px 5px',
                         letterSpacing: '0.4px',
@@ -275,7 +281,7 @@ export function MapControls({
                       </span>
                     )}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#94A3B8' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                     {flightConfigDisabled
                       ? 'Ingestion paused via ENABLE_FLIGHT_INGESTION'
                       : flightEnabled
@@ -288,7 +294,7 @@ export function MapControls({
                 style={{
                   width: '44px',
                   height: '24px',
-                  background: flightEnabled ? '#10B981' : '#CBD5E0',
+                  background: flightEnabled ? '#10B981' : 'var(--border-main)',
                   borderRadius: '12px',
                   position: 'relative',
                   transition: 'background 0.2s',
@@ -298,7 +304,7 @@ export function MapControls({
                   style={{
                     width: '20px',
                     height: '20px',
-                    background: flightConfigDisabled ? '#94A3B8' : 'white',
+                    background: flightConfigDisabled ? 'var(--text-muted)' : 'white',
                     borderRadius: '50%',
                     position: 'absolute',
                     top: '2px',
@@ -313,16 +319,16 @@ export function MapControls({
 
           {/* Section 2: Map Layers */}
           <div style={{ marginBottom: '20px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Map Layers
             </div>
             
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer', fontSize: '13px', color: '#1E293B' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }}>
               <input type="checkbox" checked={showBusStops} onChange={onToggleBusStops} />
               Bus Stops
             </label>
             
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer', fontSize: '13px', color: '#1E293B' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }}>
               <input type="checkbox" checked={showBusRoutes} onChange={onToggleBusRoutes} />
               Bus Routes
             </label>
@@ -334,7 +340,7 @@ export function MapControls({
                 gap: '8px',
                 cursor: flightConfigDisabled ? 'not-allowed' : 'pointer',
                 fontSize: '13px',
-                color: flightConfigDisabled ? '#94A3B8' : '#1E293B',
+                color: flightConfigDisabled ? 'var(--text-muted)' : 'var(--text-primary)',
                 opacity: flightConfigDisabled ? 0.5 : 1,
               }}
               title={flightConfigDisabled ? 'Flight ingestion is disabled in configuration' : undefined}
@@ -347,14 +353,14 @@ export function MapControls({
               />
               Flight Paths
               {flightConfigDisabled && (
-                <span style={{ fontSize: '10px', color: '#94A3B8' }}>(config disabled)</span>
+                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>(config disabled)</span>
               )}
             </label>
           </div>
 
           {/* Section 3: Route Filter */}
           <div style={{ marginBottom: '20px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Route Filter
             </div>
             
@@ -368,7 +374,7 @@ export function MapControls({
                 style={{
                   width: '100%',
                   padding: '8px 28px 8px 10px',
-                  border: '1px solid #E2E8F0',
+                  border: '1px solid var(--border-light)',
                   borderRadius: '6px',
                   fontSize: '12px',
                   fontFamily: "'Inter', sans-serif",
@@ -385,7 +391,7 @@ export function MapControls({
                     transform: 'translateY(-50%)',
                     background: 'transparent',
                     border: 'none',
-                    color: '#94A3B8',
+                    color: 'var(--text-muted)',
                     cursor: 'pointer',
                     fontSize: '14px',
                     padding: '0 4px',
@@ -403,12 +409,12 @@ export function MapControls({
                 style={{
                   flex: 1,
                   padding: '6px',
-                  background: '#F1F5F9',
-                  border: '1px solid #E2E8F0',
+                  background: 'var(--bg-active)',
+                  border: '1px solid var(--border-light)',
                   borderRadius: '4px',
                   fontSize: '11px',
                   fontWeight: 500,
-                  color: '#475569',
+                  color: 'var(--text-secondary)',
                   cursor: 'pointer',
                 }}
               >
@@ -419,12 +425,12 @@ export function MapControls({
                 style={{
                   flex: 1,
                   padding: '6px',
-                  background: '#F1F5F9',
-                  border: '1px solid #E2E8F0',
+                  background: 'var(--bg-active)',
+                  border: '1px solid var(--border-light)',
                   borderRadius: '4px',
                   fontSize: '11px',
                   fontWeight: 500,
-                  color: '#475569',
+                  color: 'var(--text-secondary)',
                   cursor: 'pointer',
                 }}
               >
@@ -437,14 +443,14 @@ export function MapControls({
               style={{
                 maxHeight: '200px',
                 overflowY: 'auto',
-                border: '1px solid #E2E8F0',
+                border: '1px solid var(--border-light)',
                 borderRadius: '6px',
                 padding: '8px',
-                background: '#FAFAFA',
+                background: 'var(--bg-panel)',
               }}
             >
               {filteredRoutes.length === 0 ? (
-                <div style={{ fontSize: '12px', color: '#94A3B8', textAlign: 'center', padding: '12px' }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', padding: '12px' }}>
                   {routeSearch ? 'No routes match search' : 'No active routes'}
                 </div>
               ) : (
@@ -459,7 +465,7 @@ export function MapControls({
                       cursor: 'pointer',
                       borderRadius: '4px',
                       marginBottom: '4px',
-                      background: isRouteVisible(routeId) ? 'white' : '#F1F5F9',
+                      background: isRouteVisible(routeId) ? 'var(--bg-base)' : 'var(--bg-active)',
                       opacity: isRouteVisible(routeId) ? 1 : 0.6,
                     }}
                   >
@@ -468,15 +474,15 @@ export function MapControls({
                       checked={isRouteVisible(routeId)}
                       onChange={() => handleToggleRoute(routeId)}
                     />
-                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#1E293B', flex: 1 }}>
+                    <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-primary)', flex: 1 }}>
                       Route {routeId}
                     </span>
                     <span
                       style={{
                         fontSize: '10px',
                         fontWeight: 600,
-                        color: '#64748B',
-                        background: '#E2E8F0',
+                        color: 'var(--text-secondary)',
+                        background: 'var(--border-light)',
                         padding: '2px 6px',
                         borderRadius: '10px',
                       }}
@@ -491,19 +497,61 @@ export function MapControls({
 
           {/* Section 4: Display Options */}
           <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Display
             </div>
             
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer', fontSize: '13px', color: '#1E293B' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }}>
               <input type="checkbox" checked={showVehicleLabels} onChange={onToggleVehicleLabels} />
               Show Vehicle Labels
             </label>
             
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#1E293B' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }}>
               <input type="checkbox" checked={enableClustering} onChange={onToggleClustering} />
               Cluster at Low Zoom
             </label>
+          </div>
+
+          {/* Section 5: Map Theme */}
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Map Theme
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {(['light', 'dark', 'streets'] as const).map(style => {
+                const config = {
+                  light: { label: 'Light', icon: '☀' },
+                  dark: { label: 'Dark', icon: '🌙' },
+                  streets: { label: 'Streets', icon: '🗺' },
+                }[style];
+                const isActive = mapStyle === style;
+                return (
+                  <button
+                    key={style}
+                    onClick={() => onMapStyleChange(style)}
+                    title={config.label}
+                    style={{
+                      flex: 1,
+                      padding: '6px',
+                      background: isActive ? '#3B82F6' : 'var(--bg-active)',
+                      color: isActive ? 'white' : 'var(--text-secondary)',
+                      border: '1px solid',
+                      borderColor: isActive ? '#3B82F6' : 'var(--border-light)',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <span style={{ fontSize: '14px' }}>{config.icon}</span>
+                    <span style={{ fontSize: '11px', fontWeight: 500 }}>{config.label}</span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           {/* Reset All Button */}
@@ -513,21 +561,21 @@ export function MapControls({
               width: '100%',
               padding: '10px',
               background: 'transparent',
-              border: '1px solid #CBD5E0',
+              border: '1px solid var(--border-main)',
               borderRadius: '6px',
               fontSize: '12px',
               fontWeight: 500,
-              color: '#64748B',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
               transition: 'all 0.2s',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#F1F5F9';
-              e.currentTarget.style.borderColor = '#94A3B8';
+              e.currentTarget.style.background = 'var(--bg-active)';
+              e.currentTarget.style.borderColor = 'var(--text-muted)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.borderColor = '#CBD5E0';
+              e.currentTarget.style.borderColor = 'var(--border-main)';
             }}
           >
             Reset All
