@@ -49,11 +49,11 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Pre-flight Credentials Check
-        if: env.AZURE_CREDENTIALS == '' && secrets.AZURE_CREDENTIALS == ''
         run: |
-          echo "::error::AZURE_CREDENTIALS secret is missing! Deployment cannot proceed."
-          exit 1
-
+          if [ -z "${{ secrets.AZURE_CREDENTIALS }}" ]; then
+            echo "::error::AZURE_CREDENTIALS secret is missing! Deployment cannot proceed."
+            exit 1
+          fi
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -244,7 +244,7 @@ jobs:
   deployment-summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
-    needs: [ deploy-api, deploy-functions, deploy-dashboard ]
+    needs: [ terraform, deploy-api, deploy-functions, deploy-dashboard ]
     if: always()
 
     steps:
@@ -254,7 +254,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| Terraform | ${{ needs.deploy-api.result == 'success' && '✅ Applied' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Terraform | ${{ needs.terraform.result == 'success' && '✅ Applied' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| TelemetryApi | ${{ needs.deploy-api.result == 'success' && '✅ Deployed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Azure Functions | ${{ needs.deploy-functions.result == 'success' && '✅ Deployed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Dashboard | ${{ needs.deploy-dashboard.result == 'success' && '✅ Deployed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
