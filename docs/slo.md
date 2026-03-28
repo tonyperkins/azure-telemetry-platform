@@ -10,7 +10,7 @@
 
 This document defines the Service Level Indicators (SLIs) and Service Level Objectives (SLOs) for the Azure Telemetry Platform. SLOs are internal reliability targets — not contractual SLAs. They exist to drive engineering prioritization: when an SLO is at risk, reliability work takes precedence over feature work.
 
-Each SLO is measured over a **30-day rolling window**. The SRE Operations Dashboard (Azure Portal → App Insights → Workbooks) tracks burn rate in real time.
+Each SLO is measured over a **30-day rolling window**. The [SRE Operations Dashboard](https://portal.azure.com/#view/Microsoft_Azure_Monitoring/Workbook.ReactView/id/%2Fsubscriptions%2F780f4576-d4f2-4959-a6a9-0c61fd12b7ca%2FresourceGroups%2Frg-telemetry-atp-prod%2Fproviders%2FMicrosoft.Insights%2Fworkbooks%2F50cede7b-4742-57bd-e2bf-dc2cfa12160a) (Azure Portal → App Insights → Workbooks) tracks burn rate in real time.
 
 ---
 
@@ -132,6 +132,6 @@ These are improvements that would increase reliability beyond the current SLO ta
 
 SLO compliance is tracked in three places:
 
-1. **SRE Operations Dashboard** (Azure Workbook) — real-time burn rate, updated automatically.
+1. **[SRE Operations Dashboard](https://portal.azure.com/#view/Microsoft_Azure_Monitoring/Workbook.ReactView/id/%2Fsubscriptions%2F780f4576-d4f2-4959-a6a9-0c61fd12b7ca%2FresourceGroups%2Frg-telemetry-atp-prod%2Fproviders%2FMicrosoft.Insights%2Fworkbooks%2F50cede7b-4742-57bd-e2bf-dc2cfa12160a)** (Azure Workbook) — real-time burn rate, updated automatically.
 2. **Monthly SRE report** — manually compiled from KQL queries above. Includes burn rate trend, incidents that consumed budget, and action items.
 3. **Postmortem action items** — every incident that consumes error budget generates tracked action items (see `docs/postmortem-template.md`).
