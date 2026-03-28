@@ -63,6 +63,15 @@ sequenceDiagram
 
 **SLO:** `/api/health` returns HTTP 200 with `status: "healthy"` for ≥99% of minutes in a 30-day rolling window.
 
+### Azure Portal Quick Links
+
+*(Pro-tip: Replace `YOUR_SUBSCRIPTION_ID` in the URL if linking fails directly)*
+
+- 📊 **[App Insights Failures Blade](https://portal.azure.com/#view/AppInsightsExtension/FailuresV2Blade/ComponentId/%7B"Name"%3A"appi-telemetry-prod"%2C"SubscriptionId"%3A"YOUR_SUBSCRIPTION_ID"%2C"ResourceGroup"%3A"rg-telemetry-prod"%7D)** — View exceptions and HTTP 5xx stack traces
+- 📈 **[Log Analytics Logs](https://portal.azure.com/#view/Microsoft_OperationsManagementSuite_Workspace/Logs.ReactView/resourceId/%2Fsubscriptions%2FYOUR_SUBSCRIPTION_ID%2FresourceGroups%2Frg-telemetry-prod%2Fproviders%2FMicrosoft.OperationalInsights%2Fworkspaces%2Flaw-telemetry-prod)** — Run custom KQL metrics queries
+- 🔔 **[Alert Rules Manager](https://portal.azure.com/#view/Microsoft_Azure_Monitoring/AlertsManagementBlade)** — Check active fired alerts
+- ☁️ **[Azure SQL Performance](https://portal.azure.com/#view/Microsoft_Azure_Sql/DatabaseQueryPerformanceBlade/resourceId/%2Fsubscriptions%2FYOUR_SUBSCRIPTION_ID%2FresourceGroups%2Frg-telemetry-prod%2Fproviders%2FMicrosoft.Sql%2Fservers%2Fsql-telemetry-prod%2Fdatabases%2FTelemetryDb)** — View DTU/vCore utilization
+
 ---
 
 ## 2. Health Checks

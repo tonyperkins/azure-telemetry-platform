@@ -208,6 +208,12 @@ Push to `main` → CI workflow runs tests → deploy workflow deploys all three 
 
 ## Monitoring & Alerting
 
+### Azure Portal Quick Links
+*(Replace `YOUR_SUBSCRIPTION_ID` in the URLs below)*
+- 📊 **[App Insights Failures Blade](https://portal.azure.com/#view/AppInsightsExtension/FailuresV2Blade/ComponentId/%7B"Name"%3A"appi-telemetry-prod"%2C"SubscriptionId"%3A"YOUR_SUBSCRIPTION_ID"%2C"ResourceGroup"%3A"rg-telemetry-prod"%7D)** 
+- 📈 **[Log Analytics Logs](https://portal.azure.com/#view/Microsoft_OperationsManagementSuite_Workspace/Logs.ReactView/resourceId/%2Fsubscriptions%2FYOUR_SUBSCRIPTION_ID%2FresourceGroups%2Frg-telemetry-prod%2Fproviders%2FMicrosoft.OperationalInsights%2Fworkspaces%2Flaw-telemetry-prod)**
+- 🔔 **[Alert Rules Manager](https://portal.azure.com/#view/Microsoft_Azure_Monitoring/AlertsManagementBlade)**
+
 Three alert rules fire on business-level failures (not just exceptions):
 
 | Alert | Condition | Severity |
