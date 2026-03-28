@@ -60,7 +60,7 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
           version = "KqlParameterItem/1.0"
           parameters = [
             {
-              id         = "time_range"
+              id         = "TimeRange"
               version    = "KqlParameterItem/1.0"
               name       = "TimeRange"
               type       = 4
