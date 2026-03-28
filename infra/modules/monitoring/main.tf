@@ -50,71 +50,47 @@ resource "azurerm_monitor_action_group" "email" {
 }
 
 # ---------------------------------------------------------------------------
-# Alert 1: Metro feed stale
-# Fires if vehicles_ingested{source=metro} count = 0 for 3 evaluation periods
-# SRE: This catches the "Function ran but returned no data" scenario that
-# exception-based alerting would miss entirely.
+# SRE: Data Staleness Alert (KQL-based)
+#
+# Fires if 'vehicles_ingested_zero' count > 2 for any source (metro or flight)
+# in a 5-minute window.
+#
+# Why KQL? Metric Alerts fail if the metric name hasn't been emitted yet.
+# KQL queries are robust against empty datasets, ensuring first-time 
+# deployments aren't blocked by "Metric not found" errors.
 # ---------------------------------------------------------------------------
-resource "azurerm_monitor_metric_alert" "metro_feed_stale" {
-  name                = "alert-metro-feed-stale-${var.environment}"
+resource "azurerm_monitor_scheduled_query_rules_alert_v2" "data_staleness" {
+  name                = "alert-data-staleness-${var.environment}"
   resource_group_name = var.resource_group_name
+  location            = var.location
   scopes              = [azurerm_application_insights.main.id]
-  description         = "Metro GTFS-RT feed has returned 0 vehicles for 3 consecutive 30-second polls."
   severity            = 2
-  frequency           = "PT1M"
-  window_size         = "PT5M"
+  window_duration     = "PT5M"
+  evaluation_frequency = "PT1M"
+  description         = "A data source (metro or flight) has reported 0 vehicles for 3 consecutive polls."
 
   criteria {
-    metric_namespace       = "microsoft.insights/components"
-    metric_name            = "customMetrics/vehicles_ingested_zero"
-    aggregation            = "Count"
-    operator               = "GreaterThan"
-    threshold              = 2
-    skip_metric_validation = true
+    query                   = <<-KQL
+      customMetrics
+      | where name == "vehicles_ingested_zero"
+      | summarize Count = count() by Source = tostring(customDimensions["source"])
+    KQL
+    time_aggregation_method = "Count"
+    threshold               = 2
+    operator                = "GreaterThan"
+
+    resource_id_column    = "_ResourceId"
+    metric_measure_column = "Count"
 
     dimension {
-      name     = "source"
+      name     = "Source"
       operator = "Include"
-      values   = ["metro"]
+      values   = ["*"]
     }
   }
 
   action {
-    action_group_id = azurerm_monitor_action_group.email.id
-  }
-
-  tags = var.tags
-}
-
-# ---------------------------------------------------------------------------
-# Alert 2: Flight feed stale
-# ---------------------------------------------------------------------------
-resource "azurerm_monitor_metric_alert" "flight_feed_stale" {
-  name                = "alert-flight-feed-stale-${var.environment}"
-  resource_group_name = var.resource_group_name
-  scopes              = [azurerm_application_insights.main.id]
-  description         = "OpenSky flight feed has returned 0 airborne aircraft for 3 consecutive 60-second polls."
-  severity            = 2
-  frequency           = "PT1M"
-  window_size         = "PT5M"
-
-  criteria {
-    metric_namespace       = "microsoft.insights/components"
-    metric_name            = "customMetrics/vehicles_ingested_zero"
-    aggregation            = "Count"
-    operator               = "GreaterThan"
-    threshold              = 2
-    skip_metric_validation = true
-
-    dimension {
-      name     = "source"
-      operator = "Include"
-      values   = ["flight"]
-    }
-  }
-
-  action {
-    action_group_id = azurerm_monitor_action_group.email.id
+    action_groups = [azurerm_monitor_action_group.email.id]
   }
 
   tags = var.tags
