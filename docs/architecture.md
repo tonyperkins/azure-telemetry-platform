@@ -10,7 +10,7 @@ flowchart TD
     end
 
     %% Azure Core Ingestion Layer (Function App)
-    subgraph Azure Functions (Consumption)
+    subgraph Functions ["Azure Functions (Consumption)"]
         MI[Metro Ingestion Timer]
         FI[Flight Ingestion Timer]
         RC[Retention Cleanup Timer]
@@ -23,7 +23,7 @@ flowchart TD
     end
 
     %% Backend API & Operations (App Service)
-    subgraph App Service (B1)
+    subgraph AppService ["App Service (B1)"]
         API[Telemetry API .NET 8]
         ARM[Azure Management SDK]
     end
