@@ -65,15 +65,7 @@ jobs:
 
       - name: Publish Functions artifact
         run: >
-          dotnet publish src/MetroIngestion/MetroIngestion.csproj
-          --no-build
-          --configuration Release
-          --output ./artifacts/Functions &&
-          dotnet publish src/FlightIngestion/FlightIngestion.csproj
-          --no-build
-          --configuration Release
-          --output ./artifacts/Functions &&
-          dotnet publish src/RetentionCleanup/RetentionCleanup.csproj
+          dotnet publish src/TelemetryFunctions/TelemetryFunctions.csproj
           --no-build
           --configuration Release
           --output ./artifacts/Functions

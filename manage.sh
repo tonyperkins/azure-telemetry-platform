@@ -5,8 +5,8 @@
 set -e
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-METRO_DIR="$PROJECT_ROOT/src/MetroIngestion"
-FLIGHT_DIR="$PROJECT_ROOT/src/FlightIngestion"
+METRO_DIR="$PROJECT_ROOT/src/TelemetryFunctions"
+FLIGHT_DIR="$PROJECT_ROOT/src/TelemetryFunctions"
 API_DIR="$PROJECT_ROOT/src/TelemetryApi"
 DASHBOARD_DIR="$PROJECT_ROOT/dashboard"
 
@@ -79,32 +79,32 @@ stop_service() {
     fi
 }
 
-# Start MetroIngestion
+# Start TelemetryFunctions
 start_metro() {
     if is_running "metro"; then
-        log_warn "MetroIngestion is already running"
+        log_warn "TelemetryFunctions is already running"
         return
     fi
     
-    log_info "Starting MetroIngestion..."
+    log_info "Starting TelemetryFunctions..."
     cd "$METRO_DIR"
     nohup func start --port 7071 > "$LOG_DIR/metro.log" 2>&1 &
     echo $! > "$PID_DIR/metro.pid"
-    log_success "MetroIngestion started (PID: $!)"
+    log_success "TelemetryFunctions started (PID: $!)"
 }
 
-# Start FlightIngestion
+# Start TelemetryFunctions
 start_flight() {
     if is_running "flight"; then
-        log_warn "FlightIngestion is already running"
+        log_warn "TelemetryFunctions is already running"
         return
     fi
     
-    log_info "Starting FlightIngestion..."
+    log_info "Starting TelemetryFunctions..."
     cd "$FLIGHT_DIR"
     nohup func start --port 7072 > "$LOG_DIR/flight.log" 2>&1 &
     echo $! > "$PID_DIR/flight.pid"
-    log_success "FlightIngestion started (PID: $!)"
+    log_success "TelemetryFunctions started (PID: $!)"
 }
 
 # Start TelemetryApi
@@ -137,10 +137,10 @@ start_dashboard() {
 
 # Build all services
 build_all() {
-    log_info "Building MetroIngestion..."
+    log_info "Building TelemetryFunctions..."
     cd "$METRO_DIR" && dotnet build
     
-    log_info "Building FlightIngestion..."
+    log_info "Building TelemetryFunctions..."
     cd "$FLIGHT_DIR" && dotnet build
     
     log_info "Building TelemetryApi..."
@@ -178,8 +178,8 @@ kill_all_orphans() {
     
     # SRE: Use pkill with full command line matching to target only our project
     # This is safer than killing all 'dotnet' or 'npm' processes on the host.
-    pkill -f "MetroIngestion.dll" || true
-    pkill -f "FlightIngestion.dll" || true
+    pkill -f "TelemetryFunctions.dll" || true
+    pkill -f "TelemetryFunctions.dll" || true
     pkill -f "TelemetryApi.dll" || true
     pkill -f "vite" || true
     pkill -f "func start" || true
@@ -217,15 +217,15 @@ status_all() {
     echo "=== Service Status ==="
     
     if is_running "metro"; then
-        echo -e "${GREEN}✓${NC} MetroIngestion    (PID: $(cat $PID_DIR/metro.pid))"
+        echo -e "${GREEN}✓${NC} TelemetryFunctions    (PID: $(cat $PID_DIR/metro.pid))"
     else
-        echo -e "${RED}✗${NC} MetroIngestion    (stopped)"
+        echo -e "${RED}✗${NC} TelemetryFunctions    (stopped)"
     fi
     
     if is_running "flight"; then
-        echo -e "${GREEN}✓${NC} FlightIngestion   (PID: $(cat $PID_DIR/flight.pid))"
+        echo -e "${GREEN}✓${NC} TelemetryFunctions   (PID: $(cat $PID_DIR/flight.pid))"
     else
-        echo -e "${RED}✗${NC} FlightIngestion   (stopped)"
+        echo -e "${RED}✗${NC} TelemetryFunctions   (stopped)"
     fi
     
     if is_running "api"; then
@@ -316,16 +316,16 @@ case "${1:-}" in
         echo "  logs [service]     Tail logs for a specific service"
         echo ""
         echo "Services:"
-        echo "  metro              MetroIngestion Function"
-        echo "  flight             FlightIngestion Function"
+        echo "  metro              TelemetryFunctions Function"
+        echo "  flight             TelemetryFunctions Function"
         echo "  api                TelemetryApi"
         echo "  dashboard          React Dashboard"
         echo ""
         echo "Examples:"
         echo "  $0 start           # Start all services"
-        echo "  $0 stop metro      # Stop only MetroIngestion"
+        echo "  $0 stop metro      # Stop only TelemetryFunctions"
         echo "  $0 restart         # Rebuild and restart everything"
-        echo "  $0 logs flight     # View FlightIngestion logs"
+        echo "  $0 logs flight     # View TelemetryFunctions logs"
         echo "  $0 status          # Check what's running"
         exit 1
         ;;

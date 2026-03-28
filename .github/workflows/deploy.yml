@@ -176,11 +176,9 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Publish all Function projects into one output
+      - name: Publish Function project
         run: |
-          dotnet publish src/MetroIngestion/MetroIngestion.csproj   --configuration Release --output ./publish/functions
-          dotnet publish src/FlightIngestion/FlightIngestion.csproj --configuration Release --output ./publish/functions
-          dotnet publish src/RetentionCleanup/RetentionCleanup.csproj --configuration Release --output ./publish/functions
+          dotnet publish src/TelemetryFunctions/TelemetryFunctions.csproj --configuration Release --output ./publish/functions
         # working-directory: . (removed prefix)
 
       - name: Login to Azure
