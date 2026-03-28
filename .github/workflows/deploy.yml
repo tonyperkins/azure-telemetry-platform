@@ -121,7 +121,7 @@ jobs:
           echo "sql_connection_string=$SQL_CONN" >> $GITHUB_OUTPUT
           
       - name: Initialize Database Schema
-        uses: azure/sql-action@v2.3
+        uses: azure/sql-action@v2
         with:
           connection-string: ${{ steps.tf-outputs.outputs.sql_connection_string }}
           path: './scripts/init-schema.sql'
@@ -205,7 +205,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Function App
-        uses: azure/functions-action@v1
+        uses: azure/functions-action@v1.5.1
         with:
           app-name: ${{ needs.terraform.outputs.function_app_name }}
           package: publish/functions

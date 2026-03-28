@@ -147,7 +147,7 @@ public sealed class ProtobufMetroFeedService
 
             var vehicle = new MetroVehicle
             {
-                VehicleId = vp.vehicle?.id ?? entity.id,
+                VehicleId = vp.vehicle?.id ?? entity.id ?? "unknown",
                 TripId    = vp.trip?.trip_id,
                 RouteId   = vp.trip?.route_id,
                 Latitude  = pos.latitude,
