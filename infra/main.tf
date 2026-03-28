@@ -46,6 +46,10 @@ provider "azurerm" {
 # SRE: Using a fixed suffix (not timestamp) means names are deterministic
 # after first apply — resources can be referenced by name in runbooks.
 # ---------------------------------------------------------------------------
+
+data "azurerm_client_config" "current" {}
+data "azurerm_subscription" "current" {}
+
 resource "random_id" "suffix" {
   byte_length = 4 # 8 hex chars
 }
@@ -145,6 +149,11 @@ module "appservice" {
   app_insights_api_key          = module.monitoring.app_insights_api_key
   metro_feed_url                = var.metro_feed_url
   allowed_origins               = "https://${module.staticweb.default_host_name}"
+
+  # Management Endpoints
+  subscription_id        = data.azurerm_subscription.current.subscription_id
+  function_app_name      = "func-telemetry-${var.environment}"
+  management_admin_token = var.management_admin_token
 }
 
 # ---------------------------------------------------------------------------

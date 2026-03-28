@@ -1,4 +1,33 @@
-# Operations Runbook — Azure Telemetry Platform
+# Operations Runbook — Azure Telemetry Platform — SRE Runbook
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor SRE
+    participant DASH as React Dashboard
+    participant API as Telemetry API
+    participant SQL as Azure SQL DB
+    participant FUNC as Function App
+    participant EXTERNAL as Upstream (GTFS/OpenSky)
+
+    Note over SRE,EXTERNAL: Diagnostic Flow for "0 Vehicles" Error
+    
+    SRE->>DASH: Notices degraded health indicator
+    DASH->>API: GET /api/health returns non-200
+    SRE->>API: Checks /api/logs/api 
+    API-->>SRE: Identifies exception in DB connection
+    
+    SRE->>SQL: Checks DTU/vCore metrics in Portal
+    SQL-->>SRE: SQL Server is maxed out / Resuming
+    
+    SRE->>FUNC: Retrieves internal logs
+    FUNC->>EXTERNAL: Checks upstream API (HTTP 403 / 500)
+    EXTERNAL-->>FUNC: Connection restored
+
+    SRE->>DASH: Clicks "Resume Azure Loop"
+    DASH->>API: POST /api/manage/start
+    API->>FUNC: SDK issues StartAsync()
+```
 
 **Last updated:** 2025-01  
 **Owner:** Platform SRE  
@@ -61,7 +90,14 @@ az sql db show \
   --query "status"
 ```
 
-### KQL queries (Application Insights → Logs)
+### KQL queries (Application Insights -> Logs)
+
+Application Insights provides rich custom telemetry covering exactly what cloud components failed. If the React Dashboard UI cannot pull logs via the formal Rest API, simply view Azure Portal:
+
+```bash
+az functionapp stop --name func-telemetry-prod --resource-group rg-telemetry-prod
+# Allows Azure Serverless SQL General Purpose compute instances to auto-pause saving 90% of local costs overnight!
+```
 
 **Vehicle ingestion rate by source (last 30 min):**
 ```kql

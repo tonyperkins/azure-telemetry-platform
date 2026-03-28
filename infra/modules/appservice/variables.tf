@@ -46,3 +46,7 @@ variable "app_insights_api_key" {
   sensitive   = true
   description = "The read-only Application Insights API Key."
 }
+
+variable "subscription_id" { type = string }
+variable "function_app_name" { type = string }
+variable "management_admin_token" { type = string, sensitive = true }

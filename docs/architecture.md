@@ -1,4 +1,63 @@
 # Architecture Decision Records
+## System Overview Diagram
+
+```mermaid
+flowchart TD
+    %% External Data Sources
+    subgraph Data Sources
+        CM[Capital Metro\nGTFS-RT Protobuf]
+        OS[OpenSky Network\nREST API]
+    end
+
+    %% Azure Core Ingestion Layer (Function App)
+    subgraph Azure Functions (Consumption)
+        MI[Metro Ingestion Timer]
+        FI[Flight Ingestion Timer]
+        RC[Retention Cleanup Timer]
+    end
+
+    %% Database Layer
+    subgraph Storage
+        SQL[(Azure SQL Serverless)]
+        KV[[Azure Key Vault]]
+    end
+
+    %% Backend API & Operations (App Service)
+    subgraph App Service (B1)
+        API[Telemetry API .NET 8]
+        ARM[Azure Management SDK]
+    end
+
+    %% Frontiers
+    subgraph Frontend Client
+        DASH[React Dashboard WebApp]
+    end
+
+    %% Data Flow Pathways
+    CM -.->|30s Poll| MI
+    OS -.->|60s Poll| FI
+    
+    MI -->|SqlBulkCopy Upsert| SQL
+    FI -->|SqlBulkCopy Upsert| SQL
+    RC -->|DELETE < 6hrs| SQL
+    
+    API -->|SELECT Vehicle State| SQL
+    API --- ARM
+    DASH ==>|HTTP GET| API
+    DASH -.->|HTTP POST start/stop| ARM
+    
+    KV -.->|Secrets injected at runtime| MI
+    KV -.->|Secrets injected at runtime| FI
+    KV -.->|Connection Strings| API
+
+    classDef external fill:#f96,stroke:#333,stroke-width:2px;
+    classDef azure fill:#4285F4,stroke:#fff,stroke-width:2px,color:#fff;
+    classDef storage fill:#34A853,stroke:#fff,stroke-width:2px,color:#fff;
+    
+    class CM,OS external;
+    class MI,FI,RC,API,ARM azure;
+    class SQL,KV storage;
+```
 
 ## ADR-001: Azure SQL Serverless over Provisioned Compute
 

@@ -56,6 +56,12 @@ resource "azurerm_windows_web_app" "main" {
     "LogAnalyticsWorkspaceId"              = var.log_analytics_workspace_id
     "AppInsights__AppId"                   = var.app_insights_app_id
     "AppInsights__ApiKey"                  = var.app_insights_api_key
+
+    # Management endpoints for SRE start/stop
+    "AZURE_SUBSCRIPTION_ID"     = var.subscription_id
+    "AZURE_RESOURCE_GROUP"      = var.resource_group_name
+    "AZURE_FUNCTION_APP_NAME"   = var.function_app_name
+    "MANAGEMENT_ADMIN_TOKEN"    = var.management_admin_token
   }
 
   tags = var.tags

@@ -62,6 +62,38 @@ export function SreSidebar({ health, metrics, metroCount, flightCount, lastUpdat
       onCollapsedChange(newCollapsed);
     }
   };
+
+  const [functionStatus, setFunctionStatus] = useState<'Running' | 'Stopped' | 'Unknown'>('Unknown');
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5200';
+
+  useEffect(() => {
+    if (isCollapsed) return;
+    fetch(`${API_BASE}/api/manage/status`)
+      .then(res => res.json())
+      .then(data => setFunctionStatus(data.state))
+      .catch(() => setFunctionStatus('Unknown'));
+  }, [isCollapsed, API_BASE]);
+
+  const handleFunctionStatusToggle = async (action: 'start' | 'stop') => {
+    const token = window.prompt(`Please enter the SRE Admin Token to ${action} the Azure Function integration pipeline:`);
+    if (!token) return;
+
+    try {
+      setFunctionStatus("Unknown"); // Optimistic loading
+      const response = await fetch(`${API_BASE}/api/manage/${action}?token=${encodeURIComponent(token)}`, {
+        method: 'POST'
+      });
+      if (!response.ok) {
+        window.alert(`Authorization Refused. The provided SRE token was invalid or missing.`);
+        return;
+      }
+      const data = await response.json();
+      setFunctionStatus(data.state);
+    } catch (err) {
+      window.alert("Failed to reach the Azure Management API.");
+      setFunctionStatus("Unknown");
+    }
+  };
   
   const metricsHistory = useRef<MetricSnapshot[]>([]);
   const vehicleCountHistory = useRef<VehicleCountSnapshot[]>([]);
@@ -334,44 +366,63 @@ export function SreSidebar({ health, metrics, metroCount, flightCount, lastUpdat
             {/* Control Buttons */}
             {(onTogglePause || onClearData) && (
               <div style={{ padding: '12px', borderTop: '1px solid #E5E7EB', display: 'flex', gap: '8px', flexDirection: 'column' }}>
-                {onTogglePause && (
-                  <button
-                    onClick={onTogglePause}
-                    style={{
-                      background: isPaused ? '#48BB78' : '#F6AD55',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      padding: '8px 12px',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      fontFamily: "'Inter', sans-serif",
-                      width: '100%',
-                    }}
-                  >
-                    {isPaused ? '▶ Resume' : '⏸ Pause'}
-                  </button>
-                )}
-                {onClearData && (
-                  <button
-                    onClick={onClearData}
-                    style={{
-                      background: '#E53E3E',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      padding: '8px 12px',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      fontFamily: "'Inter', sans-serif",
-                      width: '100%',
-                    }}
-                  >
-                    🗑 Clear Data
-                  </button>
-                )}
+                
+                {/* Azure Function App Ingestion Suspend */}
+                <div style={{ padding: '8px', background: '#FEE2E2', border: '1px solid #EF4444', borderRadius: '4px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '11px', color: '#B91C1C', fontWeight: 600, marginBottom: '6px' }}>
+                    Azure Pipeline: {functionStatus}
+                  </div>
+                  {functionStatus !== 'Stopped' ? (
+                     <button
+                        onClick={() => handleFunctionStatusToggle('stop')}
+                        style={{
+                          background: '#EF4444', color: 'white', border: 'none', borderRadius: '4px',
+                          padding: '6px 12px', fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+                          fontFamily: "'Inter', sans-serif", width: '100%',
+                        }}
+                      >
+                        ■ Suspend Active Ingestion
+                      </button>
+                  ) : (
+                    <button
+                        onClick={() => handleFunctionStatusToggle('start')}
+                        style={{
+                          background: '#10B981', color: 'white', border: 'none', borderRadius: '4px',
+                          padding: '6px 12px', fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+                          fontFamily: "'Inter', sans-serif", width: '100%',
+                        }}
+                      >
+                        ▶ Resume Azure Loop
+                      </button>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+                  {onTogglePause && (
+                    <button
+                      onClick={onTogglePause}
+                      style={{
+                        background: isPaused ? '#48BB78' : '#F6AD55', color: 'white', border: 'none', borderRadius: '4px',
+                        padding: '6px 12px', fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+                        fontFamily: "'Inter', sans-serif", flex: 1,
+                      }}
+                    >
+                      {isPaused ? '▶ Resume UI Polling' : '⏸ Pause UI Polling'}
+                    </button>
+                  )}
+                  {onClearData && (
+                    <button
+                      onClick={onClearData}
+                      style={{
+                        background: '#4B5563', color: 'white', border: 'none', borderRadius: '4px',
+                        padding: '6px 12px', fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+                        fontFamily: "'Inter', sans-serif",
+                      }}
+                    >
+                      🗑 Form UI
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </>

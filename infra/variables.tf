@@ -40,6 +40,12 @@ variable "opensky_bbox" {
   default     = "29.8,-98.2,30.8,-97.2"
 }
 
+variable "management_admin_token" {
+  type        = string
+  sensitive   = true
+  description = "SRE Admin password specifically authorizing the React Dashboard payload calls targeting the start/stop Function App remote endpoints natively bypassing general CORS requests."
+}
+
 variable "opensky_client_id" {
   description = "OpenSky API credentials dynamically extracted from GitHub secrets."
   type        = string

@@ -125,6 +125,7 @@ app.MapVehicleEndpoints();
 app.MapHealthEndpoints();
 app.MapRouteEndpoints();
 app.MapLogEndpoints();
+app.MapManagementEndpoints();
 
 app.Run();
 

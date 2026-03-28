@@ -80,6 +80,7 @@ jobs:
           TF_VAR_alert_email:        ${{ secrets.TF_VAR_ALERT_EMAIL }}
           TF_VAR_opensky_client_id:  ${{ secrets.OPENSKY_CLIENT_ID }}
           TF_VAR_opensky_client_secret: ${{ secrets.OPENSKY_CLIENT_SECRET }}
+          TF_VAR_management_admin_token: ${{ secrets.MANAGEMENT_ADMIN_TOKEN }}
           TF_VAR_environment:        ${{ github.event.inputs.environment || 'prod' }}
         run: terraform plan -input=false -out=tfplan
 
@@ -96,6 +97,7 @@ jobs:
           TF_VAR_alert_email:        ${{ secrets.TF_VAR_ALERT_EMAIL }}
           TF_VAR_opensky_client_id:  ${{ secrets.OPENSKY_CLIENT_ID }}
           TF_VAR_opensky_client_secret: ${{ secrets.OPENSKY_CLIENT_SECRET }}
+          TF_VAR_management_admin_token: ${{ secrets.MANAGEMENT_ADMIN_TOKEN }}
           TF_VAR_environment:        ${{ github.event.inputs.environment || 'prod' }}
         run: terraform apply -input=false tfplan
 
