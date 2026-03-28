@@ -77,12 +77,12 @@ public static class LogEndpoints
             }
 
             // Cloud Production: Application Insights REST API (API Key)
-            var appId = config["AppInsights__AppId"];
-            var apiKey = config["AppInsights__ApiKey"];
+            var appId = config["AppInsights:AppId"];
+            var apiKey = config["AppInsights:ApiKey"];
 
             if (string.IsNullOrEmpty(appId) || string.IsNullOrEmpty(apiKey))
             {
-                return Results.Problem("AppInsights__AppId or AppInsights__ApiKey is missing from configuration.", "Configuration Error");
+                return Results.Problem("AppInsights:AppId or AppInsights:ApiKey is missing from configuration.", "Configuration Error");
             }
 
             // SRE: By using the raw REST API, we bypass Azure Resource Manager (ARM)

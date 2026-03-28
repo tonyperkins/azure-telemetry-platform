@@ -175,6 +175,8 @@ export function Map({
         attribution={CARTO_ATTRIBUTION}
         subdomains="abcd"
         maxZoom={19}
+        keepBuffer={8}
+        updateWhenIdle={false}
       />
 
       <PaneSetup />
