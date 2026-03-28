@@ -6,6 +6,7 @@
 #   2. Application Insights — distributed tracing, custom metrics, failures blade
 #   3. Three alert rules — staleness (per source) + API error rate
 #   4. Action group — email on alert fire
+#   5. SRE Operations Workbook — single-pane-of-glass dashboard (see workbook.tf)
 #
 # Alert philosophy: alert on BUSINESS OUTCOMES (no vehicles ingested), not just
 # technical failures (exception thrown). A Function that runs successfully but
@@ -54,7 +55,6 @@ resource "azurerm_monitor_action_group" "email" {
 # SRE: This catches the "Function ran but returned no data" scenario that
 # exception-based alerting would miss entirely.
 # ---------------------------------------------------------------------------
-/*
 resource "azurerm_monitor_metric_alert" "metro_feed_stale" {
   name                = "alert-metro-feed-stale-${var.environment}"
   resource_group_name = var.resource_group_name
@@ -85,12 +85,10 @@ resource "azurerm_monitor_metric_alert" "metro_feed_stale" {
 
   tags = var.tags
 }
-*/
 
 # ---------------------------------------------------------------------------
 # Alert 2: Flight feed stale
 # ---------------------------------------------------------------------------
-/*
 resource "azurerm_monitor_metric_alert" "flight_feed_stale" {
   name                = "alert-flight-feed-stale-${var.environment}"
   resource_group_name = var.resource_group_name
@@ -121,7 +119,6 @@ resource "azurerm_monitor_metric_alert" "flight_feed_stale" {
 
   tags = var.tags
 }
-*/
 
 # ---------------------------------------------------------------------------
 # Alert 3: API high error rate

@@ -41,19 +41,12 @@ const AUSTIN_CENTER: [number, number] = [30.2672, -97.7431];
 const CARTO_POSITRON = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 const CARTO_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
-const STADIA_ATTRIBUTION =
-  '&copy; <a href="https://stamen.com">Stamen Design</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://stadiamaps.com">Stadia Maps</a>';
 
-// Stadia alidade_smooth_dark has far more contrast than CartoDB dark_all:
-// roads, terrain, and labels are all clearly differentiated.
 const MAP_STYLES: Record<string, { url: string; attribution?: string; subdomains?: string; filter?: string }> = {
   light: { url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', subdomains: 'abcd' },
   dark: {
-    url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',
-    attribution: STADIA_ATTRIBUTION,
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
     subdomains: 'abcd',
-    // Punch up contrast & brightness slightly — still dark but roads/terrain pop
-    filter: 'contrast(1.15) brightness(0.95)',
   },
   streets: { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', subdomains: 'abcd' }
 };

@@ -87,10 +87,11 @@ azure-telemetry-platform/
 │       ├── keyvault/
 │       ├── appservice/
 │       ├── functions/
-│       ├── monitoring/
+│       ├── monitoring/             # Alerts + SRE Workbook dashboard
 │       └── staticweb/
 ├── docs/
 │   ├── runbook.md
+│   ├── slo.md                     # SLI/SLO definitions + error budget policy
 │   ├── postmortem-template.md
 │   └── architecture-decisions.md
 ├── .github/workflows/
@@ -208,18 +209,28 @@ Push to `main` → CI workflow runs tests → deploy workflow deploys all three 
 
 ## Monitoring & Alerting
 
+### SRE Operations Dashboard
+
+An Azure Workbook is provisioned automatically by Terraform (`infra/modules/monitoring/workbook.tf`). It provides a single-pane-of-glass view of platform health at zero cost.
+
+**Access:** Azure Portal → Application Insights → Workbooks → **SRE Operations Dashboard**
+
+Dashboard panels: SLO summary tiles (availability, P95, error rate), ingestion rate by source, staleness events, API latency percentiles (P50/P95/P99), error rate timechart, request volume by endpoint, function execution health, retention cleanup volume, and SLO burn rate tracking.
+
 ### Azure Portal Quick Links
 *(Replace `YOUR_SUBSCRIPTION_ID` in the URLs below)*
 - 📊 **[App Insights Failures Blade](https://portal.azure.com/#view/AppInsightsExtension/FailuresV2Blade/ComponentId/%7B"Name"%3A"appi-telemetry-prod"%2C"SubscriptionId"%3A"YOUR_SUBSCRIPTION_ID"%2C"ResourceGroup"%3A"rg-telemetry-prod"%7D)** 
 - 📈 **[Log Analytics Logs](https://portal.azure.com/#view/Microsoft_OperationsManagementSuite_Workspace/Logs.ReactView/resourceId/%2Fsubscriptions%2FYOUR_SUBSCRIPTION_ID%2FresourceGroups%2Frg-telemetry-prod%2Fproviders%2FMicrosoft.OperationalInsights%2Fworkspaces%2Flaw-telemetry-prod)**
 - 🔔 **[Alert Rules Manager](https://portal.azure.com/#view/Microsoft_Azure_Monitoring/AlertsManagementBlade)**
 
+### Alert Rules
+
 Three alert rules fire on business-level failures (not just exceptions):
 
 | Component | Metric | Threshold | Alert Action |
 | :--- | :--- | :--- | :--- |
-| Metro Feed | Data Staleness | 0 ingested > 10m | [Planned/Manual] |
-| Flight Feed | Data Staleness | 0 ingested > 10m | [Planned/Manual] |
+| Metro Feed | Data Staleness | 0 ingested × 3 polls | Email `platform-sre` |
+| Flight Feed | Data Staleness | 0 ingested × 3 polls | Email `platform-sre` |
 | Telemetry API | Server Exceptions | > 10 exceptions / 5m | Email `platform-sre` |
 
 Alerts route to the email address specified in `var.alert_email`.
@@ -231,6 +242,10 @@ customMetrics
 | summarize avg(value) by bin(timestamp, 5m), tostring(customDimensions["source"])
 | render timechart
 ```
+
+### SLO Definitions
+
+See [`docs/slo.md`](docs/slo.md) for full SLI/SLO definitions, error budget policy, and the production hardening roadmap.
 
 ---
 

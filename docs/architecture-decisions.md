@@ -17,7 +17,7 @@ flowchart TD
     subgraph functions ["Azure Functions · consumption plan"]
         MI["Metro ingest\n<i>30s timer</i>"]
         FI["Flight ingest\n<i>60s timer</i>"]
-        RC["Retention cleanup\n<i>DELETE &lt; 6 hrs</i>"]
+        RC["Retention cleanup\n<i>DELETE &gt; 24 hrs</i>"]
     end
 
     subgraph appservice ["App Service · B1"]

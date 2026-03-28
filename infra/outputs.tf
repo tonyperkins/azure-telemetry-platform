@@ -39,3 +39,8 @@ output "sql_connection_string" {
   value       = module.sql.connection_string
   sensitive   = true
 }
+
+output "sre_workbook_id" {
+  description = "Resource ID of the SRE Operations Dashboard workbook (Azure Portal → App Insights → Workbooks)."
+  value       = module.monitoring.sre_workbook_id
+}

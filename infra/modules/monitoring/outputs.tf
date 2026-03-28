@@ -35,3 +35,8 @@ output "app_insights_api_key" {
   value       = azurerm_application_insights_api_key.read_telemetry.api_key
   sensitive   = true
 }
+
+output "sre_workbook_id" {
+  description = "Resource ID of the SRE Operations Dashboard workbook."
+  value       = azurerm_application_insights_workbook.sre_dashboard.id
+}

@@ -21,9 +21,9 @@ Each API call consumes credits based on:
 **OpenSky does NOT offer paid tiers.** It's a non-profit research network funded by academic institutions. The 4,000 credits/day limit is the maximum available to any user.
 
 **Alternatives if you need higher frequency:**
-1. **Reduce polling interval strategically**:
-   - Poll every 45s instead of 30s → 1,920 requests/day (52% headroom)
-   - Poll every 60s → 1,440 requests/day (64% headroom)
+1. **Increase polling frequency** (requires registered account for headroom):
+   - Poll every 30s → 2,880 requests/day (28% headroom on registered tier)
+   - Poll every 15s → 5,760 requests/day (exceeds 4,000 credit limit — not viable)
 
 2. **Use commercial flight tracking APIs**:
    - **FlightAware AeroAPI**: $0.0025–$0.01/request, no daily limit
