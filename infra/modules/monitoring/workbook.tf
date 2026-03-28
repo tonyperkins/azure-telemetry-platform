@@ -57,15 +57,15 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 9
         content = {
-          version    = "KqlParameterItem/1.0"
+          version = "KqlParameterItem/1.0"
           parameters = [
             {
-              id           = "time_range"
-              version      = "KqlParameterItem/1.0"
-              name         = "TimeRange"
-              type         = 4
-              isRequired   = true
-              value        = { durationMs = 3600000 }
+              id         = "time_range"
+              version    = "KqlParameterItem/1.0"
+              name       = "TimeRange"
+              type       = 4
+              isRequired = true
+              value      = { durationMs = 3600000 }
               typeSettings = {
                 selectableValues = [
                   { durationMs = 1800000, displayText = "Last 30 minutes" },
@@ -92,8 +92,8 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version      = "KqlItem/1.0"
-          query        = <<-KQL
+          version       = "KqlItem/1.0"
+          query         = <<-KQL
             requests
             | where timestamp {TimeRange}
             | where name has "/api/"
@@ -123,8 +123,8 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version      = "KqlItem/1.0"
-          query        = <<-KQL
+          version       = "KqlItem/1.0"
+          query         = <<-KQL
             requests
             | where timestamp {TimeRange}
             | where name has "/api/"
@@ -153,8 +153,8 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version      = "KqlItem/1.0"
-          query        = <<-KQL
+          version       = "KqlItem/1.0"
+          query         = <<-KQL
             requests
             | where timestamp {TimeRange}
             | where name has "/api/"
@@ -186,15 +186,15 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       # Data Pipeline Health
       # =====================================================================
       {
-        type = 1
+        type    = 1
         content = { json = "## Data Pipeline Health" }
-        name = "section-pipeline"
+        name    = "section-pipeline"
       },
       {
         type = 3
         content = {
-          version      = "KqlItem/1.0"
-          query        = <<-KQL
+          version       = "KqlItem/1.0"
+          query         = <<-KQL
             customMetrics
             | where timestamp {TimeRange}
             | where name == "vehicles_ingested"
@@ -220,8 +220,8 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version      = "KqlItem/1.0"
-          query        = <<-KQL
+          version       = "KqlItem/1.0"
+          query         = <<-KQL
             customMetrics
             | where timestamp {TimeRange}
             | where name == "vehicles_ingested_zero"
@@ -249,15 +249,15 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       # API Performance
       # =====================================================================
       {
-        type = 1
+        type    = 1
         content = { json = "## API Performance" }
-        name = "section-api"
+        name    = "section-api"
       },
       {
         type = 3
         content = {
-          version      = "KqlItem/1.0"
-          query        = <<-KQL
+          version       = "KqlItem/1.0"
+          query         = <<-KQL
             requests
             | where timestamp {TimeRange}
             | where name has "/api/"
@@ -288,8 +288,8 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version      = "KqlItem/1.0"
-          query        = <<-KQL
+          version       = "KqlItem/1.0"
+          query         = <<-KQL
             requests
             | where timestamp {TimeRange}
             | where name has "/api/"
@@ -324,15 +324,15 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       # Request Volume & Endpoint Breakdown
       # =====================================================================
       {
-        type = 1
+        type    = 1
         content = { json = "## Request Volume & Endpoint Breakdown" }
-        name = "section-requests"
+        name    = "section-requests"
       },
       {
         type = 3
         content = {
-          version      = "KqlItem/1.0"
-          query        = <<-KQL
+          version       = "KqlItem/1.0"
+          query         = <<-KQL
             requests
             | where timestamp {TimeRange}
             | where name has "/api/"
@@ -351,8 +351,8 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version      = "KqlItem/1.0"
-          query        = <<-KQL
+          version       = "KqlItem/1.0"
+          query         = <<-KQL
             requests
             | where timestamp {TimeRange}
             | where name has "/api/"
@@ -394,15 +394,15 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       # Function Execution Health
       # =====================================================================
       {
-        type = 1
+        type    = 1
         content = { json = "## Function Execution Health" }
-        name = "section-functions"
+        name    = "section-functions"
       },
       {
         type = 3
         content = {
-          version      = "KqlItem/1.0"
-          query        = <<-KQL
+          version       = "KqlItem/1.0"
+          query         = <<-KQL
             requests
             | where timestamp {TimeRange}
             | where cloud_RoleName startswith "func-telemetry"
@@ -442,8 +442,8 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version      = "KqlItem/1.0"
-          query        = <<-KQL
+          version       = "KqlItem/1.0"
+          query         = <<-KQL
             customMetrics
             | where timestamp {TimeRange}
             | where name == "records_deleted"
@@ -483,8 +483,8 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       {
         type = 3
         content = {
-          version      = "KqlItem/1.0"
-          query        = <<-KQL
+          version       = "KqlItem/1.0"
+          query         = <<-KQL
             requests
             | where timestamp {TimeRange}
             | where name has "/api/"
@@ -526,15 +526,15 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
       # Recent Exceptions
       # =====================================================================
       {
-        type = 1
+        type    = 1
         content = { json = "## Recent Exceptions" }
-        name = "section-exceptions"
+        name    = "section-exceptions"
       },
       {
         type = 3
         content = {
-          version      = "KqlItem/1.0"
-          query        = <<-KQL
+          version       = "KqlItem/1.0"
+          query         = <<-KQL
             exceptions
             | where timestamp {TimeRange}
             | project
