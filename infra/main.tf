@@ -146,11 +146,10 @@ module "appservice" {
 # ---------------------------------------------------------------------------
 # IAM Roles
 # ---------------------------------------------------------------------------
-resource "azurerm_role_assignment" "api_logs_reader" {
-  scope                = module.monitoring.log_analytics_workspace_id_arm
-  role_definition_name = "Log Analytics Reader"
-  principal_id         = module.appservice.principal_id
-}
+# SRE Note: The GitHub Actions runner intentionally operates as a 'Contributor'
+# and thus lacks 'Owner' rights required to perform 'Microsoft.Authorization/roleAssignments/write'.
+# To authorize Log Analytics reads, alternative authentication methods (e.g. API Keys)
+# must be utilized instead of Azure Native RBAC assignment via Terraform.
 
 module "functions" {
   source                        = "./modules/functions"
