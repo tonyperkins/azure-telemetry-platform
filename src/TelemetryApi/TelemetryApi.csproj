@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <!-- Dapper: lightweight ORM for explicit, performant SQL. No EF migration overhead. -->
+    <PackageReference Include="Azure.Monitor.Query" Version="1.4.0" />
     <PackageReference Include="Dapper" Version="2.1.35" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.1" />
 

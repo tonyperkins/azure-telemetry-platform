@@ -138,8 +138,18 @@ module "appservice" {
   key_vault_name                = module.keyvault.key_vault_name
   sql_secret_uri                = module.keyvault.sql_secret_uri
   appinsights_connection_string = module.monitoring.connection_string
+  log_analytics_workspace_id    = module.monitoring.log_analytics_workspace_id
   metro_feed_url                = var.metro_feed_url
   allowed_origins               = "https://${module.staticweb.default_host_name}"
+}
+
+# ---------------------------------------------------------------------------
+# IAM Roles
+# ---------------------------------------------------------------------------
+resource "azurerm_role_assignment" "api_logs_reader" {
+  scope                = module.monitoring.log_analytics_workspace_id_arm
+  role_definition_name = "Log Analytics Reader"
+  principal_id         = module.appservice.principal_id
 }
 
 module "functions" {

@@ -53,6 +53,7 @@ resource "azurerm_windows_web_app" "main" {
     # at startup via the managed identity — the raw connection string never
     # appears in app settings, environment variables, or deployment artifacts.
     "ConnectionStrings__DefaultConnection" = "@Microsoft.KeyVault(SecretUri=${var.sql_secret_uri}/)"
+    "LogAnalyticsWorkspaceId"              = var.log_analytics_workspace_id
   }
 
   tags = var.tags

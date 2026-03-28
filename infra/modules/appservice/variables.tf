@@ -27,6 +27,11 @@ variable "allowed_origins" {
 }
 
 variable "suffix" {
-  description = "Random suffix for global uniqueness."
   type        = string
+  description = "A random suffix to ensure globally unique resource names for the App Service environment."
+}
+
+variable "log_analytics_workspace_id" {
+  type        = string
+  description = "The Log Analytics Workspace ID for the API to query real logs from."
 }
