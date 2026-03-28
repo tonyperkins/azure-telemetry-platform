@@ -47,7 +47,7 @@ provider "azurerm" {
 # after first apply — resources can be referenced by name in runbooks.
 # ---------------------------------------------------------------------------
 resource "random_id" "suffix" {
-  byte_length = 3 # 6 hex chars
+  byte_length = 4 # 8 hex chars
 }
 
 locals {

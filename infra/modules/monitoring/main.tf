@@ -64,11 +64,12 @@ resource "azurerm_monitor_metric_alert" "metro_feed_stale" {
   window_size         = "PT5M"
 
   criteria {
-    metric_namespace = "microsoft.insights/components"
-    metric_name      = "customMetrics/vehicles_ingested_zero"
-    aggregation      = "Count"
-    operator         = "GreaterThan"
-    threshold        = 2
+    metric_namespace       = "microsoft.insights/components"
+    metric_name            = "customMetrics/vehicles_ingested_zero"
+    aggregation            = "Count"
+    operator               = "GreaterThan"
+    threshold              = 2
+    skip_metric_validation = true
 
     dimension {
       name     = "source"
@@ -97,11 +98,12 @@ resource "azurerm_monitor_metric_alert" "flight_feed_stale" {
   window_size         = "PT5M"
 
   criteria {
-    metric_namespace = "microsoft.insights/components"
-    metric_name      = "customMetrics/vehicles_ingested_zero"
-    aggregation      = "Count"
-    operator         = "GreaterThan"
-    threshold        = 2
+    metric_namespace       = "microsoft.insights/components"
+    metric_name            = "customMetrics/vehicles_ingested_zero"
+    aggregation            = "Count"
+    operator               = "GreaterThan"
+    threshold              = 2
+    skip_metric_validation = true
 
     dimension {
       name     = "source"
