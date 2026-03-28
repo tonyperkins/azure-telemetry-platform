@@ -66,7 +66,7 @@ resource "azurerm_windows_function_app" "main" {
 
     # SRE: Key Vault reference for the SQL connection string.
     # The consumption plan Function App uses managed identity to resolve this.
-    "SQL_CONNECTION_STRING" = "@Microsoft.KeyVault(SecretUri=${var.sql_secret_uri})"
+    "SQL_CONNECTION_STRING" = "@Microsoft.KeyVault(SecretUri=${var.sql_secret_uri}/)"
   }
 
   tags = var.tags
