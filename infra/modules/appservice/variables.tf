@@ -35,3 +35,14 @@ variable "log_analytics_workspace_id" {
   type        = string
   description = "The Log Analytics Workspace ID for the API to query real logs from."
 }
+
+variable "app_insights_app_id" {
+  type        = string
+  description = "The Application Insights App ID specifically for the REST API."
+}
+
+variable "app_insights_api_key" {
+  type        = string
+  sensitive   = true
+  description = "The read-only Application Insights API Key."
+}

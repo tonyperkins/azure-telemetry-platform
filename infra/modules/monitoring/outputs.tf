@@ -24,3 +24,14 @@ output "log_analytics_workspace_id_arm" {
   description = "The ARM Resource ID of the Log Analytics Workspace (for role assignments)."
   value       = azurerm_log_analytics_workspace.main.id
 }
+
+output "app_insights_app_id" {
+  description = "The App ID property of Application Insights for API querying."
+  value       = azurerm_application_insights.main.app_id
+}
+
+output "app_insights_api_key" {
+  description = "The dynamically generated Application Insights API Key."
+  value       = azurerm_application_insights_api_key.read_telemetry.api_key
+  sensitive   = true
+}

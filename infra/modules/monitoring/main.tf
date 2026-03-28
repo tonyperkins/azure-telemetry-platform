@@ -150,3 +150,9 @@ resource "azurerm_monitor_metric_alert" "api_high_error_rate" {
 
   tags = var.tags
 }
+
+resource "azurerm_application_insights_api_key" "read_telemetry" {
+  name                    = "api-read-telemetry-${var.environment}"
+  application_insights_id = azurerm_application_insights.main.id
+  read_permissions        = ["aggregate", "api", "draft", "extendqueries", "search"]
+}

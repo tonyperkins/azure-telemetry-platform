@@ -139,6 +139,8 @@ module "appservice" {
   sql_secret_uri                = module.keyvault.sql_secret_uri
   appinsights_connection_string = module.monitoring.connection_string
   log_analytics_workspace_id    = module.monitoring.log_analytics_workspace_id
+  app_insights_app_id           = module.monitoring.app_insights_app_id
+  app_insights_api_key          = module.monitoring.app_insights_api_key
   metro_feed_url                = var.metro_feed_url
   allowed_origins               = "https://${module.staticweb.default_host_name}"
 }
