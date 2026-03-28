@@ -233,8 +233,7 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
-          app_location: dashboard
-          output_location: dist
+          app_location: dashboard/dist
           skip_app_build: true
 
   # ---------------------------------------------------------------------------
