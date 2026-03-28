@@ -55,7 +55,7 @@ variable "function_app_name" {
   type = string
 }
 
-variable "management_admin_token" {
+variable "management_admin_token_uri" {
   type      = string
   sensitive = true
 }

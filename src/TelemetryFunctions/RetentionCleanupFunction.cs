@@ -78,7 +78,7 @@ public sealed class RetentionCleanupFunction
 
         try
         {
-            await using var conn = await _connectionFactory.CreateConnectionAsync();
+            using var conn = await _connectionFactory.CreateConnectionAsync();
             var result = await conn.ExecuteScalarAsync<int>(sql, commandTimeout: 120);
             var deletedCount = result;
 

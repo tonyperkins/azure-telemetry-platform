@@ -13,6 +13,7 @@
     <PackageReference Include="Azure.ResourceManager.AppService" Version="1.4.1" />
     <PackageReference Include="Dapper" Version="2.1.35" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.1" />
+    <PackageReference Include="Polly" Version="8.4.2" />
 
     <!-- Azure SDK: Key Vault configuration + Managed Identity auth -->
     <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.3.2" />
