@@ -60,14 +60,14 @@ resource "azurerm_monitor_action_group" "email" {
 # deployments aren't blocked by "Metric not found" errors.
 # ---------------------------------------------------------------------------
 resource "azurerm_monitor_scheduled_query_rules_alert_v2" "data_staleness" {
-  name                = "alert-data-staleness-${var.environment}"
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  scopes              = [azurerm_application_insights.main.id]
-  severity            = 2
-  window_duration     = "PT5M"
+  name                 = "alert-data-staleness-${var.environment}"
+  resource_group_name  = var.resource_group_name
+  location             = var.location
+  scopes               = [azurerm_application_insights.main.id]
+  severity             = 2
+  window_duration      = "PT5M"
   evaluation_frequency = "PT1M"
-  description         = "A data source (metro or flight) has reported 0 vehicles for 3 consecutive polls."
+  description          = "A data source (metro or flight) has reported 0 vehicles for 3 consecutive polls."
 
   criteria {
     query                   = <<-KQL
