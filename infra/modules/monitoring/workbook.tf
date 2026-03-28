@@ -20,10 +20,8 @@
 #   8. SLO Burn Rate        — % of windows meeting all targets (timechart)
 # =============================================================================
 
-resource "random_uuid" "workbook_id" {}
-
 resource "azurerm_application_insights_workbook" "sre_dashboard" {
-  name                = random_uuid.workbook_id.result
+  name                = uuidv5("oid", "${var.resource_group_name}-sre-dashboard")
   resource_group_name = var.resource_group_name
   location            = var.location
   display_name        = "SRE Operations Dashboard — ${var.environment}"

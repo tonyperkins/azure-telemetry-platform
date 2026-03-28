@@ -68,6 +68,7 @@ sequenceDiagram
 *(Pro-tip: The subscription ID has been injected to make these direct links work locally!)*
 
 - 📊 **[App Insights Failures Blade](https://portal.azure.com/#@/resource/subscriptions/780f4576-d4f2-4959-a6a9-0c61fd12b7ca/resourceGroups/rg-telemetry-atp-prod/providers/microsoft.insights/components/appi-telemetry-prod/troubleshoot)** — View exceptions and HTTP 5xx stack traces
+- 📈 **[SRE Operations Dashboard](https://portal.azure.com/#view/Microsoft_Azure_Monitoring/Workbook.ReactView/id/%2Fsubscriptions%2F780f4576-d4f2-4959-a6a9-0c61fd12b7ca%2FresourceGroups%2Frg-telemetry-atp-prod%2Fproviders%2FMicrosoft.Insights%2Fworkbooks%2Ff92d6459-6f1e-5c7e-9c45-3916bc85aaad)** — Real-time SLO burn rate and system health
 - 📈 **[Log Analytics Logs](https://portal.azure.com/#@/resource/subscriptions/780f4576-d4f2-4959-a6a9-0c61fd12b7ca/resourceGroups/rg-telemetry-atp-prod/providers/microsoft.operationalinsights/workspaces/law-telemetry-prod/logs)** — Run custom KQL metrics queries
 - 🔔 **[Alert Rules Manager](https://portal.azure.com/#@/resource/subscriptions/780f4576-d4f2-4959-a6a9-0c61fd12b7ca/resourceGroups/rg-telemetry-atp-prod/providers/Microsoft.Insights/metricalerts/alert-api-5xx-prod)** — Check active fired alerts
 - ☁️ **[Azure SQL Performance](https://portal.azure.com/#@/resource/subscriptions/780f4576-d4f2-4959-a6a9-0c61fd12b7ca/resourceGroups/rg-telemetry-atp-prod/providers/Microsoft.Sql/servers/sql-telemetry-prod-7d94f06a/databases/TelemetryDb)** — View DTU/vCore utilization
