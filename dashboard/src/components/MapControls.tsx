@@ -155,6 +155,9 @@ export function MapControls({
         boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
         width: '280px',
         fontFamily: "'Inter', sans-serif",
+        display: 'flex',
+        flexDirection: 'column',
+        maxHeight: 'calc(100vh - 150px)'
       }}
     >
       {/* Header */}
@@ -171,6 +174,7 @@ export function MapControls({
           justifyContent: 'space-between',
           cursor: 'pointer',
           userSelect: 'none',
+          flexShrink: 0,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -186,7 +190,7 @@ export function MapControls({
 
       {/* Content */}
       {isExpanded && (
-        <div style={{ padding: '16px' }}>
+        <div style={{ padding: '16px', overflowY: 'auto', flex: 1 }}>
           {/* Section 1: Data Sources */}
           <div style={{ marginBottom: '20px' }}>
             <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
