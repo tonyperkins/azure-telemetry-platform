@@ -1,10 +1,21 @@
 import { useEffect, useState } from 'react';
-import { marked } from 'marked';
+import { Marked } from 'marked';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
+
+const markedInstance = new Marked({
+  renderer: {
+    link(token) {
+      const { href, title, text } = token;
+      const isExternal = /^https?:\/\//.test(href);
+      const target = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
+      return `<a href="${href}"${target}${title ? ` title="${title}"` : ''}>${text}</a>`;
+    }
+  }
+});
 
 export function HelpModal({ isOpen, onClose }: Props) {
   const [content, setContent] = useState<string>('');
@@ -23,7 +34,7 @@ export function HelpModal({ isOpen, onClose }: Props) {
           throw new Error(`Failed to load help document: ${response.status}`);
         }
         const markdown = await response.text();
-        const html = await marked.parse(markdown);
+        const html = await markedInstance.parse(markdown);
         setContent(html);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load help document');
