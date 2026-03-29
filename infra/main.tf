@@ -134,7 +134,12 @@ module "keyvault" {
   environment              = var.environment
   tags                     = local.tags
   suffix                   = local.suffix
-  sql_connection_string    = module.sql.connection_string
+  # SRE: Zero-Trust SQL Authentication via Managed Identity.
+  # This eliminates the dependency on the 'sql_admin_password' secret
+  # and the risk of 'Auth Drift' during deployment.
+  # Note: The 'Authentication=Active Directory Managed Identity' flag 
+  # is supported natively by Microsoft.Data.SqlClient in .NET 8.
+  sql_connection_string    = "Server=tcp:${module.sql.server_name}.database.windows.net,1433;Initial Catalog=${module.sql.database_name};Persist Security Info=False;Authentication=Active Directory Managed Identity;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
   appservice_principal_id  = module.appservice.principal_id
   functionapp_principal_id = module.functions.principal_id
   opensky_client_id        = var.opensky_client_id
