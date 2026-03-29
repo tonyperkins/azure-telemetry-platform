@@ -91,26 +91,26 @@ GO
 -- Use hardcoded definitive SIDs for production identities to bypass 
 -- Entra ID Graph permission issues in CI/CD.
 
-IF exists (select * from sys.database_principals where name = 'app-telemetry-prod-7d94f06a')
+IF exists (select * from sys.database_principals where name = '$(APP_NAME)')
 BEGIN
-    DROP USER [app-telemetry-prod-7d94f06a];
+    DROP USER [$(APP_NAME)];
 END
 GO
-PRINT 'Mapping app-telemetry-prod-7d94f06a with SID: 0x3c138d46efcf53479d8877e0cac96945';
-CREATE USER [app-telemetry-prod-7d94f06a] WITH SID=0x3c138d46efcf53479d8877e0cac96945, TYPE=E;
-ALTER ROLE db_datareader ADD MEMBER [app-telemetry-prod-7d94f06a];
-ALTER ROLE db_datawriter ADD MEMBER [app-telemetry-prod-7d94f06a];
+PRINT 'Mapping $(APP_NAME) with SID: $(APP_SID)';
+CREATE USER [$(APP_NAME)] WITH SID=$(APP_SID), TYPE=E;
+ALTER ROLE db_datareader ADD MEMBER [$(APP_NAME)];
+ALTER ROLE db_datawriter ADD MEMBER [$(APP_NAME)];
 GO
 
-IF exists (select * from sys.database_principals where name = 'func-telemetry-prod-7d94f06a')
+IF exists (select * from sys.database_principals where name = '$(FUNC_NAME)')
 BEGIN
-    DROP USER [func-telemetry-prod-7d94f06a];
+    DROP USER [$(FUNC_NAME)];
 END
 GO
-PRINT 'Mapping func-telemetry-prod-7d94f06a with SID: 0xbcd40832854d5f45ba21e2accebccf79';
-CREATE USER [func-telemetry-prod-7d94f06a] WITH SID=0xbcd40832854d5f45ba21e2accebccf79, TYPE=E;
-ALTER ROLE db_datareader ADD MEMBER [func-telemetry-prod-7d94f06a];
-ALTER ROLE db_datawriter ADD MEMBER [func-telemetry-prod-7d94f06a];
+PRINT 'Mapping $(FUNC_NAME) with SID: $(FUNC_SID)';
+CREATE USER [$(FUNC_NAME)] WITH SID=$(FUNC_SID), TYPE=E;
+ALTER ROLE db_datareader ADD MEMBER [$(FUNC_NAME)];
+ALTER ROLE db_datawriter ADD MEMBER [$(FUNC_NAME)];
 GO
 
 SET NOEXEC OFF;
