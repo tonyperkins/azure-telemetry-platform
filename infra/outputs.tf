@@ -20,7 +20,7 @@ output "app_service_name" {
 
 output "log_analytics_workspace_id" {
   description = "Workspace ID for monitoring dashboards."
-  value       = module.insights.workspace_id
+  value       = module.monitoring.log_analytics_workspace_id
 }
 
 output "functionapp_principal_id" {
