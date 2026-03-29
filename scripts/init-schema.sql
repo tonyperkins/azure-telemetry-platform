@@ -14,6 +14,9 @@
 -- SRE: Abort immediately on ANY error, preventing partial applies and silent failures
 --      during GitHub Actions deployment pipeline orchestration.
 SET XACT_ABORT ON;
+PRINT 'SRE: Executing schema initialization...';
+PRINT 'SRE: Current Database: ' + DB_NAME();
+PRINT 'SRE: Current User: ' + CURRENT_USER;
 GO
 
 -- =============================================================================
