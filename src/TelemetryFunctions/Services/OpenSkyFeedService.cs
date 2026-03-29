@@ -27,7 +27,7 @@ public sealed class OpenSkyFeedService
     
     // Circuit breaker: track when we last hit rate limit
     private static DateTime? _lastRateLimitTime;
-    private static readonly TimeSpan RateLimitCooldown = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan RateLimitCooldown = TimeSpan.FromMinutes(1);
 
     public OpenSkyFeedService(
         HttpClient httpClient,
