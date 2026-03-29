@@ -11,6 +11,11 @@
 --      vehicle history permanently.
 -- =============================================================================
 
+-- SRE: Abort immediately on ANY error, preventing partial applies and silent failures
+--      during GitHub Actions deployment pipeline orchestration.
+SET XACT_ABORT ON;
+GO
+
 -- =============================================================================
 -- TABLE: vehicles
 --
