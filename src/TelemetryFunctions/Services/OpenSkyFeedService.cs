@@ -47,13 +47,18 @@ public sealed class OpenSkyFeedService
             var authHeader = Convert.ToBase64String(authBytes);
             _httpClient.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authHeader);
-            _logger.LogInformation("OpenSky authenticated mode enabled (4000 credits/day).");
+            
+            _logger.LogInformation(
+                "OpenSky authenticated mode enabled (4000 credits/day). " +
+                "Header length: {HeaderLength}", authHeader.Length);
         }
         else
         {
             _logger.LogWarning(
                 "OpenSky running in anonymous mode (400 credits/day). " +
-                "Set OPENSKY_CLIENT_ID and OPENSKY_CLIENT_SECRET for higher limits.");
+                "Check OPENSKY_CLIENT_ID and OPENSKY_CLIENT_SECRET configuration. " +
+                "ClientId: '{ClientId}', SecretLength: {SecretLength}",
+                _clientId ?? "NULL", _clientSecret?.Length ?? 0);
         }
 
         // SRE: Exponential backoff for transient errors, but NO retry on 429 (rate limit).

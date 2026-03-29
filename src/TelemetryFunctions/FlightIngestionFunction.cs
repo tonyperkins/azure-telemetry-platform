@@ -79,11 +79,19 @@ public sealed class FlightIngestionFunction
         // Step 4: Handle zero-vehicle result
         if (vehicles.Count == 0)
         {
-            // SRE: Help diagnose why the count is zero.
-            // (1) was the feed empty? (2) were all aircraft position-less? (3) were they all on ground?
-            _logger.LogWarning(
-                "Flight ingestion returned 0 airborne vehicles. Metrics: Total={Total}, WithPosition={WithPosition}, Filtering={FilterOnGround}",
-                allVehicles.Count, withPosition.Count, filterOnGround);
+            if (allVehicles.Count == 0)
+            {
+                // SRE: In quiet periods (late night), it's possible to have 0 aircraft in a small bbox.
+                // This is normal, not a warning.
+                _logger.LogInformation("OpenSky returned 0 aircraft in the current bounding box.");
+            }
+            else
+            {
+                // SRE: If we got vectors but they were all filtered out, we want to know why.
+                _logger.LogWarning(
+                    "Flight ingestion filtered all {Total} vectors to zero. Metrics: WithPosition={WithPosition}, FilterOnGround={FilterOnGround}",
+                    allVehicles.Count, withPosition.Count, filterOnGround);
+            }
 
             _telemetry.TrackMetric("vehicles_ingested_zero", 1,
                 new Dictionary<string, string> { ["source"] = "flight" });

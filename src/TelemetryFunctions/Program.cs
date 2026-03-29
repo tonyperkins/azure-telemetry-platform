@@ -22,7 +22,7 @@ var host = new HostBuilder()
         // per invocation, which causes port exhaustion at 30-second poll frequency.
         services.AddHttpClient<ProtobufMetroFeedService>(client =>
         {
-            client.Timeout = TimeSpan.FromSeconds(10);
+            client.Timeout = TimeSpan.FromSeconds(30);
             client.DefaultRequestHeaders.Add(
                 "User-Agent", "azure-telemetry-platform/1.0");
         });
@@ -30,7 +30,7 @@ var host = new HostBuilder()
         // SRE: Flight injection client
         services.AddHttpClient<OpenSkyFeedService>(client =>
         {
-            client.Timeout = TimeSpan.FromSeconds(15);
+            client.Timeout = TimeSpan.FromSeconds(30);
             client.DefaultRequestHeaders.Add(
                 "User-Agent", "azure-telemetry-platform/1.0");
         });
