@@ -72,3 +72,29 @@ BEGIN
         ON dbo.vehicles (vehicle_id, ingested_at DESC);
 END
 GO
+
+-- =============================================================================
+-- SECURITY: Zero-Trust Identity Provisioning
+--
+-- SRE: Create SQL users for the system-assigned managed identities of the
+--      App Service and Function App, and grant them read/write access.
+--      This script handles creating the users idempotently.
+-- =============================================================================
+
+-- SRE: Replace 'prod' and suffix if dynamically executed later, but for this
+--      production initialization, we use the known stable suffix.
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'app-telemetry-prod-7d94f06a')
+BEGIN
+    CREATE USER [app-telemetry-prod-7d94f06a] FROM EXTERNAL PROVIDER;
+    ALTER ROLE db_datareader ADD MEMBER [app-telemetry-prod-7d94f06a];
+    ALTER ROLE db_datawriter ADD MEMBER [app-telemetry-prod-7d94f06a];
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'func-telemetry-prod-7d94f06a')
+BEGIN
+    CREATE USER [func-telemetry-prod-7d94f06a] FROM EXTERNAL PROVIDER;
+    ALTER ROLE db_datareader ADD MEMBER [func-telemetry-prod-7d94f06a];
+    ALTER ROLE db_datawriter ADD MEMBER [func-telemetry-prod-7d94f06a];
+END
+GO

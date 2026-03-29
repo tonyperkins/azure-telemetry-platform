@@ -27,7 +27,7 @@ namespace TelemetryApi.Tests;
 public sealed class VehicleRepositoryTests : IAsyncLifetime
 {
     private const string ConnectionString =
-        "Server=(localdb)\\mssqllocaldb;Database=TelemetryDev;Trusted_Connection=True;";
+        "Server=localhost,1433;Database=TelemetryDev;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;MultipleActiveResultSets=true";
 
     private VehicleRepository _repo = null!;
 

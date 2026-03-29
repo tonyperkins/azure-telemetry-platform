@@ -23,6 +23,17 @@ jobs:
     name: .NET Build & Test
     runs-on: ubuntu-latest
 
+    # SRE: Provide a real SQL Server instance for integration tests, replacing the
+    # reliance on Windows-only LocalDB. This perfectly matches production behavior.
+    services:
+      sql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_SA_PASSWORD: YourStrong@Passw0rd
+        ports:
+          - 1433:1433
+
     steps:
       - uses: actions/checkout@v4
 
@@ -37,14 +48,18 @@ jobs:
 
       - name: Build (Release)
         run: dotnet build azure-telemetry-platform.sln --no-restore --configuration Release
-        # working-directory: azure-telemetry-platform (removed prefix)
+
+      - name: Initialize Test Database
+        uses: azure/sql-action@v2
+        with:
+          connection-string: "Server=localhost,1433;Database=master;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;MultipleActiveResultSets=true"
+          path: './scripts/seed-local-db.sql'
 
       - name: dotnet test
-        # SRE: Tests run against LocalDB in CI using the SQL Server GitHub Action.
+        # SRE: Tests run against the local SQL Server service container in CI.
         # Integration tests verify real query correctness — mocks alone are not sufficient.
         run: dotnet test azure-telemetry-platform.sln --no-build --configuration Release --logger "trx;LogFileName=test-results.trx" --results-directory ./TestResults
         continue-on-error: true
-        # working-directory: azure-telemetry-platform (removed prefix)
 
       - name: Report Results
         uses: dorny/test-reporter@v1
