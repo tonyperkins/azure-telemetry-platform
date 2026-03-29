@@ -10,5 +10,7 @@
   },
   "AllowedOrigins": [ "http://localhost:5173" ],
   "KeyVaultName": "",
-  "MetroGtfsStaticUrl": "https://www.capmetro.org/planner/includes/gtfs.zip"
+  "MetroGtfsStaticUrl": "https://www.capmetro.org/planner/includes/gtfs.zip",
+  "OPENSKY_CLIENT_ID": "<your_username>",
+  "OPENSKY_CLIENT_SECRET": "<your_password>"
 }

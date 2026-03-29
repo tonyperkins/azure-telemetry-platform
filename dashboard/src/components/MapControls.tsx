@@ -94,7 +94,14 @@ export function MapControls({
 
       const data = await res.json();
       if (!res.ok || !data.isUp) {
-        if (onAddToast) onAddToast('critical', `OpenSky API Error: ${data.statusCode}`, data.error || 'The OpenSky Network API is unreachable or rate limited.');
+        let waitTime = '';
+        if (data.retryAfterSeconds) {
+          const totalSeconds = parseInt(data.retryAfterSeconds);
+          const hours = Math.floor(totalSeconds / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          waitTime = ` (Reset in: ${hours}h ${minutes}m)`;
+        }
+        if (onAddToast) onAddToast('critical', `OpenSky API Error: ${data.statusCode}`, (data.error || 'The OpenSky Network API is unreachable or rate limited.') + waitTime);
       } else {
         const remaining = data.rateLimitRemaining ?? 'Unknown';
         const limit = data.rateLimitLimit ?? 'Unknown';
