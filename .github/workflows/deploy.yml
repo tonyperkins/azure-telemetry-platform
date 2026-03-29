@@ -112,17 +112,20 @@ jobs:
           echo "function_app_name=$(terraform output -raw function_app_name)" >> $GITHUB_OUTPUT
           echo "app_service_hostname=$(terraform output -raw app_service_hostname)" >> $GITHUB_OUTPUT
           
+          # Refresh state to ensure new outputs are visible to the shell
+          terraform refresh -input=false
+          
           # Safely export the SQL Connection String ensuring it is completely masked
           # prior to passing it down into the next sequential github workflow step.
           SQL_CONN="$(terraform output -raw sql_connection_string)"
           echo "::add-mask::$SQL_CONN"
           echo "sql_connection_string=$SQL_CONN" >> $GITHUB_OUTPUT
           
-          # Offline SID conversion for SQL Server managed identity bug bypass
+          # Offline SID conversion (using Big-Endian bytes for AAD alignment)
           FUNC_OID="$(terraform output -raw functionapp_principal_id)"
           APP_OID="$(terraform output -raw appservice_principal_id)"
-          FUNC_SID="$(python3 -c "import uuid; print('0x' + ''.join(f'{b:02X}' for b in uuid.UUID('$FUNC_OID').bytes_le))")"
-          APP_SID="$(python3 -c "import uuid; print('0x' + ''.join(f'{b:02X}' for b in uuid.UUID('$APP_OID').bytes_le))")"
+          FUNC_SID="$(python3 -c "import uuid; print('0x' + ''.join(f'{b:02X}' for b in uuid.UUID('$FUNC_OID').bytes))")"
+          APP_SID="$(python3 -c "import uuid; print('0x' + ''.join(f'{b:02X}' for b in uuid.UUID('$APP_OID').bytes))")"
           echo "func_sid=$FUNC_SID" >> $GITHUB_OUTPUT
           echo "app_sid=$APP_SID" >> $GITHUB_OUTPUT
           

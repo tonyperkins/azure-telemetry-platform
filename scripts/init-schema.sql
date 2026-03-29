@@ -88,6 +88,13 @@ GO
 
 -- SRE: Replace 'prod' and suffix if dynamically executed later, but for this
 --      production initialization, we use the known stable suffix.
+IF '$(APP_SID)' = '' OR '$(FUNC_SID)' = ''
+BEGIN
+    PRINT 'Error: APP_SID or FUNC_SID is not defined. Aborting.';
+    SET NOEXEC ON;
+END
+GO
+
 IF EXISTS (SELECT * FROM sys.database_principals WHERE name = 'app-telemetry-prod-7d94f06a')
 BEGIN
     DROP USER [app-telemetry-prod-7d94f06a];
@@ -98,12 +105,15 @@ ALTER ROLE db_datareader ADD MEMBER [app-telemetry-prod-7d94f06a];
 ALTER ROLE db_datawriter ADD MEMBER [app-telemetry-prod-7d94f06a];
 GO
 
-IF EXISTS (SELECT * FROM sys.database_principals WHERE name = 'func-tlm-prod-7d94f06a')
+IF EXISTS (SELECT * FROM sys.database_principals WHERE name = 'func-telemetry-prod-7d94f06a')
 BEGIN
-    DROP USER [func-tlm-prod-7d94f06a];
+    DROP USER [func-telemetry-prod-7d94f06a];
 END
 GO
-CREATE USER [func-tlm-prod-7d94f06a] WITH SID=$(FUNC_SID), TYPE=E;
-ALTER ROLE db_datareader ADD MEMBER [func-tlm-prod-7d94f06a];
-ALTER ROLE db_datawriter ADD MEMBER [func-tlm-prod-7d94f06a];
+CREATE USER [func-telemetry-prod-7d94f06a] WITH SID=$(FUNC_SID), TYPE=E;
+ALTER ROLE db_datareader ADD MEMBER [func-telemetry-prod-7d94f06a];
+ALTER ROLE db_datawriter ADD MEMBER [func-telemetry-prod-7d94f06a];
+GO
+
+SET NOEXEC OFF;
 GO
