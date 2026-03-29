@@ -25,7 +25,7 @@ resource "azurerm_storage_account" "main" {
 }
 
 resource "azurerm_windows_function_app" "main" {
-  name                = "func-telemetry-${var.environment}-${var.suffix}"
+  name                = "func-tlm-${var.environment}-${var.suffix}"
   resource_group_name = var.resource_group_name
   location            = var.location
 

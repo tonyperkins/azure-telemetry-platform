@@ -98,12 +98,12 @@ ALTER ROLE db_datareader ADD MEMBER [app-telemetry-prod-7d94f06a];
 ALTER ROLE db_datawriter ADD MEMBER [app-telemetry-prod-7d94f06a];
 GO
 
-IF EXISTS (SELECT * FROM sys.database_principals WHERE name = 'func-telemetry-prod-7d94f06a')
+IF EXISTS (SELECT * FROM sys.database_principals WHERE name = 'func-tlm-prod-7d94f06a')
 BEGIN
-    DROP USER [func-telemetry-prod-7d94f06a];
+    DROP USER [func-tlm-prod-7d94f06a];
 END
 GO
-CREATE USER [func-telemetry-prod-7d94f06a] FROM EXTERNAL PROVIDER;
-ALTER ROLE db_datareader ADD MEMBER [func-telemetry-prod-7d94f06a];
-ALTER ROLE db_datawriter ADD MEMBER [func-telemetry-prod-7d94f06a];
+CREATE USER [func-tlm-prod-7d94f06a] FROM EXTERNAL PROVIDER;
+ALTER ROLE db_datareader ADD MEMBER [func-tlm-prod-7d94f06a];
+ALTER ROLE db_datawriter ADD MEMBER [func-tlm-prod-7d94f06a];
 GO
