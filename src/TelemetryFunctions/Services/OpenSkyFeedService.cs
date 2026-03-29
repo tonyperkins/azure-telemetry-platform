@@ -229,7 +229,20 @@ public sealed class OpenSkyFeedService
                 $"OPENSKY_BBOX must be 'lamin,lomin,lamax,lomax'. Got: '{bboxConfig}'");
         }
 
-        return $"{BaseUrl}?lamin={parts[0]}&lomin={parts[1]}&lamax={parts[2]}&lomax={parts[3]}";
+        // SRE: Explicitly parse and re-format using InvariantCulture.
+        // This ensures that even if the Azure host locale uses ',' as a decimal
+        // separator, the outgoing API request always uses '.' as expected by OpenSky.
+        // We also Trim() to handle any accidental spaces in the App Settings.
+        var lamin = double.Parse(parts[0].Trim(), System.Globalization.CultureInfo.InvariantCulture)
+            .ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var lomin = double.Parse(parts[1].Trim(), System.Globalization.CultureInfo.InvariantCulture)
+            .ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var lamax = double.Parse(parts[2].Trim(), System.Globalization.CultureInfo.InvariantCulture)
+            .ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var lomax = double.Parse(parts[3].Trim(), System.Globalization.CultureInfo.InvariantCulture)
+            .ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        return $"{BaseUrl}?lamin={lamin}&lomin={lomin}&lamax={lamax}&lomax={lomax}";
     }
 
     private static string?  GetString(JsonElement[] arr, int idx)

@@ -91,24 +91,24 @@ GO
 -- Use hardcoded definitive SIDs for production identities to bypass 
 -- Entra ID Graph permission issues in CI/CD.
 
-IF exists (select * from sys.database_principals where name = '$(APP_NAME)')
+-- SRE: Dynamically map the Managed Identities using the provided SIDs.
+-- We DROP and CREATE to ensure the SID is always current (in case of infra re-creation).
+IF EXISTS (SELECT * FROM sys.database_principals WHERE name = '$(APP_NAME)')
 BEGIN
     DROP USER [$(APP_NAME)];
 END
 GO
-PRINT 'Mapping $(APP_NAME) with SID: $(APP_SID)';
-CREATE USER [$(APP_NAME)] WITH SID=$(APP_SID), TYPE=E;
+CREATE USER [$(APP_NAME)] WITH SID = $(APP_SID);
 ALTER ROLE db_datareader ADD MEMBER [$(APP_NAME)];
 ALTER ROLE db_datawriter ADD MEMBER [$(APP_NAME)];
 GO
 
-IF exists (select * from sys.database_principals where name = '$(FUNC_NAME)')
+IF EXISTS (SELECT * FROM sys.database_principals WHERE name = '$(FUNC_NAME)')
 BEGIN
     DROP USER [$(FUNC_NAME)];
 END
 GO
-PRINT 'Mapping $(FUNC_NAME) with SID: $(FUNC_SID)';
-CREATE USER [$(FUNC_NAME)] WITH SID=$(FUNC_SID), TYPE=E;
+CREATE USER [$(FUNC_NAME)] WITH SID = $(FUNC_SID);
 ALTER ROLE db_datareader ADD MEMBER [$(FUNC_NAME)];
 ALTER ROLE db_datawriter ADD MEMBER [$(FUNC_NAME)];
 GO

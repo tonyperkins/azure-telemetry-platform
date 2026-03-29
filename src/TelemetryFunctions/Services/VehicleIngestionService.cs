@@ -58,12 +58,10 @@ public sealed class VehicleIngestionService
         catch (SqlException ex)
         {
             // SRE: SQL failures during ingestion are logged but not re-thrown.
-            // Losing one 30-second poll is acceptable; crashing the Function
-            // host would cause additional missed polls during cold-start recovery.
+            // Losing one 30-second poll is acceptable.
             _logger.LogError(ex,
-                "SqlBulkCopy failed for metro ingestion batch of {Count} vehicles. " +
-                "This poll's data is lost. Next run will attempt a fresh batch.",
-                vehicles.Count);
+                "SqlBulkCopy failed for metro ingestion batch of {Count} vehicles. Error: {Error}. Message: {Message}",
+                vehicles.Count, ex.Number, ex.Message);
             return 0;
         }
     }
@@ -153,11 +151,9 @@ public sealed class VehicleIngestionService
         catch (SqlException ex)
         {
             // SRE: Same graceful degradation pattern as metro ingestion.
-            // Lose this poll, not the Function host process.
             _logger.LogError(ex,
-                "SqlBulkCopy failed for flight ingestion batch of {Count} aircraft. " +
-                "This poll's data is lost. Next run will attempt a fresh batch.",
-                vehicles.Count);
+                "SqlBulkCopy failed for flight ingestion batch of {Count} aircraft. Error: {Error}. Message: {Message}",
+                vehicles.Count, ex.Number, ex.Message);
             return 0;
         }
     }
