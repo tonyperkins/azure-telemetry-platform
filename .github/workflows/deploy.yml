@@ -112,9 +112,6 @@ jobs:
           echo "function_app_name=$(terraform output -raw function_app_name)" >> $GITHUB_OUTPUT
           echo "app_service_hostname=$(terraform output -raw app_service_hostname)" >> $GITHUB_OUTPUT
           
-          # Refresh state to ensure new outputs are visible to the shell
-          terraform refresh -input=false
-          
           # Safely export the SQL Connection String ensuring it is completely masked
           # prior to passing it down into the next sequential github workflow step.
           SQL_CONN="$(terraform output -raw sql_connection_string)"
