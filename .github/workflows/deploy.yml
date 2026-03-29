@@ -123,6 +123,7 @@ jobs:
         with:
           connection-string: ${{ steps.tf-outputs.outputs.sql_connection_string }}
           path: './scripts/init-schema.sql'
+          arguments: '-b'
 
   # ---------------------------------------------------------------------------
   # Job 2: Deploy TelemetryApi to App Service

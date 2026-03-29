@@ -16,6 +16,10 @@ resource "azurerm_mssql_server" "main" {
   administrator_login          = "sqladmin"
   administrator_login_password = var.sql_admin_password
 
+  identity {
+    type = "SystemAssigned"
+  }
+
   # SRE: Managed Identity access (via Key Vault references in App Service)
   # means the admin password is only used for emergency break-glass access.
   # It is stored in Key Vault and rotated quarterly.
