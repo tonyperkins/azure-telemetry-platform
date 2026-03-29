@@ -41,22 +41,19 @@ provider "azurerm" {
 }
 
 # ---------------------------------------------------------------------------
-# Random suffix — ensures globally-unique names for Key Vault and Storage.
-# The suffix is stable across applies because it is stored in Terraform state.
-# SRE: Using a fixed suffix (not timestamp) means names are deterministic
-# after first apply — resources can be referenced by name in runbooks.
+# SRE: Suffix Stabilization
+# Use a fixed suffix (not random_id) to ensure globally-unique names
+# remain stable across GitHub Actions runs without a remote backend.
+# This prevents 'Suffix Drift' where Key Vault references break 
+# on every new commit.
 # ---------------------------------------------------------------------------
 
 data "azurerm_client_config" "current" {}
 data "azurerm_subscription" "current" {}
 
-resource "random_id" "suffix" {
-  byte_length = 4 # 8 hex chars
-}
-
 locals {
   # Short suffix used in resource names that must be globally unique
-  suffix = random_id.suffix.hex
+  suffix = "7d94f06a"
 
   # SRE: Deterministic naming for Key Vault and its secrets.
   # This breaks the circular dependency between Managed Identity creation
