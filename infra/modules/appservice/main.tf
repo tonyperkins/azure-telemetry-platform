@@ -52,16 +52,16 @@ resource "azurerm_windows_web_app" "main" {
     # SRE: Key Vault reference syntax. The App Service runtime resolves this
     # at startup via the managed identity — the raw connection string never
     # appears in app settings, environment variables, or deployment artifacts.
-    "ConnectionStrings__DefaultConnection" = "@Microsoft.KeyVault(SecretUri=${var.sql_secret_uri}/)"
+    "ConnectionStrings__DefaultConnection" = "@Microsoft.KeyVault(SecretUri=${var.sql_secret_uri})"
     "LogAnalyticsWorkspaceId"              = var.log_analytics_workspace_id
     "AppInsights__AppId"                   = var.app_insights_app_id
     "AppInsights__ApiKey"                  = var.app_insights_api_key
-
+ 
     # Management endpoints for SRE start/stop
     "AZURE_SUBSCRIPTION_ID"   = var.subscription_id
     "AZURE_RESOURCE_GROUP"    = var.resource_group_name
     "AZURE_FUNCTION_APP_NAME" = var.function_app_name
-    "MANAGEMENT_ADMIN_TOKEN"  = "@Microsoft.KeyVault(SecretUri=${var.management_admin_token_uri}/)"
+    "MANAGEMENT_ADMIN_TOKEN"  = "@Microsoft.KeyVault(SecretUri=${var.management_admin_token_uri})"
     "OPENSKY_CLIENT_ID"       = "@Microsoft.KeyVault(SecretUri=${var.opensky_client_id_secret_uri})"
     "OPENSKY_CLIENT_SECRET"   = "@Microsoft.KeyVault(SecretUri=${var.opensky_client_secret_secret_uri})"
   }

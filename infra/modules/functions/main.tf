@@ -66,9 +66,9 @@ resource "azurerm_windows_function_app" "main" {
 
     # SRE: Key Vault reference for the SQL connection string.
     # The consumption plan Function App uses managed identity to resolve this.
-    "SQL_CONNECTION_STRING" = "@Microsoft.KeyVault(SecretUri=${var.sql_secret_uri}/)"
-    "OPENSKY_CLIENT_ID"     = "@Microsoft.KeyVault(SecretUri=${var.opensky_client_id_secret_uri}/)"
-    "OPENSKY_CLIENT_SECRET" = "@Microsoft.KeyVault(SecretUri=${var.opensky_client_secret_secret_uri}/)"
+    "SQL_CONNECTION_STRING" = "@Microsoft.KeyVault(SecretUri=${var.sql_secret_uri})"
+    "OPENSKY_CLIENT_ID"     = "@Microsoft.KeyVault(SecretUri=${var.opensky_client_id_secret_uri})"
+    "OPENSKY_CLIENT_SECRET" = "@Microsoft.KeyVault(SecretUri=${var.opensky_client_secret_secret_uri})"
   }
 
   tags = var.tags
