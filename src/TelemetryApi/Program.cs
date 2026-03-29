@@ -46,6 +46,7 @@ builder.Services.AddApplicationInsightsTelemetry(options =>
 {
     options.ConnectionString = builder.Configuration["APPINSIGHTS_CONNECTION_STRING"];
 });
+builder.Services.AddSingleton<Microsoft.ApplicationInsights.Extensibility.ITelemetryInitializer, CloudRoleNameInitializer>();
 
 // ---------------------------------------------------------------------------
 // Data layer
@@ -137,3 +138,19 @@ app.Run();
 
 // Partial class declaration enables xUnit integration testing with WebApplicationFactory
 public partial class Program { }
+
+/// <summary>
+/// SRE: Ensures all telemetry (traces, requests, exceptions) are tagged with
+/// a deterministic cloud_RoleName. Without this, the .NET App Service
+/// defaults to an empty string, making cross-component log correlation
+/// and dashboard filtering impossible.
+/// </summary>
+public class CloudRoleNameInitializer : Microsoft.ApplicationInsights.Extensibility.ITelemetryInitializer
+{
+    public void Initialize(Microsoft.ApplicationInsights.Channel.ITelemetry telemetry)
+    {
+        // Use a stable name for dashboard consistency, but allow environment
+        // overrides if we ever scale to multiple regional clusters.
+        telemetry.Context.Cloud.RoleName = "TelemetryApi";
+    }
+}

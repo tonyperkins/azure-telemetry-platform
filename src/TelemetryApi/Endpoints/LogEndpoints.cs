@@ -92,9 +92,9 @@ public static class LogEndpoints
             // deploy the full system securely and autonomously!
             var query = filename switch
             {
-                "metro.log" => "traces | where cloud_RoleName startswith 'func-telemetry' | where message has 'MetroIngestion' or message has 'Bus' | project timestamp, message | order by timestamp desc",
-                "flight.log" => "traces | where cloud_RoleName startswith 'func-telemetry' | where message has 'FlightIngestion' or message has 'Flight' | project timestamp, message | order by timestamp desc",
-                "api.log" => "traces | where cloud_RoleName has 'TelemetryApi' or cloud_RoleName startswith 'app-telemetry' | project timestamp, message | order by timestamp desc",
+                "metro.log" => "traces | where cloud_RoleName startswith 'func-telemetry' or cloud_RoleName has 'Ingestion' | where message has 'MetroIngestion' or message has 'Bus' | project timestamp, message | order by timestamp desc",
+                "flight.log" => "traces | where cloud_RoleName startswith 'func-telemetry' or cloud_RoleName has 'Ingestion' | where message has 'FlightIngestion' or message has 'Flight' or message has 'OpenSky' | project timestamp, message | order by timestamp desc",
+                "api.log" => "traces | where isempty(cloud_RoleName) or cloud_RoleName has 'TelemetryApi' or cloud_RoleName startswith 'app-telemetry' | project timestamp, message | order by timestamp desc",
                 _ => "traces | project timestamp, message | order by timestamp desc"
             };
 
