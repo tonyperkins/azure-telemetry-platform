@@ -128,12 +128,12 @@ module "staticweb" {
 }
 
 module "keyvault" {
-  source                   = "./modules/keyvault"
-  resource_group_name      = azurerm_resource_group.main.name
-  location                 = var.location
-  environment              = var.environment
-  tags                     = local.tags
-  suffix                   = local.suffix
+  source              = "./modules/keyvault"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = var.location
+  environment         = var.environment
+  tags                = local.tags
+  suffix              = local.suffix
   # SRE: Zero-Trust SQL Authentication via Managed Identity.
   # This eliminates the dependency on the 'sql_admin_password' secret.
   # Note: The connection string is constructed deterministically here to break
