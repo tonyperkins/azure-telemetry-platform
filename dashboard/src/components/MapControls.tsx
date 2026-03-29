@@ -86,6 +86,12 @@ export function MapControls({
     setIsCheckingApi(true);
     try {
       const res = await fetch(`${API_BASE}/api/manage/opensky-status`);
+      
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error(`Invalid response format from API (Status: ${res.status}). Expected JSON but received: ${contentType || 'blank'}`);
+      }
+
       const data = await res.json();
       if (!res.ok || !data.isUp) {
         if (onAddToast) onAddToast('critical', `OpenSky API Error: ${data.statusCode}`, data.error || 'The OpenSky Network API is unreachable or rate limited.');
