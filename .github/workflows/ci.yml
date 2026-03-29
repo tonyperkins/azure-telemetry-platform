@@ -58,6 +58,9 @@ jobs:
       - name: dotnet test
         # SRE: Tests run against the local SQL Server service container in CI.
         # Integration tests verify real query correctness — mocks alone are not sufficient.
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=TelemetryDev;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;MultipleActiveResultSets=true"
         run: dotnet test azure-telemetry-platform.sln --no-build --configuration Release --logger "trx;LogFileName=test-results.trx" --results-directory ./TestResults
         continue-on-error: true
 
