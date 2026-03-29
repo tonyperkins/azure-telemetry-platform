@@ -118,11 +118,11 @@ jobs:
           echo "::add-mask::$SQL_CONN"
           echo "sql_connection_string=$SQL_CONN" >> $GITHUB_OUTPUT
           
-          # Offline SID conversion (using Big-Endian bytes for AAD alignment)
+          # Offline SID conversion (using Little-Endian bytes for CLR/SQL alignment)
           FUNC_OID="$(terraform output -raw functionapp_principal_id)"
           APP_OID="$(terraform output -raw appservice_principal_id)"
-          FUNC_SID="$(python3 -c "import uuid; print('0x' + ''.join(f'{b:02X}' for b in uuid.UUID('$FUNC_OID').bytes))")"
-          APP_SID="$(python3 -c "import uuid; print('0x' + ''.join(f'{b:02X}' for b in uuid.UUID('$APP_OID').bytes))")"
+          FUNC_SID="$(python3 -c "import uuid; print('0x' + ''.join(f'{b:02X}' for b in uuid.UUID('$FUNC_OID').bytes_le))")"
+          APP_SID="$(python3 -c "import uuid; print('0x' + ''.join(f'{b:02X}' for b in uuid.UUID('$APP_OID').bytes_le))")"
           echo "func_sid=$FUNC_SID" >> $GITHUB_OUTPUT
           echo "app_sid=$APP_SID" >> $GITHUB_OUTPUT
           

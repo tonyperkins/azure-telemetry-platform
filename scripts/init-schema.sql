@@ -95,21 +95,23 @@ BEGIN
 END
 GO
 
-IF EXISTS (SELECT * FROM sys.database_principals WHERE name = 'app-telemetry-prod-7d94f06a')
+IF exists (select * from sys.database_principals where name = 'app-telemetry-prod-7d94f06a')
 BEGIN
     DROP USER [app-telemetry-prod-7d94f06a];
 END
 GO
+PRINT 'Mapping app-telemetry-prod-7d94f06a with SID: $(APP_SID)';
 CREATE USER [app-telemetry-prod-7d94f06a] WITH SID=$(APP_SID), TYPE=E;
 ALTER ROLE db_datareader ADD MEMBER [app-telemetry-prod-7d94f06a];
 ALTER ROLE db_datawriter ADD MEMBER [app-telemetry-prod-7d94f06a];
 GO
 
-IF EXISTS (SELECT * FROM sys.database_principals WHERE name = 'func-telemetry-prod-7d94f06a')
+IF exists (select * from sys.database_principals where name = 'func-telemetry-prod-7d94f06a')
 BEGIN
     DROP USER [func-telemetry-prod-7d94f06a];
 END
 GO
+PRINT 'Mapping func-telemetry-prod-7d94f06a with SID: $(FUNC_SID)';
 CREATE USER [func-telemetry-prod-7d94f06a] WITH SID=$(FUNC_SID), TYPE=E;
 ALTER ROLE db_datareader ADD MEMBER [func-telemetry-prod-7d94f06a];
 ALTER ROLE db_datawriter ADD MEMBER [func-telemetry-prod-7d94f06a];
