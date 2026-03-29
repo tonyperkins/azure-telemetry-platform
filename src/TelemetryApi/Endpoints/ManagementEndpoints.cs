@@ -63,6 +63,12 @@ public static class ManagementEndpoints
             var limit = response.Headers.TryGetValues("X-Rate-Limit-Limit", out var lVals) ? lVals.FirstOrDefault() : null;
             var retryAfter = response.Headers.TryGetValues("X-Rate-Limit-Retry-After-Seconds", out var raVals) ? raVals.FirstOrDefault() : null;
 
+            // SRE: OpenSky often omits the total limit header. Fallback based on auth status.
+            if (string.IsNullOrEmpty(limit))
+            {
+                limit = !string.IsNullOrEmpty(clientId) ? "4000" : "400";
+            }
+
             return Results.Ok(new 
             {
                 statusCode = (int)response.StatusCode,

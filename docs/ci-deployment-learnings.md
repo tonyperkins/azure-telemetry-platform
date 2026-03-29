@@ -48,3 +48,57 @@ We explicitly mapped the missing environmental contexts via the CI YAML runner c
         run: dotnet test ...
 ```
 This forces `WebApplicationFactory` to extract the correct configuration hierarchy from `appsettings.Development.json` and deterministically bind the API controllers to our freshly scaffolded local SQL Docker Container in CI.
+
+## 4. Deterministic SID Resolution for Managed Identities
+
+### The Issue
+Managed Identities (MIs) assigned to App Services and Function Apps required explicit mapping in Azure SQL (`CREATE USER ... FROM EXTERNAL PROVIDER`). However, because the GitHub Service Principal lacked `Directory.Read.All` permissions (common in locked-down production tenants), the SQL engine could not resolve the identity names, leading to `Login failed` errors.
+
+### The Challenge: Non-Deterministic Binary SIDs
+Initial attempts to use "Offline SID Mapping" (calculating the hex-SID from the Object ID) failed because Managed Identity SIDs in Azure SQL are **not** a simple Big-Endian or Little-Endian conversion of the Principal ID. They are specific 16-byte (or 30-byte in some contexts) binary strings assigned internally by Entra ID.
+
+### The Resolution: Surgical Extraction
+1. **Authoritative Identification**: We identified the binary SID URLs hidden in the Service Principal's `servicePrincipalNames` metadata (e.g., `https://identity.azure.net/siaJsNUUkzptOku9O7PE+oBGeTqpbqUPb31OSPmsb1Y=`).
+2. **Surgical Extraction**: We used a whitelisted Entra Admin context (Tony's local browser tool) to query the database and extract the **actual** hex strings directly from `sys.database_principals`.
+3. **Hardcoded Stabilization**: We hardcoded these definitive hex strings in `init-schema.sql` for the production identities:
+    - **Web API**: `0xa4dc824c7467f742a5a4d66821038485`
+    - **Function App**: `0xde446463bcb8224ab130549d64568b7d`
+
+
+## 5. The Technical Debt of Hardcoded SIDs & The Path to Portability
+
+> [!WARNING]
+> The current production resolution utilizes **hardcoded Hex SIDs** in `init-schema.sql`. This was a surgical choice to restore service immediately, but it is **not** an architectural best practice for Infrastructure as Code (IaC) portability.
+
+### The "Destroy and Re-deploy" Risk
+If the infrastructure is destroyed (`terraform destroy`) and re-created (`terraform apply`), Azure will provision **new** Managed Identities with **new** Principal IDs and **different** internal Binary SIDs. The hardcoded values in the SQL script will fail as they will point to "Ghost Identities" that no longer exist.
+
+### The "Gold Standard" Resolution (IaC Best Practice)
+To achieve a "wipe clean and re-deploy" capability where the entire stack is provisioned automatically, the following architectural steps are required:
+
+#### 1. Entra ID Permission Elevation (Prerequisite)
+The GitHub Service Principal (the deployment identity) must be granted the **`Directory.Read.All`** application permission (Microsoft Graph) at the Tenant level. 
+*   **Why?**: This allows the SQL Server engine to query the Entra ID Graph during the user creation process to resolve the identity name.
+
+#### 2. Native T-SQL Naming Conventions
+With those permissions in place, all hardcoded binary SIDs should be removed from `init-schema.sql` and the deployment workflow. The SQL logic should revert to the native Entra ID resolution pattern:
+```sql
+-- This command works ONLY if the executing principal has Directory permissions
+CREATE USER [app-telemetry-prod-unique] FROM EXTERNAL PROVIDER;
+CREATE USER [func-telemetry-prod-unique] FROM EXTERNAL PROVIDER;
+```
+
+#### 3. Dynamic Name Macro-Passing
+To ensure the script works across environments (Dev, QA, Prod), use macros for the **Identity Name** rather than the SID:
+```sql
+-- init-schema.sql (The Portable Pattern)
+CREATE USER [$(IDENTITY_NAME)] FROM EXTERNAL PROVIDER;
+```
+The deployment workflow can then pass the name directly from Terraform outputs:
+```yaml
+# deploy.yml
+arguments: '-v IDENTITY_NAME="${{ steps.tf-outputs.outputs.app_service_name }}"'
+```
+
+### Summary of the "Best Practice" State
+By moving to **Native Name Resolution** with **Elevated Graph Permissions**, the platform achieves 100% portability. Any `terraform apply` will generate a functional state instantly, as Azure SQL will handle the SID mapping dynamically for every new resource.
