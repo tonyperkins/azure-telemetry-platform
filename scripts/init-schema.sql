@@ -88,19 +88,19 @@ GO
 
 -- SRE: Replace 'prod' and suffix if dynamically executed later, but for this
 --      production initialization, we use the known stable suffix.
--- Use hardcoded definitive SIDs for production identities to bypass 
--- Entra ID Graph permission issues in CI/CD.
-
--- SRE: Dynamically map the Managed Identities using the provided SIDs.
--- We DROP and CREATE to ensure the SID is always current (in case of infra re-creation).
+-- SRE: Native Azure SQL Managed Identity Provisioning.
+-- Instead of calculating complex binary SIDs, we use the native
+-- 'FROM EXTERNAL PROVIDER' syntax. This ensures the user is mapped
+-- correctly in the TelemetryDb context.
 IF EXISTS (SELECT * FROM sys.database_principals WHERE name = '$(APP_NAME)')
 BEGIN
     DROP USER [$(APP_NAME)];
 END
 GO
-CREATE USER [$(APP_NAME)] WITH SID = $(APP_SID);
+CREATE USER [$(APP_NAME)] FROM EXTERNAL PROVIDER;
 ALTER ROLE db_datareader ADD MEMBER [$(APP_NAME)];
 ALTER ROLE db_datawriter ADD MEMBER [$(APP_NAME)];
+GRANT CONNECT TO [$(APP_NAME)];
 GO
 
 IF EXISTS (SELECT * FROM sys.database_principals WHERE name = '$(FUNC_NAME)')
@@ -108,9 +108,10 @@ BEGIN
     DROP USER [$(FUNC_NAME)];
 END
 GO
-CREATE USER [$(FUNC_NAME)] WITH SID = $(FUNC_SID);
+CREATE USER [$(FUNC_NAME)] FROM EXTERNAL PROVIDER;
 ALTER ROLE db_datareader ADD MEMBER [$(FUNC_NAME)];
 ALTER ROLE db_datawriter ADD MEMBER [$(FUNC_NAME)];
+GRANT CONNECT TO [$(FUNC_NAME)];
 GO
 
 SET NOEXEC OFF;

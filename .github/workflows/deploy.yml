@@ -120,26 +120,6 @@ jobs:
           echo "::add-mask::$SQL_CONN"
           echo "sql_connection_string=$SQL_CONN" >> $GITHUB_OUTPUT
           
-      - name: Calculate Binary SIDs
-        id: calc-sid
-        shell: python
-        run: |
-          import uuid
-          import os
-
-          def guid_to_hex_sid(guid_str):
-              g = uuid.UUID(guid_str)
-              # Little-Endian for Data1 (4 bytes), Data2 (2 bytes), Data3 (2 bytes)
-              # Big-Endian for Data4 (8 bytes) - Match .NET ToByteArray() / SQL binary SID format
-              return '0x' + g.bytes_le.hex()
-
-          app_guid = "${{ steps.tf-outputs.outputs.appservice_principal_id }}"
-          func_guid = "${{ steps.tf-outputs.outputs.functionapp_principal_id }}"
-          
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f"app_sid={guid_to_hex_sid(app_guid)}\n")
-              f.write(f"func_sid={guid_to_hex_sid(func_guid)}\n")
-
       - name: Initialize Database Schema
         uses: azure/sql-action@v2
         with:
@@ -147,9 +127,7 @@ jobs:
           path: './scripts/init-schema.sql'
           arguments: >
             -v APP_NAME="${{ steps.tf-outputs.outputs.app_service_name }}"
-            -v APP_SID="${{ steps.calc-sid.outputs.app_sid }}"
             -v FUNC_NAME="${{ steps.tf-outputs.outputs.function_app_name }}"
-            -v FUNC_SID="${{ steps.calc-sid.outputs.func_sid }}"
 
   # ---------------------------------------------------------------------------
   # Job 2: Deploy TelemetryApi to App Service
