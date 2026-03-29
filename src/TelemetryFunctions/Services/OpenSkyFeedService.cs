@@ -87,8 +87,8 @@ public sealed class OpenSkyFeedService
             if (timeSinceRateLimit < RateLimitCooldown)
             {
                 var remainingCooldown = RateLimitCooldown - timeSinceRateLimit;
-                _logger.LogInformation(
-                    "OpenSky circuit breaker active. Skipping call. Cooldown ends in {Minutes:F1} minutes.",
+                _logger.LogWarning(
+                    "OpenSky circuit breaker active. Skipping call. Rate limit recovery in progress. Cooldown ends in {Minutes:F1} minutes.",
                     remainingCooldown.TotalMinutes);
                 return Array.Empty<OpenSkyVehicle>();
             }
@@ -166,6 +166,14 @@ public sealed class OpenSkyFeedService
         if (!root.TryGetProperty("states", out var statesElement) ||
             statesElement.ValueKind != JsonValueKind.Array)
         {
+            // SRE: If 'states' is missing, it's often because the API returned an
+            // error object (e.g. {"error": "..."}) instead of the expected vectors.
+            // We log the raw JSON here to help diagnose silent failures.
+            var rawJson = root.GetRawText();
+            _logger.LogWarning(
+                "OpenSky response missing 'states' array. Root JSON: {RawJson}",
+                rawJson.Length > 200 ? rawJson[..200] + "..." : rawJson);
+
             return vehicles;
         }
 

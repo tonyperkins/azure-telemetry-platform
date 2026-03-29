@@ -79,15 +79,15 @@ public sealed class FlightIngestionFunction
         // Step 4: Handle zero-vehicle result
         if (vehicles.Count == 0)
         {
-            // SRE: Same zero-vehicle alerting pattern as metro ingestion.
-            // Zero airborne aircraft over Austin during peak hours is a signal
-            // that the feed is stale or our bounding box query failed silently.
+            // SRE: Help diagnose why the count is zero.
+            // (1) was the feed empty? (2) were all aircraft position-less? (3) were they all on ground?
+            _logger.LogWarning(
+                "Flight ingestion returned 0 airborne vehicles. Metrics: Total={Total}, WithPosition={WithPosition}, Filtering={FilterOnGround}",
+                allVehicles.Count, withPosition.Count, filterOnGround);
+
             _telemetry.TrackMetric("vehicles_ingested_zero", 1,
                 new Dictionary<string, string> { ["source"] = "flight" });
 
-            _logger.LogWarning(
-                "Flight ingestion returned 0 airborne vehicles. " +
-                "Staleness alert will fire if this persists across 3 consecutive polls.");
             return;
         }
 

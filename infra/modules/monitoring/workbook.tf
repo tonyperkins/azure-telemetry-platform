@@ -82,9 +82,9 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
           query                   = <<-KQL
             requests
             | where timestamp {TimeRange}
-            | where name has "/api/"
+            | where name has "/api/" or cloud_RoleName == "TelemetryApi"
             | summarize Total = count(), Succeeded = countif(success == true)
-            | extend Availability = round(100.0 * Succeeded / Total, 2)
+            | extend Availability = iff(Total == 0, 100.0, round(100.0 * Succeeded / Total, 2))
             | project Availability
           KQL
           size                    = 4
@@ -114,7 +114,7 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
           query                   = <<-KQL
             requests
             | where timestamp {TimeRange}
-            | where name has "/api/"
+            | where name has "/api/" or cloud_RoleName == "TelemetryApi"
             | summarize P95 = round(percentile(duration, 95), 0)
             | project P95
           KQL
@@ -145,7 +145,7 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
           query                   = <<-KQL
             requests
             | where timestamp {TimeRange}
-            | where name has "/api/"
+            | where name has "/api/" or cloud_RoleName == "TelemetryApi"
             | summarize Total = count(), Failed = countif(success == false)
             | extend ErrorRate = iff(Total == 0, 0.0, round(100.0 * Failed / Total, 3))
             | project ErrorRate
@@ -251,7 +251,7 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
           query                   = <<-KQL
             requests
             | where timestamp {TimeRange}
-            | where name has "/api/"
+            | where name has "/api/" or cloud_RoleName == "TelemetryApi"
             | summarize
                 P50 = round(percentile(duration, 50), 1),
                 P95 = round(percentile(duration, 95), 1),
@@ -284,7 +284,7 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
           query                   = <<-KQL
             requests
             | where timestamp {TimeRange}
-            | where name has "/api/"
+            | where name has "/api/" or cloud_RoleName == "TelemetryApi"
             | summarize
                 Total  = count(),
                 Failed = countif(success == false)
@@ -328,7 +328,7 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
           query                   = <<-KQL
             requests
             | where timestamp {TimeRange}
-            | where name has "/api/"
+            | where name has "/api/" or cloud_RoleName == "TelemetryApi"
             | summarize Requests = count() by bin(timestamp, 5m), name
             | order by timestamp asc
           KQL
@@ -349,12 +349,12 @@ resource "azurerm_application_insights_workbook" "sre_dashboard" {
           query                   = <<-KQL
             requests
             | where timestamp {TimeRange}
-            | where name has "/api/"
+            | where name has "/api/" or cloud_RoleName == "TelemetryApi"
             | summarize
                 Requests = count(),
                 AvgMs    = round(avg(duration), 1),
                 P95Ms    = round(percentile(duration, 95), 1),
-                FailRate = round(100.0 * countif(success == false) / count(), 2)
+                FailRate = iff(count() == 0, 0.0, round(100.0 * countif(success == false) / count(), 2))
               by name
             | order by Requests desc
           KQL

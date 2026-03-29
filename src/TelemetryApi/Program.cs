@@ -44,7 +44,7 @@ if (!string.IsNullOrEmpty(keyVaultName))
 // ---------------------------------------------------------------------------
 builder.Services.AddApplicationInsightsTelemetry(options =>
 {
-    options.ConnectionString = builder.Configuration["APPINSIGHTS_CONNECTION_STRING"];
+    options.ConnectionString = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
 });
 builder.Services.AddSingleton<Microsoft.ApplicationInsights.Extensibility.ITelemetryInitializer, CloudRoleNameInitializer>();
 
