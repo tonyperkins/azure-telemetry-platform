@@ -96,8 +96,8 @@ BEGIN
     DROP USER [app-telemetry-prod-7d94f06a];
 END
 GO
-PRINT 'Mapping app-telemetry-prod-7d94f06a with SID: 0xa4dc824c7467f742a5a4d66821038485';
-CREATE USER [app-telemetry-prod-7d94f06a] WITH SID=0xa4dc824c7467f742a5a4d66821038485, TYPE=E;
+PRINT 'Mapping app-telemetry-prod-7d94f06a with SID: 0x3c138d46efcf53479d8877e0cac96945';
+CREATE USER [app-telemetry-prod-7d94f06a] WITH SID=0x3c138d46efcf53479d8877e0cac96945, TYPE=E;
 ALTER ROLE db_datareader ADD MEMBER [app-telemetry-prod-7d94f06a];
 ALTER ROLE db_datawriter ADD MEMBER [app-telemetry-prod-7d94f06a];
 GO
@@ -107,8 +107,8 @@ BEGIN
     DROP USER [func-telemetry-prod-7d94f06a];
 END
 GO
-PRINT 'Mapping func-telemetry-prod-7d94f06a with SID: 0xde446463bcb8224ab130549d64568b7d';
-CREATE USER [func-telemetry-prod-7d94f06a] WITH SID=0xde446463bcb8224ab130549d64568b7d, TYPE=E;
+PRINT 'Mapping func-telemetry-prod-7d94f06a with SID: 0xbcd40832854d5f45ba21e2accebccf79';
+CREATE USER [func-telemetry-prod-7d94f06a] WITH SID=0xbcd40832854d5f45ba21e2accebccf79, TYPE=E;
 ALTER ROLE db_datareader ADD MEMBER [func-telemetry-prod-7d94f06a];
 ALTER ROLE db_datawriter ADD MEMBER [func-telemetry-prod-7d94f06a];
 GO
