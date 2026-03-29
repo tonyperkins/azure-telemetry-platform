@@ -93,7 +93,7 @@ BEGIN
     DROP USER [app-telemetry-prod-7d94f06a];
 END
 GO
-CREATE USER [app-telemetry-prod-7d94f06a] FROM EXTERNAL PROVIDER;
+CREATE USER [app-telemetry-prod-7d94f06a] WITH SID=$(APP_SID), TYPE=E;
 ALTER ROLE db_datareader ADD MEMBER [app-telemetry-prod-7d94f06a];
 ALTER ROLE db_datawriter ADD MEMBER [app-telemetry-prod-7d94f06a];
 GO
@@ -103,7 +103,7 @@ BEGIN
     DROP USER [func-tlm-prod-7d94f06a];
 END
 GO
-CREATE USER [func-tlm-prod-7d94f06a] FROM EXTERNAL PROVIDER;
+CREATE USER [func-tlm-prod-7d94f06a] WITH SID=$(FUNC_SID), TYPE=E;
 ALTER ROLE db_datareader ADD MEMBER [func-tlm-prod-7d94f06a];
 ALTER ROLE db_datawriter ADD MEMBER [func-tlm-prod-7d94f06a];
 GO

@@ -118,12 +118,20 @@ jobs:
           echo "::add-mask::$SQL_CONN"
           echo "sql_connection_string=$SQL_CONN" >> $GITHUB_OUTPUT
           
+          # Offline SID conversion for SQL Server managed identity bug bypass
+          FUNC_OID="$(terraform output -raw functionapp_principal_id)"
+          APP_OID="$(terraform output -raw appservice_principal_id)"
+          FUNC_SID="$(python3 -c "import uuid; print('0x' + ''.join(f'{b:02X}' for b in uuid.UUID('$FUNC_OID').bytes_le))")"
+          APP_SID="$(python3 -c "import uuid; print('0x' + ''.join(f'{b:02X}' for b in uuid.UUID('$APP_OID').bytes_le))")"
+          echo "func_sid=$FUNC_SID" >> $GITHUB_OUTPUT
+          echo "app_sid=$APP_SID" >> $GITHUB_OUTPUT
+          
       - name: Initialize Database Schema
         uses: azure/sql-action@v2
         with:
           connection-string: ${{ steps.tf-outputs.outputs.sql_connection_string }}
           path: './scripts/init-schema.sql'
-          arguments: '-b'
+          arguments: '-b -v FUNC_SID="${{ steps.tf-outputs.outputs.func_sid }}" APP_SID="${{ steps.tf-outputs.outputs.app_sid }}"'
 
   # ---------------------------------------------------------------------------
   # Job 2: Deploy TelemetryApi to App Service

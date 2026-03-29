@@ -18,6 +18,21 @@ output "app_service_name" {
   value       = module.appservice.app_name
 }
 
+output "log_analytics_workspace_id" {
+  description = "Workspace ID for monitoring dashboards."
+  value       = module.insights.workspace_id
+}
+
+output "functionapp_principal_id" {
+  description = "Object ID of the Function App for SID mapping."
+  value       = module.functions.principal_id
+}
+
+output "appservice_principal_id" {
+  description = "Object ID of the App Service for SID mapping."
+  value       = module.appservice.principal_id
+}
+
 output "key_vault_name" {
   description = "Name of the Key Vault."
   value       = module.keyvault.key_vault_name
