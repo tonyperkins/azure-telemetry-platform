@@ -31,6 +31,13 @@ You will find a control panel floating on the map that allows you to customize t
 * **Clustering**: When zoomed out, enabling the `Cluster Vehicles` option groups nearby vehicles together, reducing visual clutter.
 * **Reset View**: Returns all map and filter settings to their default state.
 
+### 🩺 Diagnostics & Health Checks
+Located at the bottom of the Data Sources section in the Map Controls panel:
+* **Check API Status**: This button performs a live diagnostic check of the **OpenSky Network** flight data provider. It displays:
+    * **Rate Limit**: Your current remaining credits for the 24-hour period.
+    * **Authentication Status**: Confirms if the system is correctly logged into a registered OpenSky account (4,000 credit tier).
+    * **Upstream Health**: Real-time confirmation if the OpenSky service is reachable or if a Circuit Breaker has been tripped.
+
 ---
 
 ## 🎛️ Source Filtering

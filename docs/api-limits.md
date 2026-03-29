@@ -17,31 +17,20 @@ Each API call consumes credits based on:
 - 1 credit per request for bounding box queries (what we use)
 - Larger queries (e.g., all aircraft globally) consume more credits
 
-### Upgrade Options
-**OpenSky does NOT offer paid tiers.** It's a non-profit research network funded by academic institutions. The 4,000 credits/day limit is the maximum available to any user.
+**Inference Logic**: The Telemetry API includes "Smart Inference" for OpenSky credits. If the upstream provider omits the `X-Rate-Limit-Limit` header, the API automatically injects the authoritative limit based on the current authentication status:
+- **Authenticated**: 4,000 credits
+- **Anonymous**: 400 credits
 
-**Alternatives if you need higher frequency:**
-1. **Increase polling frequency** (requires registered account for headroom):
-   - Poll every 30s → 2,880 requests/day (28% headroom on registered tier)
-   - Poll every 15s → 5,760 requests/day (exceeds 4,000 credit limit — not viable)
+### Monitoring & Status
+You can monitor real-time credit usage through two channels:
 
-2. **Use commercial flight tracking APIs**:
-   - **FlightAware AeroAPI**: $0.0025–$0.01/request, no daily limit
-   - **AviationStack**: 500 free requests/month, paid plans start at $9.99/month
-   - **FlightRadar24 Data API**: Custom enterprise pricing
-
-3. **Self-host ADS-B receiver**:
-   - Hardware: ~$150 (Raspberry Pi + RTL-SDR dongle + antenna)
-   - Range: 200–300 miles (covers all of Texas)
-   - No API limits, real-time data
-
-### Monitoring
-Current usage is logged in Application Insights:
-```kusto
-traces
-| where message contains "OpenSky"
-| summarize count() by bin(timestamp, 1h)
-```
+1. **SRE Dashboard (In-App)**: Use the **"Check API Status"** button in the Map Controls panel. This queries the `TelemetryApi /api/manage/opensky-status` endpoint to retrieve current remaining credits and inferred limits.
+2. **Application Insights**: Usage is also logged for trend analysis:
+   ```kql
+   traces
+   | where message contains "OpenSky"
+   | summarize count() by bin(timestamp, 1h)
+   ```
 
 ---
 

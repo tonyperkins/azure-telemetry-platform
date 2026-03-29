@@ -249,7 +249,7 @@ requests
 
    | Symptom | Cause | Fix |
    |---|---|---|
-   | `SqlException: Login failed` | Key Vault secret stale or Key Vault unreachable | Verify managed identity access policy; restart App Service |
+   | `SqlException: Login failed` | Identity SID mismatch in SQL | Verify SID mapping in `init-schema.sql` matches the live Service Principal (see Section 4.5) |
    | `SqlException: The service is not currently available` | SQL auto-resume in progress | Wait 30s and recheck; the next request will succeed |
    | `System.TimeoutException` | DB connection pool exhausted | Scale App Service plan or check for long-running queries |
    | HTTP 503 from App Service | App Service restart/swap | Wait for health check to pass |
@@ -263,30 +263,28 @@ requests
 
 ---
 
-## 4. Common Operational Tasks
+### Manual Deployment (Production)
 
-### Rotate the SQL admin password
+To ensure stability and prevent infrastructure drift, deployments are triggered manually via GitHub Actions.
 
-```bash
-# 1. Generate new password
-NEW_PASS=$(openssl rand -base64 32)
+1.  **Repository**: [github.com/tonyperkins/azure-telemetry-platform](https://github.com/tonyperkins/azure-telemetry-platform)
+2.  **Workflow**: Select **Actions** → **Deploy to Azure**.
+3.  **Trigger**: Click **Run workflow** and select the `prod` branch/tag.
+4.  **Verification**: Confirm the smoke test passes in the logs.
 
-# 2. Update SQL server
-az sql server update \
-  --name sql-telemetry-prod \
-  --resource-group rg-telemetry-prod \
-  --admin-password "$NEW_PASS"
+### Identity Stabilization (Surgical SIDs)
 
-# 3. Update Key Vault secret
-az keyvault secret set \
-  --vault-name kv-telemetry-prod \
-  --name SQL-CONNECTION-STRING \
-  --value "Server=tcp:sql-telemetry-prod.database.windows.net,1433;Initial Catalog=TelemetryDb;Persist Security Info=False;User ID=sqladmin;Password=${NEW_PASS};Encrypt=True;"
+If the infrastructure is destroyed and recreated, the Managed Identities for the Function App and API will receive **NEW** SIDs. Because the GitHub Runner lacks `Directory.Read.All` Graph permissions, you must manually sync these SIDs to the SQL database.
 
-# 4. Restart App Service and Function App to pick up new secret
-az webapp restart --name app-telemetry-prod --resource-group rg-telemetry-prod
-az functionapp restart --name func-telemetry-prod --resource-group rg-telemetry-prod
-```
+1.  **Extract SIDs**: Run the following in the Azure Portal SQL Query Editor (logged in as an Entra Admin):
+    ```sql
+    SELECT name, sid FROM sys.database_principals WHERE type = 'E';
+    ```
+2.  **Update Schema**: Copy the binary (Hex) SIDs and update the `CREATE USER` statements in `scripts/init-schema.sql`.
+3.  **Redeploy**: Run the manual deployment workflow to apply the logic and schema updates.
+
+> [!CAUTION]
+> If a redeployment fails with "Login failed," it is 99% likely a SID mismatch. Do not regenerate secrets; check the binary SIDs first.
 
 ### Manually trigger a Function run
 

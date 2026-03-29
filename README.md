@@ -73,12 +73,11 @@ flowchart TD
 ```
 azure-telemetry-platform/
 ├── scripts/
-│   └── seed-local-db.sql          # Local dev DB setup
+│   ├── seed-local-db.sql          # Local dev DB setup
+│   └── init-schema.sql            # Core SQL schema with Surgical SIDs
 ├── src/
 │   ├── TelemetryApi/              # .NET 8 Minimal API
-│   ├── MetroIngestion/            # Azure Function — GTFS-RT
-│   ├── FlightIngestion/           # Azure Function — OpenSky
-│   ├── RetentionCleanup/          # Azure Function — daily purge
+│   ├── TelemetryFunctions/        # Consolidated Azure Functions (Metro, Flight, Cleanup)
 │   └── TelemetryApi.Tests/        # xUnit integration tests
 ├── dashboard/                     # React + Vite + Leaflet
 ├── infra/                         # Terraform modules
@@ -92,11 +91,12 @@ azure-telemetry-platform/
 ├── docs/
 │   ├── runbook.md
 │   ├── slo.md                     # SLI/SLO definitions + error budget policy
+│   ├── ci-deployment-learnings.md # Historical SID stabilization details
 │   ├── postmortem-template.md
 │   └── architecture-decisions.md
 ├── .github/workflows/
 │   ├── ci.yml                     # Build + test on every push/PR
-│   └── deploy.yml                 # Deploy to Azure on merge to main
+│   └── deploy.yml                 # Manual deployment (workflow_dispatch)
 ├── .env.example                   # Environment variable reference
 └── azure-telemetry-platform.sln
 ```
@@ -203,7 +203,14 @@ Store the following as GitHub repository secrets:
 
 ### Subsequent deployments
 
-Push to `main` → CI workflow runs tests → deploy workflow deploys all three targets and runs a smoke test on `/api/health`.
+**Manual Trigger Only**: To prevent resource contention and ensure deterministic identity mapping, deployments are now triggered manually via the GitHub Actions UI.
+
+1.  Navigate to **Actions** → **Deploy to Azure**.
+2.  Click **Run workflow**.
+3.  Select the `prod` environment.
+
+> [!NOTE]
+> For a detailed architectural walkthrough of why we moved to manual triggers and hardcoded SID mapping, see [docs/ci-deployment-learnings.md](docs/ci-deployment-learnings.md).
 
 ---
 
