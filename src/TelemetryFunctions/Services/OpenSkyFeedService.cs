@@ -50,14 +50,16 @@ public sealed class OpenSkyFeedService
             
             _logger.LogInformation(
                 "OpenSky authenticated mode enabled (4000 credits/day). " +
-                "Header length: {HeaderLength}", authHeader.Length);
+                "User: {UserPrefix}..., SecretLength: {SecretLength}", 
+                _clientId.Length > 3 ? _clientId.Substring(0, 3) : _clientId,
+                _clientSecret.Length);
         }
         else
         {
             _logger.LogWarning(
                 "OpenSky running in anonymous mode (400 credits/day). " +
-                "Check OPENSKY_CLIENT_ID and OPENSKY_CLIENT_SECRET configuration. " +
-                "ClientId: '{ClientId}', SecretLength: {SecretLength}",
+                "Missing or empty OPENSKY_CLIENT_ID or OPENSKY_CLIENT_SECRET. " +
+                "Current ID: '{Id}', SecretLength: {Len}",
                 _clientId ?? "NULL", _clientSecret?.Length ?? 0);
         }
 

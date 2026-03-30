@@ -89,18 +89,22 @@ GO
 --      This script handles creating the users idempotently.
 -- =============================================================================
 
--- SRE: Replace 'prod' and suffix if dynamically executed later, but for this
---      production initialization, we use the known stable suffix.
--- SRE: Native Azure SQL Managed Identity Provisioning.
--- Instead of calculating complex binary SIDs, we use the native
--- 'FROM EXTERNAL PROVIDER' syntax. This ensures the user is mapped
--- correctly in the TelemetryDb context.
+-- SRE: Robust Binary SID Mapping
+-- Instead of 'FROM EXTERNAL PROVIDER' (which relies on a non-deterministic
+-- Entra ID lookup in CI/CD), we use the immutable binary SID derived
+-- from the Principal Object ID. This provides immediate, zero-latency
+-- identity propagation for the Data Plane.
+
+PRINT 'SRE: Provisioning identities with deterministic SIDs...';
+PRINT 'SRE: APP_NAME: $(APP_NAME), APP_SID: $(APP_SID)';
+PRINT 'SRE: FUNC_NAME: $(FUNC_NAME), FUNC_SID: $(FUNC_SID)';
+
 IF EXISTS (SELECT * FROM sys.database_principals WHERE name = '$(APP_NAME)')
 BEGIN
     DROP USER [$(APP_NAME)];
 END
 GO
-CREATE USER [$(APP_NAME)] FROM EXTERNAL PROVIDER;
+CREATE USER [$(APP_NAME)] WITH SID = $(APP_SID), TYPE = E;
 ALTER ROLE db_datareader ADD MEMBER [$(APP_NAME)];
 ALTER ROLE db_datawriter ADD MEMBER [$(APP_NAME)];
 GRANT CONNECT TO [$(APP_NAME)];
@@ -111,7 +115,7 @@ BEGIN
     DROP USER [$(FUNC_NAME)];
 END
 GO
-CREATE USER [$(FUNC_NAME)] FROM EXTERNAL PROVIDER;
+CREATE USER [$(FUNC_NAME)] WITH SID = $(FUNC_SID), TYPE = E;
 ALTER ROLE db_datareader ADD MEMBER [$(FUNC_NAME)];
 ALTER ROLE db_datawriter ADD MEMBER [$(FUNC_NAME)];
 GRANT CONNECT TO [$(FUNC_NAME)];
