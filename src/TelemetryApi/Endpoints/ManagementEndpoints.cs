@@ -3,6 +3,9 @@ using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.AppService;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using TelemetryApi.Data;
+using TelemetryApi.Models;
 
 namespace TelemetryApi.Endpoints;
 
