@@ -168,6 +168,7 @@ module "appservice" {
   management_admin_token_uri       = local.management_admin_token_uri
   opensky_client_id_secret_uri     = local.opensky_id_uri
   opensky_client_secret_secret_uri = local.opensky_sec_uri
+  flight_polling_cron              = var.flight_polling_cron
 }
 
 # ---------------------------------------------------------------------------
@@ -191,4 +192,5 @@ module "functions" {
   opensky_bbox                     = var.opensky_bbox
   opensky_client_id_secret_uri     = local.opensky_id_uri
   opensky_client_secret_secret_uri = local.opensky_sec_uri
+  flight_polling_cron              = var.flight_polling_cron
 }

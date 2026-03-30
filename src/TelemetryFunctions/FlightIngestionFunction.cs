@@ -40,7 +40,7 @@ public sealed class FlightIngestionFunction
     }
 
     [Function("FlightIngestion")]
-    public async Task RunAsync([TimerTrigger("0 * * * * *")] TimerInfo timer)
+    public async Task RunAsync([TimerTrigger("%FLIGHT_POLLING_CRON%")] TimerInfo timer)
     {
         // SRE: Feature flag / kill switch
         if (!_config.GetValue<bool>("ENABLE_FLIGHT_INGESTION", defaultValue: true))

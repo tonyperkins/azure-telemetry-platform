@@ -57,3 +57,9 @@ variable "opensky_client_secret" {
   type        = string
   sensitive   = true
 }
+
+variable "flight_polling_cron" {
+  description = "Cron expression for flight ingestion frequency (e.g., '0 */5 * * * *' for 5 mins)."
+  type        = string
+  default     = "0 */5 * * * *"
+}

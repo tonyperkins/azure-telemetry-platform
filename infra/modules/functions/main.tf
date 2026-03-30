@@ -69,6 +69,7 @@ resource "azurerm_windows_function_app" "main" {
     "SQL_CONNECTION_STRING" = "@Microsoft.KeyVault(SecretUri=${var.sql_secret_uri})"
     "OPENSKY_CLIENT_ID"     = "@Microsoft.KeyVault(SecretUri=${var.opensky_client_id_secret_uri})"
     "OPENSKY_CLIENT_SECRET" = "@Microsoft.KeyVault(SecretUri=${var.opensky_client_secret_secret_uri})"
+    "FLIGHT_POLLING_CRON"   = var.flight_polling_cron
   }
 
   tags = var.tags
