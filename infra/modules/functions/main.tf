@@ -79,7 +79,7 @@ resource "azurerm_service_plan" "consumption" {
   resource_group_name = var.resource_group_name
   location            = var.location
   os_type             = "Windows"
-  sku_name            = "Y1" # Consumption plan
+  sku_name            = "B1" # Basic plan (Dedicated IP range)
 
   tags = var.tags
 }
