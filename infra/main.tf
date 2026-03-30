@@ -181,7 +181,7 @@ module "appservice" {
 module "functions" {
   source                           = "./modules/functions"
   resource_group_name              = azurerm_resource_group.main.name
-  location                         = var.location
+  location                         = "eastus"
   environment                      = var.environment
   tags                             = local.tags
   suffix                           = local.suffix
