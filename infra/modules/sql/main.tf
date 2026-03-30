@@ -33,6 +33,27 @@ resource "azurerm_mssql_server" "main" {
 
 data "azurerm_client_config" "current" {}
 
+# =============================================================================
+# SRE: Grant the SQL Server's system-assigned Managed Identity the
+# "Directory Readers" role in Entra ID.
+#
+# FROM EXTERNAL PROVIDER requires the SQL server to query Entra ID to resolve
+# managed identity display names to SIDs. Without this role assignment, every
+# CREATE USER ... FROM EXTERNAL PROVIDER fails with Msg 37353.
+#
+# This is a one-time tenant-level assignment. Terraform manages it so it
+# survives server recreation and is not forgotten between deployments.
+# =============================================================================
+
+data "azuread_directory_role" "directory_readers" {
+  display_name = "Directory Readers"
+}
+
+resource "azuread_directory_role_member" "sql_directory_readers" {
+  role_object_id   = data.azuread_directory_role.directory_readers.object_id
+  member_object_id = azurerm_mssql_server.main.identity[0].principal_id
+}
+
 resource "azurerm_mssql_database" "main" {
   name      = "TelemetryDb"
   server_id = azurerm_mssql_server.main.id
