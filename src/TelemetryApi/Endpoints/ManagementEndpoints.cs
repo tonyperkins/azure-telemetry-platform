@@ -37,8 +37,32 @@ public static class ManagementEndpoints
         return Results.Ok(new { state = app.Data.State });
     }
 
-    private static async Task<IResult> GetOpenSkyStatus([FromServices] IConfiguration config, [FromServices] IHttpClientFactory httpClientFactory)
+    private static async Task<IResult> GetOpenSkyStatus(
+        [FromServices] IConfiguration config, 
+        [FromServices] IHttpClientFactory httpClientFactory,
+        [FromServices] VehicleRepository repo)
     {
+        // SRE: First, check if the ingestion service has recently reported a 429.
+        // If the circuit breaker is active in the database, we report that 
+        // immediately rather than making a fresh request that might fail or 
+        // make the problem worse.
+        var status = (await repo.GetSystemStatusAsync("flight")).ToList();
+        var circuitBreaker = status.FirstOrDefault(s => s.Key == "circuit_breaker_active");
+        var lastRateLimit = status.FirstOrDefault(s => s.Key == "rate_limit_remaining");
+
+        if (circuitBreaker.Value == "true")
+        {
+            return Results.Ok(new 
+            {
+                statusCode = 429,
+                isUp = false,
+                rateLimitRemaining = "0",
+                rateLimitLimit = !string.IsNullOrEmpty(config["OPENSKY_CLIENT_ID"]) ? "4000" : "400",
+                error = "OpenSky rate limit exceeded. Circuit breaker active in ingestion service.",
+                authenticated = !string.IsNullOrEmpty(config["OPENSKY_CLIENT_ID"])
+            });
+        }
+
         var clientId = config["OPENSKY_CLIENT_ID"];
         var clientSecret = config["OPENSKY_CLIENT_SECRET"];
         

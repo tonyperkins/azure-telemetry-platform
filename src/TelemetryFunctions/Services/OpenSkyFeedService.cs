@@ -20,6 +20,7 @@ public sealed class OpenSkyFeedService
     private const string BaseUrl = "https://opensky-network.org/api/states/all";
 
     private readonly HttpClient              _httpClient;
+    private readonly VehicleIngestionService  _ingestionService;
     private readonly ILogger<OpenSkyFeedService> _logger;
     private readonly AsyncRetryPolicy<HttpResponseMessage> _retryPolicy;
     private readonly string? _clientId;
@@ -33,11 +34,13 @@ public sealed class OpenSkyFeedService
 
     public OpenSkyFeedService(
         HttpClient httpClient,
+        VehicleIngestionService ingestionService,
         ILogger<OpenSkyFeedService> logger,
         Microsoft.Extensions.Configuration.IConfiguration config)
     {
-        _httpClient    = httpClient;
-        _logger        = logger;
+        _httpClient        = httpClient;
+        _ingestionService = ingestionService;
+        _logger            = logger;
         _clientId      = config["OPENSKY_CLIENT_ID"];
         _clientSecret  = config["OPENSKY_CLIENT_SECRET"];
 
@@ -106,6 +109,7 @@ public sealed class OpenSkyFeedService
                 // Cooldown expired, reset circuit breaker
                 _logger.LogInformation("OpenSky circuit breaker reset. Resuming API calls.");
                 _lastRateLimitTime = null;
+                _ = _ingestionService.UpdateStatusAsync("flight", "circuit_breaker_active", "false");
             }
         }
         
@@ -132,6 +136,9 @@ public sealed class OpenSkyFeedService
                     "OpenSky rate limit exceeded (429). Activating circuit breaker for {Minutes} minutes. " +
                     "This prevents hammering the API and making the problem worse.",
                     RateLimitCooldown.TotalMinutes);
+                
+                _ = _ingestionService.UpdateStatusAsync("flight", "circuit_breaker_active", "true");
+                _ = _ingestionService.UpdateStatusAsync("flight", "rate_limit_remaining", "0");
             }
             else
             {
@@ -144,6 +151,15 @@ public sealed class OpenSkyFeedService
 
         try
         {
+            if (response.Headers.TryGetValues("X-Rate-Limit-Remaining", out var values))
+            {
+                var remaining = values.FirstOrDefault();
+                if (!string.IsNullOrEmpty(remaining))
+                {
+                    _ = _ingestionService.UpdateStatusAsync("flight", "rate_limit_remaining", remaining);
+                }
+            }
+
             var json = await response.Content.ReadAsStringAsync();
             return ParseResponse(json);
         }

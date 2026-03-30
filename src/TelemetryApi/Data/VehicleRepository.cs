@@ -308,6 +308,34 @@ public sealed class VehicleRepository
         }
     }
 
+    /// <summary>
+    /// SRE: Retrieves system status values (like rate limits or circuit breaker states).
+    /// Used by the management and health endpoints to provide accurate diagnostic info
+    /// that matches the ingestion service's actual experience.
+    /// </summary>
+    public async Task<IEnumerable<(string Source, string Key, string Value, DateTime UpdatedAt)>> GetSystemStatusAsync(string? source = null)
+    {
+        const string sql = @"
+            SELECT source       AS Source,
+                   status_key   AS [Key],
+                   status_value AS Value,
+                   updated_at   AS UpdatedAt
+            FROM dbo.system_status
+            WHERE @Source IS NULL OR source = @Source;";
+
+        try
+        {
+            using var conn = _connectionFactory.CreateConnection();
+            var rows = await conn.QueryAsync<(string Source, string Key, string Value, DateTime UpdatedAt)>(sql, new { Source = source });
+            return rows;
+        }
+        catch (SqlException ex)
+        {
+            _logger.LogError(ex, "SQL error in GetSystemStatusAsync");
+            return Enumerable.Empty<(string, string, string, DateTime)>();
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------

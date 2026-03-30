@@ -238,6 +238,38 @@ public sealed class VehicleIngestionService
         return table;
     }
 
+    /// <summary>
+    /// SRE: Persists a system status key/value pair. Used for tracking
+    /// ingestion-level state (like OpenSky rate limits) that needs to
+    /// be visible to the API and dashboard.
+    /// </summary>
+    public async Task UpdateStatusAsync(string source, string key, string value)
+    {
+        const string sql = @"
+            IF EXISTS (SELECT 1 FROM dbo.system_status WHERE source = @source AND status_key = @key)
+                UPDATE dbo.system_status SET status_value = @value, updated_at = GETUTCDATE()
+                WHERE source = @source AND status_key = @key
+            ELSE
+                INSERT INTO dbo.system_status (source, status_key, status_value, updated_at)
+                VALUES (@source, @key, @value, GETUTCDATE())";
+
+        try
+        {
+            using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@source", source);
+            cmd.Parameters.AddWithValue("@key",    key);
+            cmd.Parameters.AddWithValue("@value",  (object)value ?? DBNull.Value);
+            
+            await cmd.ExecuteNonQueryAsync();
+        }
+        catch (SqlException ex)
+        {
+            _logger.LogWarning(ex, "Failed to update system status for {Source}:{Key}.", source, key);
+        }
+    }
+
     private static void MapColumns(SqlBulkCopy bulk)
     {
         bulk.ColumnMappings.Add("source",      "source");

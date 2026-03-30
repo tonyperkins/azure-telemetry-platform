@@ -23,6 +23,12 @@ public sealed class SourceHealth
     /// configuration. Distinct from "unhealthy" — no remediation needed.
     /// </summary>
     public bool      ConfigDisabled { get; init; }
+    
+    /// <summary>
+    /// SRE: Optional human-readable reason for the current status.
+    /// Used for reporting specific conditions like throttling/circuit breakers.
+    /// </summary>
+    public string?   StatusMessage  { get; init; }
 }
 
 /// <summary>

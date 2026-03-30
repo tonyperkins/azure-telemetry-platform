@@ -55,6 +55,7 @@ public static class HealthEndpoints
     private static async Task<IResult> GetHealth(VehicleRepository repo, IConfiguration config)
     {
         var sourceRows = (await repo.GetSourceHealthAsync()).ToList();
+        var statusRows = (await repo.GetSystemStatusAsync()).ToList();
         var now        = DateTime.UtcNow;
 
         // SRE: Read feature flags so we can distinguish "intentionally disabled"
@@ -92,12 +93,16 @@ public static class HealthEndpoints
                                                     "unhealthy";
             }
 
+            var circuitBreaker = statusRows.FirstOrDefault(s => s.Source == knownSource && s.Key == "circuit_breaker_active");
+
             sources[knownSource] = new SourceHealth
             {
-                Status         = status,
+                Status         = (circuitBreaker.Value == "true") ? "unhealthy" : status,
                 LastIngest     = row == default ? null : row.LastIngest,
                 VehicleCount   = row == default ? 0    : row.Count,
                 ConfigDisabled = !sourceFlags[knownSource],
+                // SRE: Add diagnostic reason to help on-call engineers
+                StatusMessage  = (circuitBreaker.Value == "true") ? "Throttled (Circuit Breaker Active)" : null
             };
         }
 
