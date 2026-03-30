@@ -307,8 +307,8 @@ jobs:
           
           # Spin lock for up to 5 minutes waiting for background workers to execute
           # successfully and populate the map with initial vehicles.
-          TIMEOUT=300
-          INTERVAL=15
+          TIMEOUT=60
+          INTERVAL=10
           ELAPSED=0
           
           while [ $ELAPSED -lt $TIMEOUT ]; do
