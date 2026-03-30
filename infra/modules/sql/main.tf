@@ -8,16 +8,12 @@
 # acceptable for a non-interactive ingestion workload.
 # =============================================================================
 
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-    }
-    azuread = {
-      source  = "hashicorp/azuread"
-    }
-  }
-}
+
+# SRE: The SQL Server's system-assigned Managed Identity must have the 
+# "Directory Readers" role in Entra ID to resolve identity names for 
+# FROM EXTERNAL PROVIDER. This is a one-time assignment performed manually 
+# in the Azure Portal or via elevated CLI, as the CI/CD Service Principal 
+# lacks the Graph API permissions to manage it via Terraform.
 
 resource "azurerm_mssql_server" "main" {
   name                         = "sql-telemetry-${var.environment}-${var.suffix}"
@@ -44,26 +40,7 @@ resource "azurerm_mssql_server" "main" {
 
 data "azurerm_client_config" "current" {}
 
-# =============================================================================
-# SRE: Grant the SQL Server's system-assigned Managed Identity the
-# "Directory Readers" role in Entra ID.
-#
-# FROM EXTERNAL PROVIDER requires the SQL server to query Entra ID to resolve
-# managed identity display names to SIDs. Without this role assignment, every
-# CREATE USER ... FROM EXTERNAL PROVIDER fails with Msg 37353.
-#
-# This is a one-time tenant-level assignment. Terraform manages it so it
-# survives server recreation and is not forgotten between deployments.
-# =============================================================================
 
-resource "azuread_directory_role" "directory_readers" {
-  display_name = "Directory Readers"
-}
-
-resource "azuread_directory_role_member" "sql_directory_readers" {
-  role_object_id   = azuread_directory_role.directory_readers.object_id
-  member_object_id = azurerm_mssql_server.main.identity[0].principal_id
-}
 
 resource "azurerm_mssql_database" "main" {
   name      = "TelemetryDb"

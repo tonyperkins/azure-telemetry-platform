@@ -8,10 +8,6 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.0"
     }
-    azuread = {
-      source  = "hashicorp/azuread"
-      version = "~> 2.0"
-    }
   }
 
   # SRE: Remote state in Azure Blob Storage prevents the "only works from my laptop"
@@ -25,8 +21,6 @@ terraform {
     key                  = "azure-telemetry-platform.tfstate"
   }
 }
-
-provider "azuread" {}
 
 provider "azurerm" {
   features {

@@ -193,15 +193,20 @@ terraform output -raw static_web_api_key
 ```
 
 Store the following as GitHub repository secrets:
-| Secret | Value |
-|---|---|
-| `AZURE_CREDENTIALS` | Service principal JSON from `az ad sp create-for-rbac` |
-| `APP_SERVICE_NAME` | `app-telemetry-prod` |
-| `FUNCTION_APP_NAME` | `func-telemetry-prod` |
-| `APP_SERVICE_HOSTNAME` | from `terraform output app_service_hostname` |
 | `AZURE_STATIC_WEB_APPS_API_TOKEN` | from `terraform output -raw static_web_api_key` |
-
-### Subsequent deployments
+ 
++### Mandatory Entra ID Setup (One-time)
++
++To enable SQL authentication via Managed Identity (`FROM EXTERNAL PROVIDER`), the SQL Server's **System-Assigned Managed Identity** must be granted the **Directory Readers** role in Entra ID. 
++
++This step must be performed manually by an Entra ID Administrator, as standard CI/CD Service Principals typically lack the Graph API permissions (`RoleManagement.ReadWrite.Directory`) required to automate this via Terraform:
++
++1.  In the Azure Portal, navigate to **Entra ID** → **Roles and administrators**.
++2.  Search for and select **Directory Readers**.
++3.  Click **Add assignments**.
++4.  Search for your SQL Server's name (e.g., `sql-telemetry-prod-...`) and assign the role.
++
+ ### Subsequent deployments
 
 **Manual Trigger Only**: To prevent resource contention and ensure deterministic identity mapping, deployments are now triggered manually via the GitHub Actions UI.
 
