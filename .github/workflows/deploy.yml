@@ -134,8 +134,8 @@ jobs:
               # with no endian swapping required for system identities.
               return '0x' + binascii.hexlify(u.bytes).decode('utf-8')
 
-          app_id = "${{ steps.tf-outputs.outputs.app_service_principal_id }}"
-          func_id = "${{ steps.tf-outputs.outputs.function_app_principal_id }}"
+          app_id = "${{ steps.tf-outputs.outputs.appservice_principal_id }}"
+          func_id = "${{ steps.tf-outputs.outputs.functionapp_principal_id }}"
 
           app_sid = object_id_to_sid(app_id)
           func_sid = object_id_to_sid(func_id)
