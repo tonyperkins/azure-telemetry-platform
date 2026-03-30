@@ -42,12 +42,17 @@ public sealed class VehicleIngestionService
             using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            // SRE: Force the connection into TelemetryDb context.
-            // Azure SQL Managed Identity connections default to the identity's default database
-            // (usually master) if Initial Catalog isn't respected by an internal reconnect.
-            // This USE statement guarantees we are in the right catalog regardless.
-            using (var useDb = new SqlCommand("USE TelemetryDb;", conn))
+            // SRE: Force the connection into the intended database context.
+            // Managed Identity connections can sometimes default to 'master' if the 
+            // identity's default database isn't set. We use the Database property 
+            // (set via Initial Catalog in the connection string) to ensure we're 
+            // in the correct context before starting bulk operations.
+            var databaseName = conn.Database;
+            if (!string.IsNullOrEmpty(databaseName))
+            {
+                using var useDb = new SqlCommand($"USE [{databaseName}];", conn);
                 await useDb.ExecuteNonQueryAsync();
+            }
 
             // SRE: SqlBulkCopyOptions.UseInternalTransaction = false (default) means
             // SqlBulkCopy will use the existing connection rather than opening a second
@@ -146,10 +151,16 @@ public sealed class VehicleIngestionService
             using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            // SRE: Same catalog-context fix as metro ingestion — explicitly SELECT TelemetryDb
-            // to prevent Managed Identity from landing on master via an internal reconnect.
-            using (var useDb = new SqlCommand("USE TelemetryDb;", conn))
+            // SRE: Force the connection into the intended database context.
+            // Using conn.Database (from Initial Catalog) to ensure we're in the 
+            // right catalog before starting bulk operations, especially when 
+            // using Managed Identity which can default to master.
+            var databaseName = conn.Database;
+            if (!string.IsNullOrEmpty(databaseName))
+            {
+                using var useDb = new SqlCommand($"USE [{databaseName}];", conn);
                 await useDb.ExecuteNonQueryAsync();
+            }
 
             using var bulk = new SqlBulkCopy(conn, SqlBulkCopyOptions.Default, externalTransaction: null)
             {
