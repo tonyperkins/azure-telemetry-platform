@@ -271,10 +271,10 @@ jobs:
           API_URL="https://${{ needs.terraform.outputs.app_service_hostname }}/api/health"
           echo "Smoke testing active Telemetry API at $API_URL"
           
-          # Spin lock for up to 5 minutes waiting for background workers to execute
+          # Spin lock for up to 2 minutes waiting for background workers to execute
           # successfully and populate the map with initial vehicles.
-          TIMEOUT=300
-          INTERVAL=15
+          TIMEOUT=120
+          INTERVAL=10
           ELAPSED=0
           
           while [ $ELAPSED -lt $TIMEOUT ]; do

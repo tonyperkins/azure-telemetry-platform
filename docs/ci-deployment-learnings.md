@@ -64,6 +64,33 @@ Initial attempts to use "Offline SID Mapping" (calculating the hex-SID from the 
     - **Web API**: `0xa4dc824c7467f742a5a4d66821038485`
     - **Function App**: `0xde446463bcb8224ab130549d64568b7d`
 
+## 5. Transition to Portable Native Identity Mapping
+
+### The "Ghost Identity" Problem
+As noted in warning below, hardcoded SIDs are fragile. If the resource is re-provisioned, the SID changes, breaking the database link. We transitioned from manual Hex SIDs to the native `FROM EXTERNAL PROVIDER` syntax.
+
+### The Resolution
+We updated `init-schema.sql` to use dynamic macro-passing for the resource names:
+```sql
+CREATE USER [$(FUNC_NAME)] FROM EXTERNAL PROVIDER;
+ALTER ROLE db_datareader ADD MEMBER [$(FUNC_NAME)];
+ALTER ROLE db_datawriter ADD MEMBER [$(FUNC_NAME)];
+```
+This allows the SQL engine to resolve the identity mapping at deploy-time, provided the deployment principal has sufficient directory permissions.
+
+## 6. The "Database \"\"" Mystery & Catalog Context
+
+### The Issue
+Despite a successful mapping, the ingestion functions continued failing with `Error: 916`. The tracing showed: `The server principal "..." is not able to access the database "" under the current security context.`
+
+### The Root Cause: Catalog Ambiguity
+1. **Tooling Fallback**: The `azure/sql-action` step in GitHub Actions was connecting to the server but not explicitly pinning the session to `TelemetryDb`. This resulted in the script executing against `master`. In Azure SQL, a Managed Identity is a **contained database user** — it exists in the user database but NOT in `master`.
+2. **Connection Leak**: Without an explicit `database:` parameter in the action YAML, the identity was "logged in" to the server but "lost" in the transition to the target catalog, leading to the empty database string `""` error.
+
+### The Resolution: Explicit Pining
+1. **GitHub Workflow**: We added `database: "TelemetryDb"` to the `sql-action` step. This forces the runner to establish the session context inside the target database before executing any DDL.
+2. **.NET Client Library**: We refactored `VehicleIngestionService.cs` to use an **explicitly opened** `SqlConnection` for `SqlBulkCopy`. By calling `await conn.OpenAsync()` before initializing the bulk copy, we ensure the .NET driver has successfully negotiated the Managed Identity token and set the `Initial Catalog` context, preventing the bulk operation from defaulting to an empty or invalid catalog.
+
 
 ## 5. The Technical Debt of Hardcoded SIDs & The Path to Portability
 
@@ -101,4 +128,4 @@ arguments: '-v IDENTITY_NAME="${{ steps.tf-outputs.outputs.app_service_name }}"'
 ```
 
 ### Summary of the "Best Practice" State
-By moving to **Native Name Resolution** with **Elevated Graph Permissions**, the platform achieves 100% portability. Any `terraform apply` will generate a functional state instantly, as Azure SQL will handle the SID mapping dynamically for every new resource.
+By moving to **Native Name Resolution** with **Explicit Catalog Context**, the platform achieves 100% portability. The system automatically handles new identities during `terraform apply` and ensures the deployment pipeline and application code are always pinned to the correct database context.
