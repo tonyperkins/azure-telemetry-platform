@@ -130,9 +130,10 @@ jobs:
 
           def object_id_to_sid(object_id):
               u = uuid.UUID(object_id)
-              # Azure SQL binary SID is a direct 16-byte representation of the UUID
-              # with no endian swapping required for system identities.
-              return '0x' + binascii.hexlify(u.bytes).decode('utf-8')
+              # Azure SQL binary SID uses Windows GUID byte order:
+              # first 3 groups are little-endian, last 2 are big-endian.
+              # u.bytes_le matches this layout exactly.
+              return '0x' + binascii.hexlify(u.bytes_le).decode('utf-8').upper()
 
           app_id = "${{ steps.tf-outputs.outputs.appservice_principal_id }}"
           func_id = "${{ steps.tf-outputs.outputs.functionapp_principal_id }}"
@@ -155,9 +156,7 @@ jobs:
           path: './scripts/init-schema.sql'
           arguments: >
             -v APP_NAME="${{ steps.tf-outputs.outputs.app_service_name }}"
-            -v APP_SID="${{ steps.calculate-sids.outputs.app_sid }}"
             -v FUNC_NAME="${{ steps.tf-outputs.outputs.function_app_name }}"
-            -v FUNC_SID="${{ steps.calculate-sids.outputs.func_sid }}"
 
   # ---------------------------------------------------------------------------
   # Job 2: Deploy TelemetryApi to App Service
