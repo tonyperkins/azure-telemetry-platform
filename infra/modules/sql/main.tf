@@ -56,12 +56,12 @@ data "azurerm_client_config" "current" {}
 # survives server recreation and is not forgotten between deployments.
 # =============================================================================
 
-data "azuread_directory_role" "directory_readers" {
+resource "azuread_directory_role" "directory_readers" {
   display_name = "Directory Readers"
 }
 
 resource "azuread_directory_role_member" "sql_directory_readers" {
-  role_object_id   = data.azuread_directory_role.directory_readers.object_id
+  role_object_id   = azuread_directory_role.directory_readers.object_id
   member_object_id = azurerm_mssql_server.main.identity[0].principal_id
 }
 
