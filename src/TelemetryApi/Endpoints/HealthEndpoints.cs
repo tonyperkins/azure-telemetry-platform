@@ -101,11 +101,20 @@ public static class HealthEndpoints
             };
         }
 
-        // Aggregate: worst-case wins
+        // SRE: Aggregate uses only non-disabled sources as voters.
+        // A disabled or rate-limited flight source must not drag the overall
+        // status to "unhealthy" when metro is healthy. The pipeline smoke test
+        // accepts "degraded" as a pass — "unhealthy" means ALL sources failed.
+        var votingSources = sources.Values
+            .Where(s => !s.ConfigDisabled)
+            .ToList();
+
         var overallStatus =
-            sources.Values.All(s => s.Status == "healthy")   ? "healthy"   :
-            sources.Values.All(s => s.Status == "unhealthy") ? "unhealthy" :
-                                                                "degraded";
+            votingSources.Count == 0                                ? "unhealthy" :
+            votingSources.All(s => s.Status == "healthy")           ? "healthy"   :
+            votingSources.All(s => s.Status == "unhealthy")         ? "unhealthy" :
+                                                                      "degraded";
+
 
         var response = new HealthStatus
         {
