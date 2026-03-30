@@ -25,8 +25,10 @@ public sealed class OpenSkyFeedService
     private readonly string? _clientId;
     private readonly string? _clientSecret;
     
-    // Circuit breaker: track when we last hit rate limit
-    private static DateTime? _lastRateLimitTime;
+    // Circuit breaker: track when we last hit rate limit.
+    // SRE: Instance field (not static) so it resets on cold start / new deployment.
+    // A static field would persist across warm restarts and block calls indefinitely.
+    private DateTime? _lastRateLimitTime;
     private static readonly TimeSpan RateLimitCooldown = TimeSpan.FromMinutes(1);
 
     public OpenSkyFeedService(

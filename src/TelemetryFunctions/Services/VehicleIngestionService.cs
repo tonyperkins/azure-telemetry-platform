@@ -42,7 +42,18 @@ public sealed class VehicleIngestionService
             using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            using var bulk = new SqlBulkCopy(conn)
+            // SRE: Force the connection into TelemetryDb context.
+            // Azure SQL Managed Identity connections default to the identity's default database
+            // (usually master) if Initial Catalog isn't respected by an internal reconnect.
+            // This USE statement guarantees we are in the right catalog regardless.
+            using (var useDb = new SqlCommand("USE TelemetryDb;", conn))
+                await useDb.ExecuteNonQueryAsync();
+
+            // SRE: SqlBulkCopyOptions.UseInternalTransaction = false (default) means
+            // SqlBulkCopy will use the existing connection rather than opening a second
+            // internal connection via its own transaction. This prevents the Error 916
+            // where the secondary connection lands on master instead of TelemetryDb.
+            using var bulk = new SqlBulkCopy(conn, SqlBulkCopyOptions.Default, externalTransaction: null)
             {
                 DestinationTableName = "dbo.vehicles",
                 BatchSize            = 500,
@@ -135,7 +146,12 @@ public sealed class VehicleIngestionService
             using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            using var bulk = new SqlBulkCopy(conn)
+            // SRE: Same catalog-context fix as metro ingestion — explicitly SELECT TelemetryDb
+            // to prevent Managed Identity from landing on master via an internal reconnect.
+            using (var useDb = new SqlCommand("USE TelemetryDb;", conn))
+                await useDb.ExecuteNonQueryAsync();
+
+            using var bulk = new SqlBulkCopy(conn, SqlBulkCopyOptions.Default, externalTransaction: null)
             {
                 DestinationTableName = "dbo.vehicles",
                 BatchSize            = 500,
