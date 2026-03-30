@@ -90,8 +90,7 @@ public sealed class GtfsStaticService
                 var urls = new[]
                 {
                     _config["MetroGtfsStaticUrl"],
-                    "https://www.capmetro.org/planner/includes/gtfs.zip",
-                    "https://data.texas.gov/download/r4v4-vz24/application/zip",
+                    "https://data.texas.gov/download/r4v4-vz24/application%2Fzip",
                 }.Where(u => !string.IsNullOrEmpty(u)).Cast<string>().Distinct().ToArray();
 
                 var client = _httpFactory.CreateClient("GtfsStatic");
@@ -136,8 +135,7 @@ public sealed class GtfsStaticService
         var urls = new[]
         {
             _config["MetroGtfsStaticUrl"],
-            "https://www.capmetro.org/planner/includes/gtfs.zip",
-            "https://data.texas.gov/download/r4v4-vz24/application/zip",
+            "https://data.texas.gov/download/r4v4-vz24/application%2Fzip",
         }.Where(u => !string.IsNullOrEmpty(u)).Cast<string>().Distinct().ToArray();
 
         var client = _httpFactory.CreateClient("GtfsStatic");

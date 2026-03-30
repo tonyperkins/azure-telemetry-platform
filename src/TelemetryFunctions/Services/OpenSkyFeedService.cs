@@ -157,6 +157,8 @@ public sealed class OpenSkyFeedService
                 if (!string.IsNullOrEmpty(remaining))
                 {
                     _ = _ingestionService.UpdateStatusAsync("flight", "rate_limit_remaining", remaining);
+                    // SRE: Explicitly reset circuit breaker onto success to handle state sync after restarts.
+                    _ = _ingestionService.UpdateStatusAsync("flight", "circuit_breaker_active", "false");
                 }
             }
 
