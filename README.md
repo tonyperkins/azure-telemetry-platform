@@ -62,9 +62,9 @@ flowchart TD
 ```
 
 **Additional infrastructure:**
-- Azure Key Vault — secret management via Managed Identity (no plaintext secrets anywhere)
-- Application Insights — distributed tracing, custom metrics, staleness alerts
+- Microsoft Application Insights — distributed tracing, custom metrics, staleness alerts
 - RetentionCleanup Function — daily purge of records older than 24h (cost control)
+- **`dbo.system_status` Synchronization** — Shared database table to synchronize ingestion throttling status (429s) with the diagnostic dashboard.
 
 ---
 

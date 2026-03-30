@@ -129,3 +129,47 @@ arguments: '-v IDENTITY_NAME="${{ steps.tf-outputs.outputs.app_service_name }}"'
 
 ### Summary of the "Best Practice" State
 By moving to **Native Name Resolution** with **Explicit Catalog Context**, the platform achieves 100% portability. The system automatically handles new identities during `terraform apply` and ensures the deployment pipeline and application code are always pinned to the correct database context.
+
+---
+
+## 7. Stabilizing CI/CD: Resolving Graph API Permission 403s
+
+### The Issue
+After transitioning to `FROM EXTERNAL PROVIDER` for SQL user mapping, the CI/CD pipeline began failing during the `terraform apply` phase with an **HTTP 403 Forbidden** / `Authorization_RequestDenied` error.
+
+### The Root Cause
+The GitHub Actions Service Principal (SP) used for deployment lacked the elevated **Microsoft Graph API permissions** (`RoleManagement.ReadWrite.Directory`) required to manage Entra ID Directory Roles. Terraform was attempting to automate the assignment of the "Directory Readers" role to the SQL Server, which is a tenant-level operation requiring high-privilege administrative consent.
+
+### The Resolution
+1.  **Decoupled Role Management**: We removed the `azuread` provider and all directory role resources from the Terraform configuration. This eliminated the brittle dependency on Graph API permissions during automated runs.
+2.  **Manual Stabilization**: The "Directory Readers" role is now a **one-time manual prerequisite**. Once assigned to the SQL Server's Managed Identity by a Tenant Admin, the role remains stable and persists across application deployments.
+3.  **Documentation First**: The requirement was moved from the "Automated" bucket to the "Operational Prerequisite" bucket in the `README.md`.
+
+## 8. Cross-Component Status Synchronization: OpenSky Throttling
+
+### The Issue
+An SRE investigation identified a "Misleading UP" signal: the dashboard reported "OpenSky API is UP!" while the background ingestion functions were actually throttled (HTTP 429). 
+
+### The Root Cause
+The "Check API Status" tool in the `TelemetryApi` was performing a fresh "canary" request to OpenSky. Because it was a single request, it frequently succeeded, even when the steady-state ingestion (polling every 60s) had tripped the upstream rate limit. The API and Functions shared no state regarding their respective circuit breakers or rate-limit quotas.
+
+### The Resolution
+1.  **Shared Persistence**: We introduced a `dbo.system_status` table in the database to act as a shared health state between ingestion and diagnostics.
+2.  **Synchronized Diagnostics**: The `OpenSkyFeedService` (Functions) now logs its 429 hits and `X-Rate-Limit-Remaining` counts to the database.
+3.  **Inertia-Aware API**: Updated the `ManagementEndpoints` (API) and `/api/health` to check the database *before* attempting a canary. If a circuit breaker is active, the tool now correctly reports **"Throttled (Circuit Breaker Active)"** without making additional requests.
+
+## 9. Local Development: Dynamic Database Contexts
+
+### The Issue
+Local development environments (e.g., `TelemetryDev`) failed to start ingestion with `Error: 911` (Database not found).
+
+### The Root Cause
+The `VehicleIngestionService.cs` contained a hardcoded `USE TelemetryDb;` statement. While correct for production, this prevented the application from functioning in local environments or CI runners where the database name differed.
+
+### The Resolution
+We dynamicized the database context switching by using `conn.Database` (resolved from the connection string's `Initial Catalog`) in the `USE` statement:
+```csharp
+var databaseName = conn.Database;
+using var useDb = new SqlCommand($"USE [{databaseName}];", conn);
+```
+This ensures the ingestion logic is 100% portable across local, test, and production environments.

@@ -200,3 +200,25 @@ Leaflet 1.9 with CARTO Positron tile layer (free, no API key, suitable for data 
 - **Capability:** Leaflet covers all requirements: markers, popups, zoom, pan, custom `DivIcon` SVG markers.
 - **Performance:** `VehicleMarker` uses the imperative Leaflet API (`marker.setLatLng()`) for position updates rather than destroying and recreating React components, avoiding unnecessary DOM churn during 30-second refresh cycles.
 - **Offline:** CARTO tiles require internet access. For a production deployment with strict data residency requirements, self-hosted tiles (e.g., via `tileserver-gl`) would be substituted.
+
+---
+
+## ADR-007: Persistent Status Synchronization for Throttling Visibility
+
+**Date:** 2026-03
+**Status:** Accepted
+
+### Context
+
+External providers (like OpenSky Network) impose strict rate limits (HTTP 429). The platform uses a circuit breaker in the ingestion Functions to back off when these limits are hit. However, because the Functions and the Telemetry API reside in separate execution contexts (Function App vs. App Service), the API's diagnostic tools remained unaware of the active throttling, leading to misleading "UP" signals in the dashboard while ingestion was actually stalled.
+
+### Decision
+
+Introduce a shared `dbo.system_status` table in the database to synchronize real-time health events and rate-limit metadata between the ingestion and diagnostic layers.
+
+### Consequences
+
+- **Single Source of Truth:** The "Check API Status" tool and `/api/health` now report the same throttled state as the ingestion service, eliminating diagnostic drift.
+- **Circuit Breaker Persistence:** The circuit breaker state now survives Function cold-starts and redeployments, as it is backed by a persistent database record rather than just in-memory variables.
+- **Diagnostic Precision:** The health endpoint provides an explicit `StatusMessage` (e.g., "Throttled") instead of just a generic "unhealthy" status, reducing the mean-time-to-identify (MTTI) for on-call SREs.
+- **Minimal Overhead:** The table is extremely small (one row per source/key pair) and updates infrequently (once per poll), resulting in near-zero SQL performance impact.
