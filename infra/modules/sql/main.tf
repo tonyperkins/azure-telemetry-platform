@@ -8,6 +8,17 @@
 # acceptable for a non-interactive ingestion workload.
 # =============================================================================
 
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+    }
+    azuread = {
+      source  = "hashicorp/azuread"
+    }
+  }
+}
+
 resource "azurerm_mssql_server" "main" {
   name                         = "sql-telemetry-${var.environment}-${var.suffix}"
   resource_group_name          = var.resource_group_name
