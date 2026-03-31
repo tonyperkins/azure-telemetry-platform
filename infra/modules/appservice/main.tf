@@ -64,6 +64,12 @@ resource "azurerm_windows_web_app" "main" {
     "MANAGEMENT_ADMIN_TOKEN"  = "@Microsoft.KeyVault(SecretUri=${var.management_admin_token_uri})"
     "OPENSKY_CLIENT_ID"       = "@Microsoft.KeyVault(SecretUri=${var.opensky_client_id_secret_uri})"
     "OPENSKY_CLIENT_SECRET"   = "@Microsoft.KeyVault(SecretUri=${var.opensky_client_secret_secret_uri})"
+
+    # SRE: External trigger connectivity for the Function App.
+    # The API uses these to signal the Function App to 'Instant Start' 
+    # when a dashboard user is active.
+    "FLIGHT_INGESTION_URL" = "https://${var.function_app_hostname}"
+    "FLIGHT_INGESTION_KEY" = var.function_app_key
   }
 
   tags = var.tags

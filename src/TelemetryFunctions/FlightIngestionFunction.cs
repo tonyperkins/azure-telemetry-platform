@@ -69,19 +69,21 @@ public sealed class FlightIngestionFunction
         // We only poll OpenSky if a dashboard has reported a heartbeat in the last 5 minutes.
         // This ensures credits are only used when someone is actually watching.
         var (lastActiveVal, lastActiveTime) = await _ingestionService.GetStatusAsync("dashboard", "last_active");
+        
         if (lastActiveTime.HasValue)
         {
             var heartbeatAge = DateTime.UtcNow - lastActiveTime.Value;
             if (heartbeatAge > TimeSpan.FromMinutes(5))
             {
-                _logger.LogInformation("On-Demand: No active heartbeat in {Age:F1}m. Skipping OpenSky pull to conserve credits.", heartbeatAge.TotalMinutes);
+                _logger.LogInformation("On-Demand: Idle ({Age:F1}m since heartbeat). Skipping OpenSky pull to conserve credits.", heartbeatAge.TotalMinutes);
                 return;
             }
         }
         else
         {
-             _logger.LogInformation("On-Demand: No heartbeat ever recorded. Skipping OpenSky pull.");
-             return;
+             // SRE: Bootstrap mode. If the row is missing (first run), we proceed once
+             // so the dashboard isn't empty when the first user arrives.
+             _logger.LogInformation("On-Demand: No heartbeat row found. Running bootstrap ingestion.");
         }
 
         var sw   = Stopwatch.StartNew();

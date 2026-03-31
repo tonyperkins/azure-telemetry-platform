@@ -313,7 +313,7 @@ public sealed class VehicleRepository
     /// </summary>
     public async Task<(string? value, DateTime? updatedAt)> GetStatusAsync(string source, string key)
     {
-        const string sql = "SELECT status_value, updated_at FROM dbo.system_status WHERE source = @Source AND status_key = @Key";
+        const string sql = "SELECT status_value AS value, updated_at AS updatedAt FROM dbo.system_status WHERE source = @Source AND status_key = @Key";
         
         try
         {

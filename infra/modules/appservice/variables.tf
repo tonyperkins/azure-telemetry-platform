@@ -70,3 +70,14 @@ variable "opensky_client_secret_secret_uri" {
   sensitive   = true
   description = "Versionless URI of the OpenSky Client Secret in Key Vault."
 }
+
+variable "function_app_hostname" {
+  type        = string
+  description = "The default hostname of the function app for cross-service triggers."
+}
+
+variable "function_app_key" {
+  type        = string
+  sensitive   = true
+  description = "The host key for the function app to allow the API to trigger ingestion."
+}

@@ -164,10 +164,17 @@ module "appservice" {
 
   # Management Endpoints
   subscription_id                  = data.azurerm_subscription.current.subscription_id
-  function_app_name                = "func-telemetry-${var.environment}-${local.suffix}"
+  function_app_name                = module.functions.function_app_name
+  function_app_hostname            = module.functions.function_app_hostname
+  function_app_key                 = data.azurerm_function_app_host_keys.main.default_function_key
   management_admin_token_uri       = local.management_admin_token_uri
   opensky_client_id_secret_uri     = local.opensky_id_uri
   opensky_client_secret_secret_uri = local.opensky_sec_uri
+}
+
+data "azurerm_function_app_host_keys" "main" {
+  name                = module.functions.function_app_name
+  resource_group_name = azurerm_resource_group.main.name
 }
 
 # ---------------------------------------------------------------------------

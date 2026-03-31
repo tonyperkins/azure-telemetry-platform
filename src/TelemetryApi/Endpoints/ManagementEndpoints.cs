@@ -97,7 +97,20 @@ public static class ManagementEndpoints
 
         try
         {
-            var url = "https://opensky-network.org/api/states/all?lamin=30.0&lomin=-98.0&lamax=30.1&lomax=-97.9";
+            var bboxConfig = config["OPENSKY_BBOX"] ?? "29.8,-98.2,30.8,-97.2";
+            var parts = bboxConfig.Split(',');
+            var url = "https://opensky-network.org/api/states/all";
+
+            if (parts.Length == 4)
+            {
+                url += $"?lamin={parts[0].Trim()}&lomin={parts[1].Trim()}&lamax={parts[2].Trim()}&lomax={parts[3].Trim()}";
+            }
+            else
+            {
+                // Fallback to Austin if config is malformed
+                url += "?lamin=29.8&lomin=-98.2&lamax=30.8&lomax=-97.2";
+            }
+
             var response = await client.GetAsync(url);
             
             var remaining = response.Headers.TryGetValues("X-Rate-Limit-Remaining", out var rVals) ? rVals.FirstOrDefault() : null;
