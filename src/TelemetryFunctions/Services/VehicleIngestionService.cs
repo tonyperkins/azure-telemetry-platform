@@ -1,6 +1,7 @@
 using TelemetryFunctions.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Data;
 using System.Text.Json;
 
