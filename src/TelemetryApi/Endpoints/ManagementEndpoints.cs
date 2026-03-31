@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using TelemetryApi.Data;
 using TelemetryApi.Models;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace TelemetryApi.Endpoints;
 
@@ -30,6 +33,10 @@ public static class ManagementEndpoints
         group.MapGet("/opensky-status", GetOpenSkyStatus)
             .WithName("GetOpenSkyStatus")
             .WithDescription("Queries OpenSky to retrieve current API rate limits and status.");
+
+        group.MapPost("/heartbeat", PostHeartbeat)
+            .WithName("PostHeartbeat")
+            .WithDescription("Updates the last-active timestamp for the dashboard to enable on-demand ingestion.");
     }
 
     private static async Task<IResult> GetFunctionStatus([FromServices] IConfiguration config)
@@ -40,22 +47,28 @@ public static class ManagementEndpoints
         return Results.Ok(new { state = app.Data.State });
     }
 
+    private static (OpenSkyStatusResponse? data, DateTime? timestamp) _openSkyCache;
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(30);
+
     private static async Task<IResult> GetOpenSkyStatus(
         [FromServices] IConfiguration config, 
         [FromServices] IHttpClientFactory httpClientFactory,
         [FromServices] VehicleRepository repo)
     {
-        // SRE: First, check if the ingestion service has recently reported a 429.
-        // If the circuit breaker is active in the database, we report that 
-        // immediately rather than making a fresh request that might fail or 
-        // make the problem worse.
-        var status = (await repo.GetSystemStatusAsync("flight")).ToList();
-        var circuitBreaker = status.FirstOrDefault(s => s.Key == "circuit_breaker_active");
-        var lastRateLimit = status.FirstOrDefault(s => s.Key == "rate_limit_remaining");
+        // SRE: Cache check to prevent dashboard polling from draining credits.
+        if (_openSkyCache.data != null && _openSkyCache.timestamp.HasValue && 
+            (DateTime.UtcNow - _openSkyCache.timestamp.Value) < CacheDuration)
+        {
+            return Results.Ok(_openSkyCache.data);
+        }
 
+        // SRE: First, check if the ingestion service has recently reported a 429.
+        var statusList = (await repo.GetSystemStatusAsync("flight")).ToList();
+        var circuitBreaker = statusList.FirstOrDefault(s => s.Key == "circuit_breaker_active");
+        
         if (circuitBreaker.Value == "true")
         {
-            return Results.Ok(new 
+            var cbResponse = new OpenSkyStatusResponse
             {
                 statusCode = 429,
                 isUp = false,
@@ -63,27 +76,27 @@ public static class ManagementEndpoints
                 rateLimitLimit = !string.IsNullOrEmpty(config["OPENSKY_CLIENT_ID"]) ? "4000" : "400",
                 error = "OpenSky rate limit exceeded. Circuit breaker active in ingestion service.",
                 authenticated = !string.IsNullOrEmpty(config["OPENSKY_CLIENT_ID"])
-            });
+            };
+            return Results.Ok(cbResponse);
         }
 
         var clientId = config["OPENSKY_CLIENT_ID"];
         var clientSecret = config["OPENSKY_CLIENT_SECRET"];
         
         var client = httpClientFactory.CreateClient("OpenSky");
-        // SRE: Limit timeout for interactive dashboard queries
         client.Timeout = TimeSpan.FromSeconds(10);
         
         if (!string.IsNullOrEmpty(clientId) && !string.IsNullOrEmpty(clientSecret))
         {
-            var authBytes = System.Text.Encoding.ASCII.GetBytes($"{clientId}:{clientSecret}");
-            var authHeader = Convert.ToBase64String(authBytes);
-            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authHeader);
+            var token = await GetOpenSkyTokenAsync(httpClientFactory, clientId, clientSecret);
+            if (!string.IsNullOrEmpty(token))
+            {
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            }
         }
 
         try
         {
-            // SRE: Use a tiny 1x1 degree box (Small area = 1 credit) for diagnostic checks.
-            // A 0x0 box (0,0,0,0) is often penalized by OpenSky as a Global/Invalid query (4 credits).
             var url = "https://opensky-network.org/api/states/all?lamin=30.0&lomin=-98.0&lamax=30.1&lomax=-97.9";
             var response = await client.GetAsync(url);
             
@@ -91,13 +104,12 @@ public static class ManagementEndpoints
             var limit = response.Headers.TryGetValues("X-Rate-Limit-Limit", out var lVals) ? lVals.FirstOrDefault() : null;
             var retryAfter = response.Headers.TryGetValues("X-Rate-Limit-Retry-After-Seconds", out var raVals) ? raVals.FirstOrDefault() : null;
 
-            // SRE: OpenSky often omits the total limit header. Fallback based on auth status.
             if (string.IsNullOrEmpty(limit))
             {
                 limit = !string.IsNullOrEmpty(clientId) ? "4000" : "400";
             }
 
-            return Results.Ok(new 
+            var result = new OpenSkyStatusResponse
             {
                 statusCode = (int)response.StatusCode,
                 isUp = response.IsSuccessStatusCode,
@@ -105,17 +117,72 @@ public static class ManagementEndpoints
                 rateLimitLimit = limit,
                 retryAfterSeconds = retryAfter,
                 authenticated = !string.IsNullOrEmpty(clientId)
-            });
+            };
+
+            // Update cache
+            _openSkyCache = (result, DateTime.UtcNow);
+
+            return Results.Ok(result);
         }
         catch (Exception ex)
         {
-            return Results.Ok(new 
-            {
-                statusCode = 500,
-                isUp = false,
-                error = ex.Message
-            });
+            return Results.Json(new { error = ex.Message, isUp = false }, statusCode: 500);
         }
+    }
+
+    private static async Task<IResult> PostHeartbeat(
+        HttpContext context,
+        [FromServices] IConfiguration config,
+        [FromServices] IHttpClientFactory httpClientFactory,
+        [FromServices] VehicleRepository repo)
+    {
+        // SRE: Identify user IP. Static Web Apps/App Service pass this in X-Forwarded-For.
+        var ip = context.Request.Headers["X-Forwarded-For"].FirstOrDefault() 
+                 ?? context.Connection.RemoteIpAddress?.ToString() 
+                 ?? "unknown";
+
+        // Check the old timestamp first to see if we need an 'Instant Start'
+        var (_, lastActiveTime) = await repo.GetStatusAsync("dashboard", "last_active");
+        var isWakingUp = !lastActiveTime.HasValue || (DateTime.UtcNow - lastActiveTime.Value) > TimeSpan.FromMinutes(5);
+
+        // Update dashboard status to signal ingestion functions.
+        var statusValue = $"active|{ip}";
+        await repo.UpdateStatusAsync("dashboard", "last_active", statusValue);
+
+        // SRE: Instant Start Logic.
+        // If the ingestion was idle, we trigger it immediately via HTTP rather than waiting for the Timer.
+        if (isWakingUp)
+        {
+            var functionBaseUrl = config["FLIGHT_INGESTION_URL"]; // e.g. https://func-telemetry-prod.azurewebsites.net
+            var functionKey = config["FLIGHT_INGESTION_KEY"];
+            
+            if (!string.IsNullOrEmpty(functionBaseUrl))
+            {
+                var client = httpClientFactory.CreateClient();
+                var triggerUrl = $"{functionBaseUrl.TrimEnd('/')}/api/ingest/flight";
+                if (!string.IsNullOrEmpty(functionKey))
+                {
+                    triggerUrl += $"?code={functionKey}";
+                }
+                
+                // Fire and forget (don't block the heartbeat response)
+                _ = client.PostAsync(triggerUrl, null);
+            }
+        }
+
+        return Results.NoContent();
+    }
+
+    // SRE: Helper model for caching and consistency
+    private class OpenSkyStatusResponse
+    {
+        public int statusCode { get; set; }
+        public bool isUp { get; set; }
+        public string? rateLimitRemaining { get; set; }
+        public string? rateLimitLimit { get; set; }
+        public string? retryAfterSeconds { get; set; }
+        public string? error { get; set; }
+        public bool authenticated { get; set; }
     }
 
     private static async Task<IResult> StopFunctionApp(HttpRequest request, [FromServices] IConfiguration config)
@@ -177,5 +244,42 @@ public static class ManagementEndpoints
         var response = await client.GetWebSiteResource(resourceId).GetAsync();
 
         return response.Value;
+    }
+
+    private static string? _cachedToken;
+    private static DateTime _tokenExpiry = DateTime.MinValue;
+
+    private static async Task<string?> GetOpenSkyTokenAsync(IHttpClientFactory httpClientFactory, string clientId, string clientSecret)
+    {
+        if (!string.IsNullOrEmpty(_cachedToken) && DateTime.UtcNow < _tokenExpiry)
+        {
+            return _cachedToken;
+        }
+
+        const string authUrl = "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token";
+        var client = httpClientFactory.CreateClient();
+        
+        var dict = new Dictionary<string, string>
+        {
+            { "grant_type", "client_credentials" },
+            { "client_id", clientId },
+            { "client_secret", clientSecret }
+        };
+
+        var response = await client.PostAsync(authUrl, new FormUrlEncodedContent(dict));
+        if (response.IsSuccessStatusCode)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            if (doc.RootElement.TryGetProperty("access_token", out var tokenProp))
+            {
+                _cachedToken = tokenProp.GetString();
+                int expiresIn = doc.RootElement.TryGetProperty("expires_in", out var expProp) ? expProp.GetInt32() : 1800;
+                _tokenExpiry = DateTime.UtcNow.AddSeconds(expiresIn - 60); // 1-minute buffer
+                return _cachedToken;
+            }
+        }
+
+        return null;
     }
 }

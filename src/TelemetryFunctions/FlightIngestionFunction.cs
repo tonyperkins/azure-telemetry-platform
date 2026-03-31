@@ -1,6 +1,7 @@
 using TelemetryFunctions.Services;
 using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
@@ -40,14 +41,47 @@ public sealed class FlightIngestionFunction
         _logger           = logger;
     }
 
-    [Function("FlightIngestion")]
-    public async Task RunAsync([TimerTrigger("%FLIGHT_POLLING_CRON%")] TimerInfo timer)
+    [Function("FlightIngestionTimer")]
+    public async Task RunTimerAsync(
+        [TimerTrigger("%FLIGHT_POLLING_CRON%")] TimerInfo timer)
+    {
+        await ExecuteIngestionAsync();
+    }
+
+    [Function("FlightIngestionHttp")]
+    public async Task<HttpResponseData> RunHttpAsync(
+        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "ingest/flight")] HttpRequestData req)
+    {
+        await ExecuteIngestionAsync();
+        return req.CreateResponse(System.Net.HttpStatusCode.Accepted);
+    }
+
+    private async Task ExecuteIngestionAsync()
     {
         // SRE: Feature flag / kill switch
         if (!_config.GetValue<bool>("ENABLE_FLIGHT_INGESTION", defaultValue: true))
         {
             _logger.LogInformation("Flight ingestion is disabled via configuration. Skipping run.");
             return;
+        }
+
+        // SRE: On-Demand Ingestion Check
+        // We only poll OpenSky if a dashboard has reported a heartbeat in the last 5 minutes.
+        // This ensures credits are only used when someone is actually watching.
+        var (lastActiveVal, lastActiveTime) = await _ingestionService.GetStatusAsync("dashboard", "last_active");
+        if (lastActiveTime.HasValue)
+        {
+            var heartbeatAge = DateTime.UtcNow - lastActiveTime.Value;
+            if (heartbeatAge > TimeSpan.FromMinutes(5))
+            {
+                _logger.LogInformation("On-Demand: No active heartbeat in {Age:F1}m. Skipping OpenSky pull to conserve credits.", heartbeatAge.TotalMinutes);
+                return;
+            }
+        }
+        else
+        {
+             _logger.LogInformation("On-Demand: No heartbeat ever recorded. Skipping OpenSky pull.");
+             return;
         }
 
         var sw   = Stopwatch.StartNew();

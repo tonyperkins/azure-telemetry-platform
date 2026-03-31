@@ -309,6 +309,50 @@ public sealed class VehicleRepository
     }
 
     /// <summary>
+    /// SRE: Retrieves a system status value by key.
+    /// </summary>
+    public async Task<(string? value, DateTime? updatedAt)> GetStatusAsync(string source, string key)
+    {
+        const string sql = "SELECT status_value, updated_at FROM dbo.system_status WHERE source = @Source AND status_key = @Key";
+        
+        try
+        {
+            using var conn = _connectionFactory.CreateConnection();
+            var row = await conn.QueryFirstOrDefaultAsync<(string? value, DateTime? updatedAt)>(sql, new { Source = source, Key = key });
+            return (row.value, row.updatedAt);
+        }
+        catch (SqlException ex)
+        {
+            _logger.LogError(ex, "SQL error in GetStatusAsync for {Source}:{Key}", source, key);
+            return (null, null);
+        }
+    }
+
+    /// <summary>
+    /// SRE: Updates or inserts a system status value.
+    /// </summary>
+    public async Task UpdateStatusAsync(string source, string key, string value)
+    {
+        const string sql = @"
+            IF EXISTS (SELECT 1 FROM dbo.system_status WHERE source = @source AND status_key = @key)
+                UPDATE dbo.system_status SET status_value = @value, updated_at = GETUTCDATE()
+                WHERE source = @source AND status_key = @key
+            ELSE
+                INSERT INTO dbo.system_status (source, status_key, status_value, updated_at)
+                VALUES (@source, @key, @value, GETUTCDATE())";
+
+        try
+        {
+            using var conn = _connectionFactory.CreateConnection();
+            await conn.ExecuteAsync(sql, new { source, key, value });
+        }
+        catch (SqlException ex)
+        {
+            _logger.LogError(ex, "SQL error in UpdateStatusAsync for {Source}:{Key}", source, key);
+        }
+    }
+
+    /// <summary>
     /// SRE: Retrieves system status values (like rate limits or circuit breaker states).
     /// Used by the management and health endpoints to provide accurate diagnostic info
     /// that matches the ingestion service's actual experience.

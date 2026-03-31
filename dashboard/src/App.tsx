@@ -135,6 +135,29 @@ export default function App() {
     }
   }, [flightCount, flightEnabled]);
 
+  // SRE: Heartbeat signal to the API for On-Demand Ingestion.
+  // Sends a signal every 60s while the dashboard is visible.
+  useEffect(() => {
+    const sendHeartbeat = async () => {
+      // Only send heartbeat if tab is visible to conserve cloud resources
+      if (document.visibilityState !== 'visible') return;
+
+      try {
+        await fetch(`${import.meta.env.VITE_API_BASE_URL ?? ''}/api/manage/heartbeat`, {
+          method: 'POST'
+        });
+      } catch (err) {
+        console.warn('[SRE] Heartbeat failed — ingestion may pause:', err);
+      }
+    };
+
+    // Send immediate heartbeat on mount
+    sendHeartbeat();
+
+    const interval = setInterval(sendHeartbeat, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleClearData = () => {
     if (confirm('Are you sure you want to clear all historical vehicle data? This will reset trails and paths.')) {
       window.location.reload();

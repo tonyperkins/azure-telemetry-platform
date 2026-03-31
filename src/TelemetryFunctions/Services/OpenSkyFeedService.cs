@@ -3,6 +3,8 @@ using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Retry;
 using System.Text.Json;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace TelemetryFunctions.Services;
 
@@ -25,6 +27,8 @@ public sealed class OpenSkyFeedService
     private readonly AsyncRetryPolicy<HttpResponseMessage> _retryPolicy;
     private readonly string? _clientId;
     private readonly string? _clientSecret;
+    private string? _cachedToken;
+    private DateTime _tokenExpiry = DateTime.MinValue;
     
     // Circuit breaker: track when we last hit rate limit.
     // SRE: Instance field (not static) so it resets on cold start / new deployment.
@@ -48,16 +52,10 @@ public sealed class OpenSkyFeedService
         // This raises the rate limit from 400/day (anonymous) to 4000/day (registered).
         if (!string.IsNullOrEmpty(_clientId) && !string.IsNullOrEmpty(_clientSecret))
         {
-            var authBytes = System.Text.Encoding.ASCII.GetBytes($"{_clientId}:{_clientSecret}");
-            var authHeader = Convert.ToBase64String(authBytes);
-            _httpClient.DefaultRequestHeaders.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authHeader);
-            
             _logger.LogInformation(
-                "OpenSky authenticated mode enabled (4000 credits/day). " +
-                "User: {UserPrefix}..., SecretLength: {SecretLength}", 
-                _clientId.Length > 3 ? _clientId.Substring(0, 3) : _clientId,
-                _clientSecret.Length);
+                "OpenSky OAuth2 mode enabled (4000 credits/day). " +
+                "User: {UserPrefix}...", 
+                _clientId.Length > 3 ? _clientId.Substring(0, 3) : _clientId);
         }
         else
         {
@@ -111,6 +109,14 @@ public sealed class OpenSkyFeedService
                 _lastRateLimitTime = null;
                 _ = _ingestionService.UpdateStatusAsync("flight", "circuit_breaker_active", "false");
             }
+        }
+
+        // SRE: Ensure we have a valid OAuth2 token before calling the API.
+        var token = await GetAuthTokenAsync();
+        if (!string.IsNullOrEmpty(token))
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = 
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
         }
         
         var url = BuildUrl(bboxConfig);
@@ -275,4 +281,56 @@ public sealed class OpenSkyFeedService
 
     private static bool GetBool(JsonElement[] arr, int idx)
         => arr[idx].ValueKind != JsonValueKind.Null && arr[idx].GetBoolean();
+
+    private async Task<string?> GetAuthTokenAsync()
+    {
+        if (!string.IsNullOrEmpty(_cachedToken) && DateTime.UtcNow < _tokenExpiry)
+        {
+            return _cachedToken;
+        }
+
+        if (string.IsNullOrEmpty(_clientId) || string.IsNullOrEmpty(_clientSecret))
+        {
+            return null;
+        }
+
+        const string authUrl = "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token";
+        
+        try
+        {
+            var dict = new Dictionary<string, string>
+            {
+                { "grant_type", "client_credentials" },
+                { "client_id", _clientId },
+                { "client_secret", _clientSecret }
+            };
+
+            var response = await _httpClient.PostAsync(authUrl, new FormUrlEncodedContent(dict));
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("access_token", out var tokenProp))
+                {
+                    _cachedToken = tokenProp.GetString();
+                    int expiresIn = doc.RootElement.TryGetProperty("expires_in", out var expProp) ? expProp.GetInt32() : 1800;
+                    _tokenExpiry = DateTime.UtcNow.AddSeconds(expiresIn - 60); // 1-minute buffer
+                    
+                    _logger.LogInformation("OpenSky OAuth2 token refreshed. Expires in: {Exp}s", expiresIn);
+                    return _cachedToken;
+                }
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to fetch OpenSky OAuth2 token. Status: {Status}, Error: {Error}", response.StatusCode, error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Exception during OpenSky OAuth2 token acquisition.");
+        }
+
+        return null;
+    }
 }
