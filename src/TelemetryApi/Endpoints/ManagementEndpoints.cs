@@ -82,8 +82,9 @@ public static class ManagementEndpoints
 
         try
         {
-            // Empty bounding box to minimize data transfer while still hitting the active endpoint
-            var url = "https://opensky-network.org/api/states/all?lamin=0&lomin=0&lamax=0&lomax=0";
+            // SRE: Use a tiny 1x1 degree box (Small area = 1 credit) for diagnostic checks.
+            // A 0x0 box (0,0,0,0) is often penalized by OpenSky as a Global/Invalid query (4 credits).
+            var url = "https://opensky-network.org/api/states/all?lamin=30.0&lomin=-98.0&lamax=30.1&lomax=-97.9";
             var response = await client.GetAsync(url);
             
             var remaining = response.Headers.TryGetValues("X-Rate-Limit-Remaining", out var rVals) ? rVals.FirstOrDefault() : null;

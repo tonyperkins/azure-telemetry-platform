@@ -52,6 +52,21 @@ public sealed class FlightIngestionFunction
         var sw   = Stopwatch.StartNew();
         var bbox = _config["OPENSKY_BBOX"] ?? "29.8,-98.2,30.8,-97.2";
 
+        // SRE: Adaptive Polling (Back-off logic)
+        // If we previously hit 3+ consecutive zero-aircraft runs, "is_quiet_mode" is set to true.
+        // We then back off to a 5-minute polling interval to save credits until traffic returns.
+        var (quietVal, quietTime) = await _ingestionService.GetStatusAsync("flight", "is_quiet_mode");
+        if (quietVal == "true" && quietTime.HasValue)
+        {
+            var quietAge = DateTime.UtcNow - quietTime.Value;
+            if (quietAge < TimeSpan.FromMinutes(5))
+            {
+                _logger.LogInformation("Adaptive polling: Quiet mode active ({Age:F1}m). Skipping OpenSky pull to conserve credits.", quietAge.TotalMinutes);
+                return;
+            }
+            _logger.LogInformation("Adaptive polling: Quiet mode expired. Resuming check.");
+        }
+
         _logger.LogInformation("Flight ingestion started. BBox: {BBox}", bbox);
 
         // Step 1: Fetch + parse OpenSky JSON
@@ -79,6 +94,17 @@ public sealed class FlightIngestionFunction
         // Step 4: Handle zero-vehicle result
         if (vehicles.Count == 0)
         {
+            var (cntStr, _) = await _ingestionService.GetStatusAsync("flight", "quiet_count");
+            int count = int.TryParse(cntStr, out var c) ? c : 0;
+            count++;
+            
+            await _ingestionService.UpdateStatusAsync("flight", "quiet_count", count.ToString());
+            if (count >= 3)
+            {
+                await _ingestionService.UpdateStatusAsync("flight", "is_quiet_mode", "true");
+                _logger.LogInformation("Adaptive polling: 3+ empty results. Engaging 5-minute quiet mode back-off.");
+            }
+
             if (allVehicles.Count == 0)
             {
                 // SRE: In quiet periods (late night), it's possible to have 0 aircraft in a small bbox.
@@ -98,6 +124,10 @@ public sealed class FlightIngestionFunction
 
             return;
         }
+
+        // Reset quiet mode on success
+        await _ingestionService.UpdateStatusAsync("flight", "quiet_count", "0");
+        await _ingestionService.UpdateStatusAsync("flight", "is_quiet_mode", "false");
 
         // Step 5: Bulk insert
         var insertedCount = await _ingestionService.BulkInsertAsync(vehicles);

@@ -270,6 +270,38 @@ public sealed class VehicleIngestionService
         }
     }
 
+    /// <summary>
+    /// Retrieves a system status key/value pair.
+    /// </summary>
+    public async Task<(string? value, DateTime? updatedAt)> GetStatusAsync(string source, string key)
+    {
+        const string sql = "SELECT status_value, updated_at FROM dbo.system_status WHERE source = @source AND status_key = @key";
+        
+        try
+        {
+            using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@source", source);
+            cmd.Parameters.AddWithValue("@key",    key);
+            
+            using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return (
+                    reader.IsDBNull(0) ? null : reader.GetString(0),
+                    reader.IsDBNull(1) ? null : reader.GetDateTime(1)
+                );
+            }
+        }
+        catch (SqlException ex)
+        {
+            _logger.LogWarning(ex, "Failed to retrieve system status for {Source}:{Key}.", source, key);
+        }
+        
+        return (null, null);
+    }
+
     private static void MapColumns(SqlBulkCopy bulk)
     {
         bulk.ColumnMappings.Add("source",      "source");
