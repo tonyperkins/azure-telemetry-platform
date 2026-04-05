@@ -153,7 +153,9 @@ jobs:
         run: |
           export APP_NAME="${{ steps.tf-outputs.outputs.app_service_name }}"
           export FUNC_NAME="${{ steps.tf-outputs.outputs.function_app_name }}"
-          envsubst '${APP_NAME} ${FUNC_NAME}' < ./scripts/init-schema.sql > /tmp/init-schema-rendered.sql
+          export APP_SID="${{ steps.calculate-sids.outputs.app_sid }}"
+          export FUNC_SID="${{ steps.calculate-sids.outputs.func_sid }}"
+          envsubst '${APP_NAME} ${FUNC_NAME} ${APP_SID} ${FUNC_SID}' < ./scripts/init-schema.sql > /tmp/init-schema-rendered.sql
           echo "=== Rendered SQL (security section) ==="
           grep -A2 -B2 "APP_NAME\|FUNC_NAME" /tmp/init-schema-rendered.sql
 
@@ -307,7 +309,7 @@ jobs:
           
           # Spin lock for up to 5 minutes waiting for background workers to execute
           # successfully and populate the map with initial vehicles.
-          TIMEOUT=60
+          TIMEOUT=120
           INTERVAL=10
           ELAPSED=0
           
