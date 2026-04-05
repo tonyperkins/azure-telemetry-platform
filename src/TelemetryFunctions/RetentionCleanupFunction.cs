@@ -46,70 +46,75 @@ public sealed class RetentionCleanupFunction
         _logger    = logger;
     }
 
+    // SRE: Run every 6 hours rather than once daily.
+    // The original daily schedule meant the table could accumulate ~24h × 4 feeds × 2/min
+    // = 576K rows between runs. At 30s poll frequency across both sources that's enough
+    // to fill the 5 GB quota over a long outage or if feeds spike. Running 4× per day
+    // keeps the watermark low and ensures any backlog drains quickly.
     [Function("RetentionCleanup")]
-    public async Task RunAsync([TimerTrigger("0 0 2 * * *")] TimerInfo timer)
+    public async Task RunAsync([TimerTrigger("0 0 */6 * * *")] TimerInfo timer)
     {
         var sw = Stopwatch.StartNew();
 
         _logger.LogInformation(
-            "Retention cleanup started. Deleting records older than 24 hours.");
+            "SRE: Retention cleanup started. IsPastDue={IsPastDue}. Deleting records older than 24 hours.",
+            timer.IsPastDue);
 
+        // SRE: Batch deletes in chunks of 5000 to avoid long-running transactions
+        // and excessive log growth. The 1-second delay between batches lets the
+        // SQL Serverless auto-scaler breathe and prevents lock escalation on the
+        // full-table IX_vehicles_source_ingested index.
+        // commandTimeout is 600s (10 min) to handle large catch-up backlogs.
         const string sql = @"
             DECLARE @DeletedRows INT = 1;
             DECLARE @TotalDeleted INT = 0;
+            DECLARE @BatchNum    INT = 0;
 
             WHILE @DeletedRows > 0
             BEGIN
-                DELETE TOP (5000) 
-                FROM dbo.vehicles 
+                DELETE TOP (5000)
+                FROM dbo.vehicles
                 WHERE ingested_at < DATEADD(hour, -24, GETUTCDATE());
 
-                SET @DeletedRows = @@ROWCOUNT;
+                SET @DeletedRows  = @@ROWCOUNT;
                 SET @TotalDeleted = @TotalDeleted + @DeletedRows;
+                SET @BatchNum     = @BatchNum + 1;
 
                 IF @DeletedRows > 0
                 BEGIN
                     WAITFOR DELAY '00:00:01';
                 END
             END
-            
+
             SELECT @TotalDeleted;
         ";
 
         try
         {
             using var conn = await _connectionFactory.CreateConnectionAsync();
-            var result = await conn.ExecuteScalarAsync<int>(sql, commandTimeout: 120);
-            var deletedCount = result;
+            var deletedCount = await conn.ExecuteScalarAsync<int>(sql, commandTimeout: 600);
 
             sw.Stop();
 
-            // SRE: Track deleted record count as a custom metric.
-            // A sudden spike (e.g., 50,000 records deleted instead of the
-            // expected ~14,400) could indicate a feed bug that wrote duplicate
-            // records. Monitoring this metric catches data anomalies retroactively.
-            _telemetry.TrackMetric("records_deleted", deletedCount,
+            _telemetry.TrackMetric("retention_deleted_rows", deletedCount,
                 new Dictionary<string, string> { ["source"] = "all" });
 
             _logger.LogInformation(
-                "Retention cleanup complete: {Count} records deleted in {Ms}ms.",
+                "SRE: Retention cleanup complete. Deleted={Count} rows in {Ms}ms.",
                 deletedCount, sw.ElapsedMilliseconds);
         }
         catch (SqlException ex)
         {
-            // SRE: If the DELETE fails (e.g., SQL server under load, lock timeout),
-            // log the error and let the next daily run handle it. The table will
-            // accumulate an extra 24h of data but will not grow unboundedly.
-            // Do NOT retry here — a failed DELETE at 2 AM that retries immediately
-            // could cause extended lock contention during the next morning's peak traffic.
+            sw.Stop();
             _logger.LogError(ex,
-                "Retention cleanup failed. Table may have accumulated extra rows. " +
-                "Next scheduled run will clean up. Do not retry manually unless table is " +
-                "approaching storage limits.");
+                "SRE: Retention cleanup FAILED after {Ms}ms. Error={Number}. " +
+                "Table will accumulate until next scheduled run at next 6-hour mark.",
+                sw.ElapsedMilliseconds, ex.Number);
 
             _telemetry.TrackException(ex, new Dictionary<string, string>
             {
-                ["operation"] = "RetentionCleanup"
+                ["operation"] = "RetentionCleanup",
+                ["sqlErrorNumber"] = ex.Number.ToString()
             });
         }
     }
