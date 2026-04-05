@@ -120,42 +120,12 @@ jobs:
           echo "::add-mask::$SQL_CONN"
           echo "sql_connection_string=$SQL_CONN" >> $GITHUB_OUTPUT
           
-      - name: Calculate Managed Identity SIDs
-        id: calculate-sids
-        shell: python
-        run: |
-          import uuid
-          import binascii
-          import os
-
-          def object_id_to_sid(object_id):
-              u = uuid.UUID(object_id)
-              # Azure SQL binary SID uses Windows GUID byte order:
-              # first 3 groups are little-endian, last 2 are big-endian.
-              # u.bytes_le matches this layout exactly.
-              return '0x' + binascii.hexlify(u.bytes_le).decode('utf-8').upper()
-
-          app_id = "${{ steps.tf-outputs.outputs.appservice_principal_id }}"
-          func_id = "${{ steps.tf-outputs.outputs.functionapp_principal_id }}"
-
-          app_sid = object_id_to_sid(app_id)
-          func_sid = object_id_to_sid(func_id)
-
-          print(f"APP_SID: {app_sid}")
-          print(f"FUNC_SID: {func_sid}")
-
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f"app_sid={app_sid}\n")
-              f.write(f"func_sid={func_sid}\n")
-
       - name: Render Database Schema SQL
         id: render-sql
         run: |
           export APP_NAME="${{ steps.tf-outputs.outputs.app_service_name }}"
           export FUNC_NAME="${{ steps.tf-outputs.outputs.function_app_name }}"
-          export APP_SID="${{ steps.calculate-sids.outputs.app_sid }}"
-          export FUNC_SID="${{ steps.calculate-sids.outputs.func_sid }}"
-          envsubst '${APP_NAME} ${FUNC_NAME} ${APP_SID} ${FUNC_SID}' < ./scripts/init-schema.sql > /tmp/init-schema-rendered.sql
+          envsubst '${APP_NAME} ${FUNC_NAME}' < ./scripts/init-schema.sql > /tmp/init-schema-rendered.sql
           echo "=== Rendered SQL (security section) ==="
           grep -A2 -B2 "APP_NAME\|FUNC_NAME" /tmp/init-schema-rendered.sql
 
