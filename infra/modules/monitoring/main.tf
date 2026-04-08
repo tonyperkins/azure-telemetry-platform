@@ -129,3 +129,40 @@ resource "azurerm_application_insights_api_key" "read_telemetry" {
   application_insights_id = azurerm_application_insights.main.id
   read_permissions        = ["aggregate", "api", "draft", "extendqueries", "search"]
 }
+
+# ---------------------------------------------------------------------------
+# SRE: Monthly Spend Budget Alert
+#
+# Scoped to this resource group so it only watches ATP resources.
+# Fires at 80% ($20) of the $25/mo cap — gives time to react before
+# the bill becomes a surprise. Useful for demo-at-rest mode where the
+# expected idle cost is ~$13/mo; anything above $20 means unexpected
+# SQL compute activity (ingestion left running or unexpected API traffic).
+# ---------------------------------------------------------------------------
+resource "azurerm_consumption_budget_resource_group" "monthly_cap" {
+  name              = "budget-telemetry-monthly-${var.environment}"
+  resource_group_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}"
+
+  amount     = 25
+  time_grain = "Monthly"
+
+  time_period {
+    start_date = formatdate("YYYY-MM-01'T'00:00:00'Z'", timestamp())
+  }
+
+  notification {
+    enabled        = true
+    threshold      = 80
+    operator       = "GreaterThan"
+    threshold_type = "Actual"
+    contact_emails = [var.alert_email]
+  }
+
+  notification {
+    enabled        = true
+    threshold      = 100
+    operator       = "GreaterThan"
+    threshold_type = "Actual"
+    contact_emails = [var.alert_email]
+  }
+}

@@ -29,7 +29,11 @@ resource "azurerm_windows_web_app" "main" {
       current_stack  = "dotnet"
       dotnet_version = "v8.0"
     }
-    always_on = true
+    # SRE: always_on is disabled for demo-at-rest mode.
+    # The B1 plan supports it, but we intentionally leave it off to
+    # avoid wasted compute when no demo is running. Cold-start latency
+    # on first request is ~5–10s — acceptable for a portfolio demo.
+    always_on = false
 
     # SRE: CORS is enforced at the platform level, not just in application code.
     # Setting it here ensures the restriction holds even if the app is

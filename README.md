@@ -2,6 +2,8 @@
 
 A production-quality reference platform demonstrating SRE engineering practices on Azure PaaS. Ingests real-time vehicle position data from two live public feeds — Capital Metro buses (GTFS-RT protobuf) and OpenSky Network flights (REST JSON) — stores them in Azure SQL Serverless, and serves them through a .NET 8 Minimal API to a React + Leaflet live map dashboard.
 
+> **💡 Demo Playbook** — Infrastructure runs in **demo-at-rest** mode by default (~$13/mo fixed, SQL auto-paused). To activate live data ingestion for a demo, click **Start** on the dashboard. To shut it down after, click **Stop**. SQL auto-pauses within 60 minutes of the last query.
+
 ---
 
 ## Architecture Overview

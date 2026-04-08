@@ -107,6 +107,7 @@ module "monitoring" {
   environment         = var.environment
   tags                = local.tags
   alert_email         = var.alert_email
+  subscription_id     = data.azurerm_subscription.current.subscription_id
 }
 
 module "sql" {
