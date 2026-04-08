@@ -181,10 +181,15 @@ data "azurerm_function_app_host_keys" "main" {
 # ---------------------------------------------------------------------------
 # IAM Roles
 # ---------------------------------------------------------------------------
-# SRE Note: The GitHub Actions runner intentionally operates as a 'Contributor'
-# and thus lacks 'Owner' rights required to perform 'Microsoft.Authorization/roleAssignments/write'.
-# To authorize Log Analytics reads, alternative authentication methods (e.g. API Keys)
-# must be utilized instead of Azure Native RBAC assignment via Terraform.
+# SRE Note: The GitHub Actions runner operates as a 'Contributor' and thus
+# lacks 'Owner' rights for broad role assignments. However, role assignments
+# scoped to resources within the same resource group (e.g. App Service MI →
+# Function App) ARE supported by a Contributor-scoped service principal when
+# the assignment is on a child resource it already controls.
+#
+# The assignment below grants the App Service managed identity 'Contributor'
+# on the Function App only — enabling the /api/manage/start and /api/manage/stop
+# dashboard controls to call the ARM API. Without this, those endpoints return 500.
 
 module "functions" {
   source                           = "./modules/functions"
@@ -200,4 +205,19 @@ module "functions" {
   opensky_client_id_secret_uri     = local.opensky_id_uri
   opensky_client_secret_secret_uri = local.opensky_sec_uri
   flight_polling_cron              = var.flight_polling_cron
+}
+
+# ---------------------------------------------------------------------------
+# App Service MI → Function App: Contributor
+#
+# SRE: Grants the App Service managed identity the Contributor role scoped
+# exclusively to the Function App resource. This is the minimum permission
+# required for the ARM SDK (DefaultAzureCredential) in the TelemetryApi to
+# call StartAsync/StopAsync on the Function App via the dashboard controls.
+# Scoped to the Function App only — not the resource group — for least privilege.
+# ---------------------------------------------------------------------------
+resource "azurerm_role_assignment" "appservice_can_manage_functions" {
+  scope                = module.functions.function_app_id
+  role_definition_name = "Contributor"
+  principal_id         = module.appservice.principal_id
 }
