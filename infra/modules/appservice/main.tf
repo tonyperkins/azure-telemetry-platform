@@ -7,7 +7,7 @@ resource "azurerm_service_plan" "main" {
   resource_group_name = var.resource_group_name
   location            = var.location
   os_type             = "Windows"
-  sku_name            = "B1"
+  sku_name            = "F1"
 
   tags = var.tags
 }
