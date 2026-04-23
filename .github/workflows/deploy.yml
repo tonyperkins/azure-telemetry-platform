@@ -140,7 +140,6 @@ jobs:
         uses: azure/sql-action@v2
         with:
           connection-string: ${{ steps.tf-outputs.outputs.sql_connection_string }}
-          database: "TelemetryDb"
           path: '/tmp/init-schema-rendered.sql'
 
   # ---------------------------------------------------------------------------
