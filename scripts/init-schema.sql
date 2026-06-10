@@ -95,7 +95,7 @@ GO
 --      was failing (it was running in master).
 -- =============================================================================
 
-PRINT 'SRE: Provisioning identities via FROM EXTERNAL PROVIDER...';
+PRINT 'SRE: Provisioning identities via WITH SID (bypassing Directory Readers requirement)...';
 PRINT 'SRE: Database context: ' + DB_NAME();
 PRINT 'SRE: APP_NAME = ${APP_NAME}';
 PRINT 'SRE: FUNC_NAME = ${FUNC_NAME}';
@@ -105,7 +105,7 @@ BEGIN
     DROP USER [${APP_NAME}];
 END
 GO
-CREATE USER [${APP_NAME}] FROM EXTERNAL PROVIDER;
+CREATE USER [${APP_NAME}] WITH SID = ${APP_SID}, TYPE = E;
 ALTER ROLE db_datareader ADD MEMBER [${APP_NAME}];
 ALTER ROLE db_datawriter ADD MEMBER [${APP_NAME}];
 GRANT CONNECT TO [${APP_NAME}];
@@ -116,7 +116,7 @@ BEGIN
     DROP USER [${FUNC_NAME}];
 END
 GO
-CREATE USER [${FUNC_NAME}] FROM EXTERNAL PROVIDER;
+CREATE USER [${FUNC_NAME}] WITH SID = ${FUNC_SID}, TYPE = E;
 ALTER ROLE db_datareader ADD MEMBER [${FUNC_NAME}];
 ALTER ROLE db_datawriter ADD MEMBER [${FUNC_NAME}];
 GRANT CONNECT TO [${FUNC_NAME}];
