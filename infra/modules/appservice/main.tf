@@ -21,8 +21,12 @@ resource "azurerm_windows_web_app" "main" {
   # SRE: System-assigned managed identity is the principal that authenticates
   # to Key Vault. No client secrets, no stored credentials.
   identity {
-    type = "SystemAssigned"
+    type         = "UserAssigned"
+    identity_ids = [var.user_assigned_identity_id]
   }
+
+  key_vault_reference_identity_id = var.user_assigned_identity_id
+
 
   site_config {
     application_stack {
@@ -46,6 +50,8 @@ resource "azurerm_windows_web_app" "main" {
 
   app_settings = {
     "KeyVaultName"           = var.key_vault_name
+    "AZURE_CLIENT_ID"        = var.user_assigned_identity_client_id
+
     "ASPNETCORE_ENVIRONMENT" = var.environment == "prod" ? "Production" : "Staging"
     # SRE: Use APPLICATIONINSIGHTS_CONNECTION_STRING (not the legacy
     # APPINSIGHTS_INSTRUMENTATIONKEY). The connection string includes the

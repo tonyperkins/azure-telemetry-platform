@@ -14,6 +14,7 @@ output "function_app_id" {
 }
 
 output "principal_id" {
-  description = "Object ID of the Function App system-assigned managed identity."
-  value       = azurerm_windows_function_app.main.identity[0].principal_id
+  description = "Object ID of the Function App managed identity."
+  value       = var.user_assigned_identity_principal_id
 }
+

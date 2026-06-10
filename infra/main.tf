@@ -85,6 +85,21 @@ resource "azurerm_resource_group" "main" {
   tags     = local.tags
 }
 
+resource "azurerm_user_assigned_identity" "app" {
+  name                = "id-telemetry-app-${var.environment}-${local.suffix}"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = var.location
+  tags                = local.tags
+}
+
+resource "azurerm_user_assigned_identity" "func" {
+  name                = "id-telemetry-func-${var.environment}-${local.suffix}"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = var.location
+  tags                = local.tags
+}
+
+
 # ---------------------------------------------------------------------------
 # Modules — dependency order:
 #   1. monitoring (App Insights conn string needed by appservice + functions)
@@ -147,8 +162,8 @@ module "keyvault" {
   # Note: The connection string is constructed deterministically here to break
   # the circular dependency between the SQL module and the Key Vault module.
   sql_connection_string    = "Server=tcp:sql-telemetry-${var.environment}-${local.suffix}.database.windows.net,1433;Initial Catalog=TelemetryDb;Persist Security Info=False;Authentication=Active Directory Managed Identity;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
-  appservice_principal_id  = module.appservice.principal_id
-  functionapp_principal_id = module.functions.principal_id
+  appservice_principal_id  = azurerm_user_assigned_identity.app.principal_id
+  functionapp_principal_id = azurerm_user_assigned_identity.func.principal_id
   opensky_client_id        = var.opensky_client_id
   opensky_client_secret    = var.opensky_client_secret
   management_admin_token   = var.management_admin_token
@@ -180,7 +195,12 @@ module "appservice" {
   management_admin_token_uri       = local.management_admin_token_uri
   opensky_client_id_secret_uri     = local.opensky_id_uri
   opensky_client_secret_secret_uri = local.opensky_sec_uri
+
+  user_assigned_identity_id           = azurerm_user_assigned_identity.app.id
+  user_assigned_identity_client_id     = azurerm_user_assigned_identity.app.client_id
+  user_assigned_identity_principal_id  = azurerm_user_assigned_identity.app.principal_id
 }
+
 
 
 
@@ -212,6 +232,10 @@ module "functions" {
   opensky_client_secret_secret_uri = local.opensky_sec_uri
   flight_polling_cron              = var.flight_polling_cron
   function_host_key                = module.keyvault.function_host_key
+
+  user_assigned_identity_id           = azurerm_user_assigned_identity.func.id
+  user_assigned_identity_client_id     = azurerm_user_assigned_identity.func.client_id
+  user_assigned_identity_principal_id  = azurerm_user_assigned_identity.func.principal_id
 }
 
 # ---------------------------------------------------------------------------
@@ -226,5 +250,6 @@ module "functions" {
 resource "azurerm_role_assignment" "appservice_can_manage_functions" {
   scope                = module.functions.function_app_id
   role_definition_name = "Contributor"
-  principal_id         = module.appservice.principal_id
+  principal_id         = azurerm_user_assigned_identity.app.principal_id
 }
+

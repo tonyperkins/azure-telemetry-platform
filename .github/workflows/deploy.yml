@@ -113,6 +113,8 @@ jobs:
           echo "app_service_hostname=$(terraform output -raw app_service_hostname)" >> $GITHUB_OUTPUT
           echo "appservice_principal_id=$(terraform output -raw appservice_principal_id)" >> $GITHUB_OUTPUT
           echo "functionapp_principal_id=$(terraform output -raw functionapp_principal_id)" >> $GITHUB_OUTPUT
+          echo "appservice_client_id=$(terraform output -raw appservice_client_id)" >> $GITHUB_OUTPUT
+          echo "functionapp_client_id=$(terraform output -raw functionapp_client_id)" >> $GITHUB_OUTPUT
           
           # Safely export the SQL Connection String ensuring it is completely masked
           # prior to passing it down into the next sequential github workflow step.
@@ -125,15 +127,14 @@ jobs:
         run: |
           export APP_NAME="${{ steps.tf-outputs.outputs.app_service_name }}"
           export FUNC_NAME="${{ steps.tf-outputs.outputs.function_app_name }}"
-          APP_OID="${{ steps.tf-outputs.outputs.appservice_principal_id }}"
-          FUNC_OID="${{ steps.tf-outputs.outputs.functionapp_principal_id }}"
-          APP_CLIENT_ID=$(az ad sp show --id "$APP_OID" --query "appId" -o tsv)
-          FUNC_CLIENT_ID=$(az ad sp show --id "$FUNC_OID" --query "appId" -o tsv)
+          APP_CLIENT_ID="${{ steps.tf-outputs.outputs.appservice_client_id }}"
+          FUNC_CLIENT_ID="${{ steps.tf-outputs.outputs.functionapp_client_id }}"
           export APP_SID=$(python3 -c "import uuid; print('0x' + uuid.UUID('$APP_CLIENT_ID').bytes_le.hex())")
           export FUNC_SID=$(python3 -c "import uuid; print('0x' + uuid.UUID('$FUNC_CLIENT_ID').bytes_le.hex())")
           envsubst '${APP_NAME} ${FUNC_NAME} ${APP_SID} ${FUNC_SID}' < ./scripts/init-schema.sql > /tmp/init-schema-rendered.sql
           echo "=== Rendered SQL (security section) ==="
           grep -A2 -B2 "APP_NAME\|FUNC_NAME" /tmp/init-schema-rendered.sql
+
 
       - name: Initialize Database Schema
         uses: azure/sql-action@v2

@@ -34,8 +34,12 @@ resource "azurerm_windows_function_app" "main" {
   service_plan_id            = azurerm_service_plan.consumption.id
 
   identity {
-    type = "SystemAssigned"
+    type         = "UserAssigned"
+    identity_ids = [var.user_assigned_identity_id]
   }
+
+  key_vault_reference_identity_id = var.user_assigned_identity_id
+
 
   site_config {
     application_stack {
@@ -46,6 +50,8 @@ resource "azurerm_windows_function_app" "main" {
 
   app_settings = {
     "FUNCTIONS_WORKER_RUNTIME" = "dotnet-isolated"
+    "AZURE_CLIENT_ID"          = var.user_assigned_identity_client_id
+
     # SRE: Azure Functions runtime requires APPLICATIONINSIGHTS_CONNECTION_STRING
     # (not APPINSIGHTS_CONNECTION_STRING) for automatic distributed tracing
     # correlation. Using the wrong key results in Functions emitting telemetry

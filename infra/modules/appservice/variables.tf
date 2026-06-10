@@ -81,3 +81,19 @@ variable "function_host_key_uri" {
   sensitive   = true
   description = "Versionless KV secret URI of the pre-generated Function App host key. Used as a Key Vault reference — the raw key never appears in app settings."
 }
+
+variable "user_assigned_identity_id" {
+  type        = string
+  description = "Resource ID of the User Assigned Identity."
+}
+
+variable "user_assigned_identity_client_id" {
+  type        = string
+  description = "Client ID of the User Assigned Identity."
+}
+
+variable "user_assigned_identity_principal_id" {
+  type        = string
+  description = "Principal ID (Object ID) of the User Assigned Identity."
+}
+

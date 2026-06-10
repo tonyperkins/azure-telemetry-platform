@@ -33,6 +33,17 @@ output "appservice_principal_id" {
   value       = module.appservice.principal_id
 }
 
+output "appservice_client_id" {
+  description = "Client ID of the App Service user-assigned managed identity."
+  value       = azurerm_user_assigned_identity.app.client_id
+}
+
+output "functionapp_client_id" {
+  description = "Client ID of the Function App user-assigned managed identity."
+  value       = azurerm_user_assigned_identity.func.client_id
+}
+
+
 output "key_vault_name" {
   description = "Name of the Key Vault."
   value       = module.keyvault.key_vault_name

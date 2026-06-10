@@ -41,3 +41,19 @@ variable "function_host_key" {
   type        = string
   sensitive   = true
 }
+
+variable "user_assigned_identity_id" {
+  type        = string
+  description = "Resource ID of the User Assigned Identity."
+}
+
+variable "user_assigned_identity_client_id" {
+  type        = string
+  description = "Client ID of the User Assigned Identity."
+}
+
+variable "user_assigned_identity_principal_id" {
+  type        = string
+  description = "Principal ID (Object ID) of the User Assigned Identity."
+}
+
