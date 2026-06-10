@@ -33,23 +33,29 @@ resource "azurerm_key_vault" "main" {
   tags = var.tags
 }
 
-# Terraform deployer access (to create/update secrets during apply)
-resource "azurerm_key_vault_access_policy" "terraform_deployer" {
+# SRE: Terraform deployer access policies are HARDCODED, not dynamic.
+# Using data.azurerm_client_config.current.object_id is fragile — it resolves
+# to different OIDs locally vs CI, causing state conflicts. Static OIDs are
+# explicit, auditable, and idempotent regardless of who runs Terraform.
+
+# Local developer (tonyperkins personal az CLI identity)
+resource "azurerm_key_vault_access_policy" "local_deployer" {
   key_vault_id = azurerm_key_vault.main.id
   tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = data.azurerm_client_config.current.object_id
+  object_id    = "290e17ad-994a-4746-89ea-1c5ad4d58396"
 
   secret_permissions = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
 }
 
-# GitHub Actions service principal — full secret access for CI/CD Terraform runs
+# GitHub Actions service principal (sp-telemetry-github-actions)
 resource "azurerm_key_vault_access_policy" "ci_deployer" {
   key_vault_id = azurerm_key_vault.main.id
   tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = var.ci_deployer_object_id
+  object_id    = "ca14dff5-3a2c-420b-8fb8-e4a911086ada"
 
   secret_permissions = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
 }
+
 
 # App Service managed identity — read-only access
 resource "azurerm_key_vault_access_policy" "appservice" {
@@ -86,8 +92,9 @@ resource "azurerm_key_vault_secret" "sql_connection_string" {
 
   # Ensure the SP running the deployment has rights first
   depends_on = [
-    azurerm_key_vault_access_policy.terraform_deployer
+    azurerm_key_vault_access_policy.local_deployer
   ]
+
 }
 
 resource "azurerm_key_vault_secret" "opensky_client_id" {
@@ -96,8 +103,9 @@ resource "azurerm_key_vault_secret" "opensky_client_id" {
   key_vault_id = azurerm_key_vault.main.id
 
   depends_on = [
-    azurerm_key_vault_access_policy.terraform_deployer
+    azurerm_key_vault_access_policy.local_deployer
   ]
+
 }
 
 resource "azurerm_key_vault_secret" "opensky_client_secret" {
@@ -106,8 +114,9 @@ resource "azurerm_key_vault_secret" "opensky_client_secret" {
   key_vault_id = azurerm_key_vault.main.id
 
   depends_on = [
-    azurerm_key_vault_access_policy.terraform_deployer
+    azurerm_key_vault_access_policy.local_deployer
   ]
+
 }
 
 resource "azurerm_key_vault_secret" "management_admin_token" {
@@ -116,8 +125,9 @@ resource "azurerm_key_vault_secret" "management_admin_token" {
   key_vault_id = azurerm_key_vault.main.id
 
   depends_on = [
-    azurerm_key_vault_access_policy.terraform_deployer
+    azurerm_key_vault_access_policy.local_deployer
   ]
+
 }
 
 resource "azurerm_key_vault_secret" "function_host_key" {
@@ -126,6 +136,7 @@ resource "azurerm_key_vault_secret" "function_host_key" {
   key_vault_id = azurerm_key_vault.main.id
 
   depends_on = [
-    azurerm_key_vault_access_policy.terraform_deployer
+    azurerm_key_vault_access_policy.local_deployer
   ]
+
 }
