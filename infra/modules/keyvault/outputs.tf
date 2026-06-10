@@ -8,9 +8,15 @@ output "key_vault_name" {
   value       = azurerm_key_vault.main.name
 }
 
-output "sql_secret_uri" {
-  description = "URI of the SQL connection string secret (for Key Vault reference syntax)."
-  value       = azurerm_key_vault_secret.sql_connection_string.versionless_id
+output "sql_secret_app_uri" {
+  description = "URI of the SQL connection string secret for App Service."
+  value       = azurerm_key_vault_secret.sql_connection_string_app.versionless_id
+  sensitive   = true
+}
+
+output "sql_secret_func_uri" {
+  description = "URI of the SQL connection string secret for Function App."
+  value       = azurerm_key_vault_secret.sql_connection_string_func.versionless_id
   sensitive   = true
 }
 

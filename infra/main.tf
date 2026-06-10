@@ -64,7 +64,8 @@ locals {
   # (appservice/functions) and Secret access policy assignment (keyvault).
   kv_name                    = "kv-tlm-${var.environment}-${local.suffix}"
   kv_base_uri                = "https://${local.kv_name}.vault.azure.net/secrets"
-  sql_secret_uri             = "${local.kv_base_uri}/SQL-CONNECTION-STRING"
+  sql_secret_app_uri         = "${local.kv_base_uri}/SQL-CONNECTION-STRING-APP"
+  sql_secret_func_uri        = "${local.kv_base_uri}/SQL-CONNECTION-STRING-FUNC"
   opensky_id_uri             = "${local.kv_base_uri}/OPEN-SKY-CLIENT-ID"
   opensky_sec_uri            = "${local.kv_base_uri}/OPEN-SKY-CLIENT-SECRET"
   management_admin_token_uri = "${local.kv_base_uri}/MANAGEMENT-ADMIN-TOKEN"
@@ -161,12 +162,13 @@ module "keyvault" {
   # This eliminates the dependency on the 'sql_admin_password' secret.
   # Note: The connection string is constructed deterministically here to break
   # the circular dependency between the SQL module and the Key Vault module.
-  sql_connection_string    = "Server=tcp:sql-telemetry-${var.environment}-${local.suffix}.database.windows.net,1433;Initial Catalog=TelemetryDb;Persist Security Info=False;Authentication=Active Directory Managed Identity;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
-  appservice_principal_id  = azurerm_user_assigned_identity.app.principal_id
-  functionapp_principal_id = azurerm_user_assigned_identity.func.principal_id
-  opensky_client_id        = var.opensky_client_id
-  opensky_client_secret    = var.opensky_client_secret
-  management_admin_token   = var.management_admin_token
+  sql_connection_string_app  = "Server=tcp:sql-telemetry-${var.environment}-${local.suffix}.database.windows.net,1433;Initial Catalog=TelemetryDb;Persist Security Info=False;Authentication=Active Directory Managed Identity;User Id=${azurerm_user_assigned_identity.app.client_id};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+  sql_connection_string_func = "Server=tcp:sql-telemetry-${var.environment}-${local.suffix}.database.windows.net,1433;Initial Catalog=TelemetryDb;Persist Security Info=False;Authentication=Active Directory Managed Identity;User Id=${azurerm_user_assigned_identity.func.client_id};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+  appservice_principal_id    = azurerm_user_assigned_identity.app.principal_id
+  functionapp_principal_id   = azurerm_user_assigned_identity.func.principal_id
+  opensky_client_id          = var.opensky_client_id
+  opensky_client_secret      = var.opensky_client_secret
+  management_admin_token     = var.management_admin_token
 }
 
 
@@ -179,7 +181,7 @@ module "appservice" {
   tags                          = local.tags
   suffix                        = local.suffix
   key_vault_name                = local.kv_name
-  sql_secret_uri                = local.sql_secret_uri
+  sql_secret_uri                = local.sql_secret_app_uri
   appinsights_connection_string = module.monitoring.connection_string
   log_analytics_workspace_id    = module.monitoring.log_analytics_workspace_id
   app_insights_app_id           = module.monitoring.app_insights_app_id
@@ -224,7 +226,7 @@ module "functions" {
   environment                      = var.environment
   tags                             = local.tags
   suffix                           = local.suffix
-  sql_secret_uri                   = local.sql_secret_uri
+  sql_secret_uri                   = local.sql_secret_func_uri
   appinsights_connection_string    = module.monitoring.connection_string
   metro_feed_url                   = var.metro_feed_url
   opensky_bbox                     = var.opensky_bbox

@@ -85,16 +85,26 @@ resource "random_password" "function_host_key" {
 }
 
 # Secrets
-resource "azurerm_key_vault_secret" "sql_connection_string" {
-  name         = "SQL-CONNECTION-STRING"
-  value        = var.sql_connection_string
+resource "azurerm_key_vault_secret" "sql_connection_string_app" {
+  name         = "SQL-CONNECTION-STRING-APP"
+  value        = var.sql_connection_string_app
   key_vault_id = azurerm_key_vault.main.id
 
   # Ensure the SP running the deployment has rights first
   depends_on = [
     azurerm_key_vault_access_policy.local_deployer
   ]
+}
 
+resource "azurerm_key_vault_secret" "sql_connection_string_func" {
+  name         = "SQL-CONNECTION-STRING-FUNC"
+  value        = var.sql_connection_string_func
+  key_vault_id = azurerm_key_vault.main.id
+
+  # Ensure the SP running the deployment has rights first
+  depends_on = [
+    azurerm_key_vault_access_policy.local_deployer
+  ]
 }
 
 resource "azurerm_key_vault_secret" "opensky_client_id" {

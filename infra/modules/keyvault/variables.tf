@@ -19,8 +19,14 @@ variable "suffix" {
   type        = string
 }
 
-variable "sql_connection_string" {
-  description = "SQL connection string to store as a Key Vault secret."
+variable "sql_connection_string_app" {
+  description = "SQL connection string for App Service to store as a Key Vault secret."
+  type        = string
+  sensitive   = true
+}
+
+variable "sql_connection_string_func" {
+  description = "SQL connection string for Function App to store as a Key Vault secret."
   type        = string
   sensitive   = true
 }
