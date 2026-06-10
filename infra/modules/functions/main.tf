@@ -76,6 +76,9 @@ resource "azurerm_windows_function_app" "main" {
     "OPENSKY_CLIENT_ID"     = "@Microsoft.KeyVault(SecretUri=${var.opensky_client_id_secret_uri})"
     "OPENSKY_CLIENT_SECRET" = "@Microsoft.KeyVault(SecretUri=${var.opensky_client_secret_secret_uri})"
     "FLIGHT_POLLING_CRON"   = var.flight_polling_cron
+    "OPENSKY_PROXY_URL"     = var.opensky_proxy_url
+    "OPENSKY_API_URL"       = var.opensky_api_url
+    "OPENSKY_AUTH_URL"      = var.opensky_auth_url
   }
 
   tags = var.tags

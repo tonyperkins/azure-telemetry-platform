@@ -28,11 +28,23 @@ var host = new HostBuilder()
         });
 
         // SRE: Flight injection client
-        services.AddHttpClient<OpenSkyFeedService>(client =>
+        services.AddHttpClient<OpenSkyFeedService>((sp, client) =>
         {
             client.Timeout = TimeSpan.FromSeconds(30);
             client.DefaultRequestHeaders.Add(
                 "User-Agent", "azure-telemetry-platform/1.0");
+        })
+        .ConfigurePrimaryHttpMessageHandler(sp =>
+        {
+            var config = sp.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+            var proxyUrl = config["OPENSKY_PROXY_URL"];
+            var handler = new HttpClientHandler();
+            if (!string.IsNullOrEmpty(proxyUrl))
+            {
+                handler.Proxy = new System.Net.WebProxy(proxyUrl);
+                handler.UseProxy = true;
+            }
+            return handler;
         });
 
         // VehicleIngestionService requires the connection string at construction time

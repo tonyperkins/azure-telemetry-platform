@@ -88,9 +88,11 @@ public static class ManagementEndpoints
             var client = httpClientFactory.CreateClient("OpenSky");
             client.Timeout = TimeSpan.FromSeconds(10);
             
+            var authUrlSetting = config["OPENSKY_AUTH_URL"];
+            var authUrl = !string.IsNullOrEmpty(authUrlSetting) ? authUrlSetting : "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token";
             if (!string.IsNullOrEmpty(clientId) && !string.IsNullOrEmpty(clientSecret))
             {
-                var token = await GetOpenSkyTokenAsync(httpClientFactory, clientId, clientSecret);
+                var token = await GetOpenSkyTokenAsync(httpClientFactory, authUrl, clientId, clientSecret);
                 if (!string.IsNullOrEmpty(token))
                 {
                     client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
@@ -99,7 +101,9 @@ public static class ManagementEndpoints
 
             var bboxConfig = config["OPENSKY_BBOX"] ?? "29.8,-98.2,30.8,-97.2";
             var parts = bboxConfig.Split(',');
-            var url = "https://opensky-network.org/api/states/all";
+            var apiUrl = config["OPENSKY_API_URL"];
+            var baseUrl = !string.IsNullOrEmpty(apiUrl) ? apiUrl : "https://opensky-network.org/api/states/all";
+            var url = baseUrl;
 
             if (parts.Length == 4)
             {
@@ -262,15 +266,14 @@ public static class ManagementEndpoints
     private static string? _cachedToken;
     private static DateTime _tokenExpiry = DateTime.MinValue;
 
-    private static async Task<string?> GetOpenSkyTokenAsync(IHttpClientFactory httpClientFactory, string clientId, string clientSecret)
+    private static async Task<string?> GetOpenSkyTokenAsync(IHttpClientFactory httpClientFactory, string authUrl, string clientId, string clientSecret)
     {
         if (!string.IsNullOrEmpty(_cachedToken) && DateTime.UtcNow < _tokenExpiry)
         {
             return _cachedToken;
         }
 
-        const string authUrl = "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token";
-        var client = httpClientFactory.CreateClient();
+        var client = httpClientFactory.CreateClient("OpenSky");
         
         var dict = new Dictionary<string, string>
         {

@@ -1,0 +1,6 @@
+name = "opensky-proxy"
+main = "src/index.js"
+compatibility_date = "2024-06-10"
+
+# Optional: route configuration if using a custom domain
+# routes = [ { pattern = "proxy.yourdomain.com", custom_domain = true } ]

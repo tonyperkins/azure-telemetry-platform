@@ -97,3 +97,7 @@ variable "user_assigned_identity_principal_id" {
   description = "Principal ID (Object ID) of the User Assigned Identity."
 }
 
+variable "opensky_proxy_url" { type = string }
+variable "opensky_api_url" { type = string }
+variable "opensky_auth_url" { type = string }
+

@@ -49,8 +49,8 @@ resource "azurerm_windows_web_app" "main" {
   }
 
   app_settings = {
-    "KeyVaultName"           = var.key_vault_name
-    "AZURE_CLIENT_ID"        = var.user_assigned_identity_client_id
+    "KeyVaultName"    = var.key_vault_name
+    "AZURE_CLIENT_ID" = var.user_assigned_identity_client_id
 
     "ASPNETCORE_ENVIRONMENT" = var.environment == "prod" ? "Production" : "Staging"
     # SRE: Use APPLICATIONINSIGHTS_CONNECTION_STRING (not the legacy
@@ -74,6 +74,9 @@ resource "azurerm_windows_web_app" "main" {
     "MANAGEMENT_ADMIN_TOKEN"  = "@Microsoft.KeyVault(SecretUri=${var.management_admin_token_uri})"
     "OPENSKY_CLIENT_ID"       = "@Microsoft.KeyVault(SecretUri=${var.opensky_client_id_secret_uri})"
     "OPENSKY_CLIENT_SECRET"   = "@Microsoft.KeyVault(SecretUri=${var.opensky_client_secret_secret_uri})"
+    "OPENSKY_PROXY_URL"       = var.opensky_proxy_url
+    "OPENSKY_API_URL"         = var.opensky_api_url
+    "OPENSKY_AUTH_URL"        = var.opensky_auth_url
 
     # SRE: External trigger connectivity for the Function App.
     # The API uses these to signal the Function App to 'Instant Start' 

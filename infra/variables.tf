@@ -63,3 +63,21 @@ variable "flight_polling_cron" {
   type        = string
   default     = "*/30 * * * * *"
 }
+
+variable "opensky_proxy_url" {
+  description = "Optional proxy URL to route OpenSky requests through (e.g. http://your-proxy:port)."
+  type        = string
+  default     = ""
+}
+
+variable "opensky_api_url" {
+  description = "Optional base URL override for the OpenSky API endpoint."
+  type        = string
+  default     = ""
+}
+
+variable "opensky_auth_url" {
+  description = "Optional URL override for the OpenSky OAuth2 token endpoint."
+  type        = string
+  default     = ""
+}
