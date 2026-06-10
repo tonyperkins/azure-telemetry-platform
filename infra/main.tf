@@ -247,9 +247,10 @@ module "functions" {
 # call StartAsync/StopAsync on the Function App via the dashboard controls.
 # Scoped to the Function App only — not the resource group — for least privilege.
 # ---------------------------------------------------------------------------
-resource "azurerm_role_assignment" "appservice_can_manage_functions" {
-  scope                = module.functions.function_app_id
-  role_definition_name = "Contributor"
-  principal_id         = azurerm_user_assigned_identity.app.principal_id
-}
+# resource "azurerm_role_assignment" "appservice_can_manage_functions" {
+#   scope                = module.functions.function_app_id
+#   role_definition_name = "Contributor"
+#   principal_id         = azurerm_user_assigned_identity.app.principal_id
+# }
+
 
