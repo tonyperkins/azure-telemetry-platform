@@ -80,23 +80,23 @@ public static class ManagementEndpoints
             return Results.Ok(cbResponse);
         }
 
-        var clientId = config["OPENSKY_CLIENT_ID"];
-        var clientSecret = config["OPENSKY_CLIENT_SECRET"];
-        
-        var client = httpClientFactory.CreateClient("OpenSky");
-        client.Timeout = TimeSpan.FromSeconds(10);
-        
-        if (!string.IsNullOrEmpty(clientId) && !string.IsNullOrEmpty(clientSecret))
-        {
-            var token = await GetOpenSkyTokenAsync(httpClientFactory, clientId, clientSecret);
-            if (!string.IsNullOrEmpty(token))
-            {
-                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-            }
-        }
-
         try
         {
+            var clientId = config["OPENSKY_CLIENT_ID"];
+            var clientSecret = config["OPENSKY_CLIENT_SECRET"];
+            
+            var client = httpClientFactory.CreateClient("OpenSky");
+            client.Timeout = TimeSpan.FromSeconds(10);
+            
+            if (!string.IsNullOrEmpty(clientId) && !string.IsNullOrEmpty(clientSecret))
+            {
+                var token = await GetOpenSkyTokenAsync(httpClientFactory, clientId, clientSecret);
+                if (!string.IsNullOrEmpty(token))
+                {
+                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                }
+            }
+
             var bboxConfig = config["OPENSKY_BBOX"] ?? "29.8,-98.2,30.8,-97.2";
             var parts = bboxConfig.Split(',');
             var url = "https://opensky-network.org/api/states/all";
@@ -279,18 +279,25 @@ public static class ManagementEndpoints
             { "client_secret", clientSecret }
         };
 
-        var response = await client.PostAsync(authUrl, new FormUrlEncodedContent(dict));
-        if (response.IsSuccessStatusCode)
+        try
         {
-            var json = await response.Content.ReadAsStringAsync();
-            using var doc = System.Text.Json.JsonDocument.Parse(json);
-            if (doc.RootElement.TryGetProperty("access_token", out var tokenProp))
+            var response = await client.PostAsync(authUrl, new FormUrlEncodedContent(dict));
+            if (response.IsSuccessStatusCode)
             {
-                _cachedToken = tokenProp.GetString();
-                int expiresIn = doc.RootElement.TryGetProperty("expires_in", out var expProp) ? expProp.GetInt32() : 1800;
-                _tokenExpiry = DateTime.UtcNow.AddSeconds(expiresIn - 60); // 1-minute buffer
-                return _cachedToken;
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("access_token", out var tokenProp))
+                {
+                    _cachedToken = tokenProp.GetString();
+                    int expiresIn = doc.RootElement.TryGetProperty("expires_in", out var expProp) ? expProp.GetInt32() : 1800;
+                    _tokenExpiry = DateTime.UtcNow.AddSeconds(expiresIn - 60); // 1-minute buffer
+                    return _cachedToken;
+                }
             }
+        }
+        catch (Exception)
+        {
+            // Fallback gracefully
         }
 
         return null;
