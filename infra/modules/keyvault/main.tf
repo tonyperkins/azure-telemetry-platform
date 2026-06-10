@@ -42,6 +42,15 @@ resource "azurerm_key_vault_access_policy" "terraform_deployer" {
   secret_permissions = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
 }
 
+# GitHub Actions service principal — full secret access for CI/CD Terraform runs
+resource "azurerm_key_vault_access_policy" "ci_deployer" {
+  key_vault_id = azurerm_key_vault.main.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = var.ci_deployer_object_id
+
+  secret_permissions = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
+}
+
 # App Service managed identity — read-only access
 resource "azurerm_key_vault_access_policy" "appservice" {
   key_vault_id = azurerm_key_vault.main.id

@@ -152,7 +152,11 @@ module "keyvault" {
   opensky_client_id        = var.opensky_client_id
   opensky_client_secret    = var.opensky_client_secret
   management_admin_token   = var.management_admin_token
+  # SRE: GitHub Actions service principal — needs full secret CRUD for CI Terraform runs.
+  # This is the object ID of sp-telemetry-github-actions (not secret, just an identity reference).
+  ci_deployer_object_id    = "ca14dff5-3a2c-420b-8fb8-e4a911086ada"
 }
+
 
 module "appservice" {
   source                        = "./modules/appservice"

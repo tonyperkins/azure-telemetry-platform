@@ -52,3 +52,8 @@ variable "management_admin_token" {
   type        = string
   sensitive   = true
 }
+
+variable "ci_deployer_object_id" {
+  description = "Object ID of the GitHub Actions service principal. Granted full secret access so CI/CD Terraform runs can read/write Key Vault secrets."
+  type        = string
+}
