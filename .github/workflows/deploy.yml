@@ -26,8 +26,8 @@ jobs:
   # Job 1: Terraform apply — provisions / updates Azure infrastructure
   # This runs BEFORE app deployments so the App Service and Function App
   # always exist before we attempt code deployments.
-  # Requires secrets: AZURE_CREDENTIALS, TF_VAR_sql_admin_password,
-  #                   TF_VAR_alert_email
+  # Requires secrets: AZURE_CREDENTIALS, TF_VAR_SQL_ADMIN_PASSWORD, TF_VAR_ALERT_EMAIL,
+  #                   MANAGEMENT_ADMIN_TOKEN, OPENSKY_CLIENT_ID, OPENSKY_CLIENT_SECRET
   # ---------------------------------------------------------------------------
   terraform:
     name: Terraform Apply
@@ -45,13 +45,6 @@ jobs:
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Wake up Function App
-        # SRE: Terraform fails to read host keys if the Function App is stopped (Demo-at-rest mode).
-        # We must start it before running Terraform. It can be stopped later via the dashboard.
-        run: |
-          echo "Attempting to start Function App so Terraform can read its keys..."
-          az functionapp start --name func-telemetry-${{ github.event.inputs.environment || 'prod' }}-7d94f06a --resource-group rg-telemetry-atp-${{ github.event.inputs.environment || 'prod' }} || echo "Function app might not exist yet, ignoring."
 
       - name: Pre-flight Credentials Check
         run: |
