@@ -35,3 +35,9 @@ variable "flight_polling_cron" {
   type        = string
   default     = "0 */5 * * * *"
 }
+
+variable "function_host_key" {
+  description = "Pre-generated host key value to register on the Function App. Generated in the keyvault module and stored in Key Vault so the App Service can reference it without a data source read at apply time."
+  type        = string
+  sensitive   = true
+}

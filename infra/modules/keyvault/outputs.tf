@@ -23,3 +23,15 @@ output "opensky_client_secret_secret_uri" {
   value     = azurerm_key_vault_secret.opensky_client_secret.versionless_id
   sensitive = true
 }
+
+output "function_host_key_uri" {
+  description = "Versionless URI of the pre-generated Function App host key secret."
+  value       = azurerm_key_vault_secret.function_host_key.versionless_id
+  sensitive   = true
+}
+
+output "function_host_key" {
+  description = "The pre-generated Function App host key value (used to register the key on the Function App)."
+  value       = random_password.function_host_key.result
+  sensitive   = true
+}

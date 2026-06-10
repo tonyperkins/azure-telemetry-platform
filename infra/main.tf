@@ -8,6 +8,10 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.0"
     }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.0"
+    }
   }
 
   # SRE: Remote state in Azure Blob Storage prevents the "only works from my laptop"
@@ -64,6 +68,9 @@ locals {
   opensky_id_uri             = "${local.kv_base_uri}/OPEN-SKY-CLIENT-ID"
   opensky_sec_uri            = "${local.kv_base_uri}/OPEN-SKY-CLIENT-SECRET"
   management_admin_token_uri = "${local.kv_base_uri}/MANAGEMENT-ADMIN-TOKEN"
+  # SRE: Pre-generated key URI — known before the Function App exists.
+  # Eliminates the azurerm_function_app_host_keys data source timing problem.
+  function_host_key_uri      = "${local.kv_base_uri}/FUNCTION-HOST-KEY"
 
   tags = {
     project     = "azure-telemetry-platform"
@@ -167,16 +174,13 @@ module "appservice" {
   subscription_id                  = data.azurerm_subscription.current.subscription_id
   function_app_name                = module.functions.function_app_name
   function_app_hostname            = module.functions.function_app_hostname
-  function_app_key                 = data.azurerm_function_app_host_keys.main.default_function_key
+  function_host_key_uri            = local.function_host_key_uri
   management_admin_token_uri       = local.management_admin_token_uri
   opensky_client_id_secret_uri     = local.opensky_id_uri
   opensky_client_secret_secret_uri = local.opensky_sec_uri
 }
 
-data "azurerm_function_app_host_keys" "main" {
-  name                = module.functions.function_app_name
-  resource_group_name = azurerm_resource_group.main.name
-}
+
 
 # ---------------------------------------------------------------------------
 # IAM Roles
@@ -205,6 +209,7 @@ module "functions" {
   opensky_client_id_secret_uri     = local.opensky_id_uri
   opensky_client_secret_secret_uri = local.opensky_sec_uri
   flight_polling_cron              = var.flight_polling_cron
+  function_host_key                = module.keyvault.function_host_key
 }
 
 # ---------------------------------------------------------------------------

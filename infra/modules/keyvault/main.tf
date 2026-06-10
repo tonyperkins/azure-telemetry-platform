@@ -1,4 +1,9 @@
 # =============================================================================
+# SRE: The function_host_key is pre-generated here (not read from the live
+# Function App) to eliminate the timing dependency on azurerm_function_app_host_keys.
+# The key is injected into the Function App at deploy time and referenced by
+# the App Service via Key Vault — no data source read required.
+# =============================================================================
 # module/keyvault — Azure Key Vault + access policies + secrets
 #
 # SRE: Key Vault is the single source of truth for all secrets.
@@ -55,6 +60,15 @@ resource "azurerm_key_vault_access_policy" "functionapp" {
   secret_permissions = ["Get", "List"]
 }
 
+# ---------------------------------------------------------------------------
+# Pre-generate Function App host key
+# ---------------------------------------------------------------------------
+resource "random_password" "function_host_key" {
+  length  = 40
+  special = false
+  # Produces a URL-safe alphanumeric string suitable for use as a function key
+}
+
 # Secrets
 resource "azurerm_key_vault_secret" "sql_connection_string" {
   name         = "SQL-CONNECTION-STRING"
@@ -90,6 +104,16 @@ resource "azurerm_key_vault_secret" "opensky_client_secret" {
 resource "azurerm_key_vault_secret" "management_admin_token" {
   name         = "MANAGEMENT-ADMIN-TOKEN"
   value        = var.management_admin_token
+  key_vault_id = azurerm_key_vault.main.id
+
+  depends_on = [
+    azurerm_key_vault_access_policy.terraform_deployer
+  ]
+}
+
+resource "azurerm_key_vault_secret" "function_host_key" {
+  name         = "FUNCTION-HOST-KEY"
+  value        = random_password.function_host_key.result
   key_vault_id = azurerm_key_vault.main.id
 
   depends_on = [

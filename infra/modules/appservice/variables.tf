@@ -76,8 +76,8 @@ variable "function_app_hostname" {
   description = "The default hostname of the function app for cross-service triggers."
 }
 
-variable "function_app_key" {
+variable "function_host_key_uri" {
   type        = string
   sensitive   = true
-  description = "The host key for the function app to allow the API to trigger ingestion."
+  description = "Versionless KV secret URI of the pre-generated Function App host key. Used as a Key Vault reference — the raw key never appears in app settings."
 }

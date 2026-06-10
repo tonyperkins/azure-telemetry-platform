@@ -66,7 +66,7 @@ resource "azurerm_monitor_scheduled_query_rules_alert_v2" "data_staleness" {
   scopes               = [azurerm_application_insights.main.id]
   severity             = 2
   window_duration      = "PT5M"
-  evaluation_frequency = "PT1M"
+  evaluation_frequency = "PT5M"
   description          = "A data source (metro or flight) has reported 0 vehicles for 3 consecutive polls."
 
   criteria {

@@ -73,7 +73,8 @@ resource "azurerm_windows_web_app" "main" {
     # The API uses these to signal the Function App to 'Instant Start' 
     # when a dashboard user is active.
     "FLIGHT_INGESTION_URL" = "https://${var.function_app_hostname}"
-    "FLIGHT_INGESTION_KEY" = var.function_app_key
+    "FLIGHT_INGESTION_KEY" = "@Microsoft.KeyVault(SecretUri=${var.function_host_key_uri})"
+
   }
 
   tags = var.tags

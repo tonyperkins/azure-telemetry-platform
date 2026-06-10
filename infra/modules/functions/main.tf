@@ -75,6 +75,49 @@ resource "azurerm_windows_function_app" "main" {
   tags = var.tags
 }
 
+# ---------------------------------------------------------------------------
+# SRE: Register the pre-generated host key on the Function App.
+#
+# Azure generates its own default host key on first boot (which takes 15-20
+# minutes on a cold consumption plan). Instead of reading that key back with
+# a data source (which races against initialization), we register OUR OWN
+# named key ('terraform-managed') with a value we generated beforehand.
+#
+# The App Service uses this named key via a Key Vault reference — no timing
+# dependency, no data source read, no 20-minute timeout loop.
+#
+# triggers: change to key value or function app ID forces re-registration.
+# ---------------------------------------------------------------------------
+resource "null_resource" "register_function_host_key" {
+  triggers = {
+    function_app_id   = azurerm_windows_function_app.main.id
+    function_host_key = var.function_host_key
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      echo "Registering pre-generated host key on Function App..."
+      for i in $(seq 1 30); do
+        result=$(az functionapp keys set \
+          --name "${azurerm_windows_function_app.main.name}" \
+          --resource-group "${var.resource_group_name}" \
+          --key-type functionKeys \
+          --key-name terraform-managed \
+          --key-value "${var.function_host_key}" \
+          --query value -o tsv 2>&1)
+        if [ $? -eq 0 ] && [ -n "$result" ] && ! echo "$result" | grep -qi "error\|bad request"; then
+          echo "Host key registered successfully."
+          exit 0
+        fi
+        echo "Attempt $i/30: not ready yet, retrying in 30s... ($result)"
+        sleep 30
+      done
+      echo "ERROR: Failed to register function host key after 15 minutes."
+      exit 1
+    EOT
+  }
+}
+
 resource "azurerm_service_plan" "consumption" {
   name                = "asp-func-${var.environment}"
   resource_group_name = var.resource_group_name
