@@ -127,8 +127,10 @@ jobs:
           export FUNC_NAME="${{ steps.tf-outputs.outputs.function_app_name }}"
           APP_OID="${{ steps.tf-outputs.outputs.appservice_principal_id }}"
           FUNC_OID="${{ steps.tf-outputs.outputs.functionapp_principal_id }}"
-          export APP_SID=$(python3 -c "import uuid; print('0x' + uuid.UUID('$APP_OID').bytes_le.hex())")
-          export FUNC_SID=$(python3 -c "import uuid; print('0x' + uuid.UUID('$FUNC_OID').bytes_le.hex())")
+          APP_CLIENT_ID=$(az ad sp show --id "$APP_OID" --query "appId" -o tsv)
+          FUNC_CLIENT_ID=$(az ad sp show --id "$FUNC_OID" --query "appId" -o tsv)
+          export APP_SID=$(python3 -c "import uuid; print('0x' + uuid.UUID('$APP_CLIENT_ID').bytes_le.hex())")
+          export FUNC_SID=$(python3 -c "import uuid; print('0x' + uuid.UUID('$FUNC_CLIENT_ID').bytes_le.hex())")
           envsubst '${APP_NAME} ${FUNC_NAME} ${APP_SID} ${FUNC_SID}' < ./scripts/init-schema.sql > /tmp/init-schema-rendered.sql
           echo "=== Rendered SQL (security section) ==="
           grep -A2 -B2 "APP_NAME\|FUNC_NAME" /tmp/init-schema-rendered.sql
