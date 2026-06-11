@@ -71,7 +71,7 @@ locals {
   management_admin_token_uri = "${local.kv_base_uri}/MANAGEMENT-ADMIN-TOKEN"
   # SRE: Pre-generated key URI — known before the Function App exists.
   # Eliminates the azurerm_function_app_host_keys data source timing problem.
-  function_host_key_uri = "${local.kv_base_uri}/FUNCTION-HOST-KEY"
+  function_host_key_uri      = "${local.kv_base_uri}/FUNCTION-HOST-KEY"
 
   tags = {
     project     = "azure-telemetry-platform"
@@ -197,13 +197,10 @@ module "appservice" {
   management_admin_token_uri       = local.management_admin_token_uri
   opensky_client_id_secret_uri     = local.opensky_id_uri
   opensky_client_secret_secret_uri = local.opensky_sec_uri
-  opensky_proxy_url                = var.opensky_proxy_url
-  opensky_api_url                  = var.opensky_api_url
-  opensky_auth_url                 = var.opensky_auth_url
 
   user_assigned_identity_id           = azurerm_user_assigned_identity.app.id
-  user_assigned_identity_client_id    = azurerm_user_assigned_identity.app.client_id
-  user_assigned_identity_principal_id = azurerm_user_assigned_identity.app.principal_id
+  user_assigned_identity_client_id     = azurerm_user_assigned_identity.app.client_id
+  user_assigned_identity_principal_id  = azurerm_user_assigned_identity.app.principal_id
 }
 
 
@@ -237,13 +234,10 @@ module "functions" {
   opensky_client_secret_secret_uri = local.opensky_sec_uri
   flight_polling_cron              = var.flight_polling_cron
   function_host_key                = module.keyvault.function_host_key
-  opensky_proxy_url                = var.opensky_proxy_url
-  opensky_api_url                  = var.opensky_api_url
-  opensky_auth_url                 = var.opensky_auth_url
 
   user_assigned_identity_id           = azurerm_user_assigned_identity.func.id
-  user_assigned_identity_client_id    = azurerm_user_assigned_identity.func.client_id
-  user_assigned_identity_principal_id = azurerm_user_assigned_identity.func.principal_id
+  user_assigned_identity_client_id     = azurerm_user_assigned_identity.func.client_id
+  user_assigned_identity_principal_id  = azurerm_user_assigned_identity.func.principal_id
 }
 
 # ---------------------------------------------------------------------------

@@ -73,18 +73,6 @@ builder.Services.AddHttpClient("OpenSky", client =>
 {
     client.Timeout = TimeSpan.FromSeconds(10);
     client.DefaultRequestHeaders.Add("User-Agent", "azure-telemetry-platform/1.0");
-})
-.ConfigurePrimaryHttpMessageHandler(sp =>
-{
-    var config = sp.GetRequiredService<IConfiguration>();
-    var proxyUrl = config["OPENSKY_PROXY_URL"];
-    var handler = new HttpClientHandler();
-    if (!string.IsNullOrEmpty(proxyUrl))
-    {
-        handler.Proxy = new System.Net.WebProxy(proxyUrl);
-        handler.UseProxy = true;
-    }
-    return handler;
 });
 builder.Services.AddSingleton<GtfsStaticService>();
 

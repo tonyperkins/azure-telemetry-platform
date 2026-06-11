@@ -19,8 +19,7 @@ namespace TelemetryFunctions.Services;
 /// </summary>
 public sealed class OpenSkyFeedService
 {
-    private readonly string _baseUrl;
-    private readonly string _authUrl;
+    private const string BaseUrl = "https://opensky-network.org/api/states/all";
 
     private readonly HttpClient              _httpClient;
     private readonly VehicleIngestionService  _ingestionService;
@@ -48,10 +47,6 @@ public sealed class OpenSkyFeedService
         _logger            = logger;
         _clientId      = config["OPENSKY_CLIENT_ID"];
         _clientSecret  = config["OPENSKY_CLIENT_SECRET"];
-        var apiUrl = config["OPENSKY_API_URL"];
-        _baseUrl       = !string.IsNullOrEmpty(apiUrl) ? apiUrl : "https://opensky-network.org/api/states/all";
-        var authUrlSetting = config["OPENSKY_AUTH_URL"];
-        _authUrl       = !string.IsNullOrEmpty(authUrlSetting) ? authUrlSetting : "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token";
 
         // SRE: If credentials are configured, set Basic Auth header for all requests.
         // This raises the rate limit from 400/day (anonymous) to 4000/day (registered).
@@ -252,7 +247,7 @@ public sealed class OpenSkyFeedService
         return vehicles;
     }
 
-    private string BuildUrl(string bboxConfig)
+    private static string BuildUrl(string bboxConfig)
     {
         // OPENSKY_BBOX format: "lamin,lomin,lamax,lomax"  e.g. "29.8,-98.2,30.8,-97.2"
         var parts = bboxConfig.Split(',');
@@ -275,7 +270,7 @@ public sealed class OpenSkyFeedService
         var lomax = double.Parse(parts[3].Trim(), System.Globalization.CultureInfo.InvariantCulture)
             .ToString(System.Globalization.CultureInfo.InvariantCulture);
 
-        return $"{_baseUrl}?lamin={lamin}&lomin={lomin}&lamax={lamax}&lomax={lomax}";
+        return $"{BaseUrl}?lamin={lamin}&lomin={lomin}&lamax={lamax}&lomax={lomax}";
     }
 
     private static string?  GetString(JsonElement[] arr, int idx)
@@ -299,7 +294,7 @@ public sealed class OpenSkyFeedService
             return null;
         }
 
-        var authUrl = _authUrl;
+        const string authUrl = "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token";
         
         try
         {
