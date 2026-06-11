@@ -252,7 +252,7 @@ public sealed class OpenSkyFeedService
         return vehicles;
     }
 
-    private static string BuildUrl(string bboxConfig)
+    private string BuildUrl(string bboxConfig)
     {
         // OPENSKY_BBOX format: "lamin,lomin,lamax,lomax"  e.g. "29.8,-98.2,30.8,-97.2"
         var parts = bboxConfig.Split(',');
